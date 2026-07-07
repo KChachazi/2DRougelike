@@ -9,14 +9,14 @@
 
 ## 当前进度(务必保持最新)
 
-- 状态:**第 1 周参考代码与文档已写完,等待用户自己在 `Assets/Scripts/` 下创建文件并在 Unity 编辑器里完成场景搭建**。
+- 状态:**第 1 周(项目搭建与基础移动射击)已完成并通过验收**。
 - 已有内容:
   - Unity 6000.3.19f1 + URP 2D 模板默认工程,`.gitignore`/`.gitattributes` 已提交,首次提交(`init`)已完成。
-  - `Assets/Scripts/` 目前**是空的**——第 1 周的参考实现放在仓库根目录的 `Reference/Scripts/Core|Entities|Weapons/`(与 `Assets/` 同级,`.gitignore` 已排除,不属于 Unity 工程)。用户需要自己对照参考代码在 `Assets/Scripts/` 下创建同名文件。见下方「Reference 参考代码约定」。
-  - `Assets/Prefabs/` 目录已创建(空),预制体需要用户在编辑器里手动完成,**Claude 不直接编辑 `.unity`/`.prefab` 场景文件**(YAML 手改风险高,交给用户在编辑器操作更可靠)。
-  - `devlog/week1.md` 已写好完整的第 1 周文档:设计意图、逐文件代码讲解(指向 `Reference/Scripts/...`)、Unity 编辑器详细操作步骤、常见问题排查表、验收 checklist。**这是本项目"每周文档"的范本格式**,后续周数照此结构产出。
+  - `Assets/Scripts/Core/`(`ObjectPool.cs`、`GameManager.cs`、`CameraFollow.cs`)、`Assets/Scripts/Entities/`(`Health.cs`、`PlayerController.cs`、`EnemyController.cs`)、`Assets/Scripts/Weapons/`(`Bullet.cs`、`PlayerShooter.cs`)均由用户对照 `Reference/Scripts/...` 手动创建完成,场景搭建(Player/Bullet 预制体/BulletPool/Enemy/GameManager/摄像机)已在编辑器里完成。
+  - Play 模式验收通过:八方向移动、朝向鼠标旋转、连续开火、子弹命中敌人扣血/消失、敌人追击并周期性造成接触伤害均正常。过程中出现的笔误型 bug(接口漏实现、Tag 大小写、方法名拼写等)已修复,详见 `devlog/week1.md` 第 5 节。
+  - `devlog/week1.md` 已补全"实际完成情况"记录(区别于开工前的计划部分)。
 - 尚未创建:`Assets/Scripts/Commands/`、`Assets/Scripts/StateMachines/`、`Assets/Scripts/UI/`、`Assets/Data/`(第 2 周及以后按需创建)。命名空间约定见下方「目录结构约定」一节。
-- 下一步:用户对照 `Reference/Scripts/...` 在 `Assets/Scripts/` 下创建第 1 周的 8 个文件,再按 `devlog/week1.md` 的编辑器步骤搭建场景(建 Tag、拼装 Player/Bullet/Enemy/GameManager/摄像机)、跑通 Play 模式验收 checklist;跑通后回到 `devlog/week1.md` 第 5 节勾选完成项,再开始第 2 周(状态机)。
+- 下一步:开始第 2 周——状态机与敌人基础 AI(玩家 Idle/Move/Dash/Attack/Hurt、敌人 Patrol/Chase/Attack/Dead、闪避+无敌帧+受击闪白、近战武器原型)。是否要给第 1 周打 `v1-week1` 标签待用户确认(见下方 Git 约定)。
 
 **更新规则**:每完成一项里程碑(一周任务,或用户认可的阶段性成果)后:
 1. 更新本节的"已有内容 / 尚未创建 / 下一步";
@@ -44,8 +44,8 @@
 
 ## 开发节奏
 
-- 当前阶段:**第 1 周 - 项目搭建与基础移动射击**(见 README「六周开发路线」)。
-- 目标产出:Unity 2D 项目初始化细化、Input System 接入、玩家八方向移动 + 面向鼠标旋转、单发子弹射击(对象池雏形)、敌人追击 + 碰撞伤害、最小 Game Loop 框架。
+- 当前阶段:**第 1 周已完成,准备进入第 2 周 - 状态机与敌人基础 AI**(见 README「六周开发路线」)。
+- 第 2 周目标产出:玩家状态机(Idle/Move/Dash/Attack/Hurt)、敌人状态机(Patrol/Chase/Attack/Dead)、闪避(Dash)+ 无敌帧 + 受击闪白、近战武器原型。新增 `Assets/Scripts/StateMachines/` 目录。
 
 ## 架构约定(写代码前必读)
 

@@ -564,14 +564,22 @@ namespace Game.Weapons
 
 ## 5. 本周完成情况(实际发生了什么)
 
-> 这一节等你实际跑通之后,由 Claude 回填/由你口头告诉我进展后更新,记录"真的做了什么",区别于上面"计划要做什么"。
+- [x] 环境检查(Active Input Handling)
+- [x] Player 搭建完成,可以移动 + 转向
+- [x] Bullet 预制体 + BulletPool 搭建完成,可以开火
+- [x] Enemy 搭建完成,会追击 + 造成伤害
+- [x] GameManager / CameraFollow 挂好
+- [x] 整体跑通,没有报错
 
-- [ ] 环境检查(Active Input Handling)
-- [ ] Player 搭建完成,可以移动 + 转向
-- [ ] Bullet 预制体 + BulletPool 搭建完成,可以开火
-- [ ] Enemy 搭建完成,会追击 + 造成伤害
-- [ ] GameManager / CameraFollow 挂好
-- [ ] 整体跑通,没有报错
+**过程中踩过的坑**(都是用户对照 `Reference/Scripts/` 手动敲代码时引入的笔误,不是参考实现本身的问题,记录下来方便以后排查同类问题):
+
+- `PlayerController.cs`:`Mouse.current.position.ReadValue` 漏了调用括号 `()`;`rb.rotation` 和 `rb.position` 搞混,导致方向向量用错了类型。
+- `EnemyController.cs`:`Awake()` 里写成 `rb.GetComponent<Rigidbody2D>()`(在还是 `null` 的 `rb` 上取组件),应为 `rb = GetComponent<Rigidbody2D>()`;`OnCollisionStay2D` 少打一个字母写成 `OCollisionStay2D`,导致 Unity 认不出这个是碰撞回调,不报错但静默失效。
+- `Bullet.cs`:漏写 `IPoolable` 接口声明,导致对象池的 `TryGetComponent<IPoolable>` 找不到组件,`Pool` 恒为 `null`,子弹一直在被 `Destroy` 而不是回收复用(功能上不影响手感,但违反了对象池的架构约定);`CompareTag("enemy")` 大小写和实际 Tag `Enemy` 不一致,导致子弹一直判定"不是敌人",直接穿过不掉血。
+- 顺手清理了几个转录时带出来的多余 `using`(`Unity.Collections`、`System.Dynamic`、`System.Net.NetworkInformation`、`UnityEditor.Callbacks`),其中 `UnityEditor.Callbacks` 如果不删,后续真正打包 Build 时会编译报错(`UnityEditor` 命名空间不存在于打包后的运行时)。
+- `CameraFollow.cs` 里偏移量计算一度被改成 `target.position - offset`(应为 `+`),当前 `offset` 默认是 `(0,0)` 所以没造成可见影响,但已经改回来,避免以后设置非零偏移时方向反了。
+
+**验收结果**:WASD 八方向移动、朝向鼠标旋转、按住左键连续开火、子弹命中敌人掉血/多次命中后消失、敌人追击玩家并每秒造成一次接触伤害,均已在 Play 模式下测试通过。第 1 周正式完成。
 
 ---
 

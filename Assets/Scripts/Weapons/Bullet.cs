@@ -1,12 +1,11 @@
 using Game.Core;
 using Game.Entities;
-using UnityEditor.Callbacks;
 using UnityEngine;
 
 namespace Game.Weapons
 {
     [RequireComponent(typeof(Rigidbody2D))]
-    public class Bullet : MonoBehaviour
+    public class Bullet : MonoBehaviour, IPoolable
     {
         [SerializeField] private float speed = 15f;
         [SerializeField] private float lifeTime = 2f;
@@ -39,7 +38,7 @@ namespace Game.Weapons
 
         private void OnTriggerEnter2D(Collider2D other)
         {
-            if (!other.CompareTag("enemy")) return ;
+            if (!other.CompareTag("Enemy")) return ;
             if (other.TryGetComponent(out Health health))
             {
                 health.TakeDamage(damage);

@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 105153940241452425}
   - component: {fileID: 7924292702578438647}
   - component: {fileID: 6635949759773687915}
+  - component: {fileID: -6326122943897061908}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Enemy
@@ -186,3 +187,16 @@ MonoBehaviour:
   moveSpeed: 2.5
   contactDamage: 10
   damageCooldown: 1
+--- !u!114 &-6326122943897061908
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4382135075672594973}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 520fd29f89341ff4a89aa57351ed5f01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Entities.Health
+  maxHealth: 100
