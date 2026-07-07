@@ -27,6 +27,9 @@
 # Claude Code local (personal) settings — not shared across machines
 .claude/settings.local.json
 
+# Claude 的每周参考代码/示例，不是工程本体，不进版本库
+/Reference/
+
 # Gradle cache directory (Android builds)
 .gradle/
 
