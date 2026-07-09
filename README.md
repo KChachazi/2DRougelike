@@ -153,7 +153,7 @@ Assets/
 
 每完成一周的任务，建议打一个 Git 标签 `v1-week<周数>`，并在下方简要记录关键成果：
 - ✅ `v1-week1`: 基础移动射击、敌人追击、对象池（已完成，详见 [devlog/week1.md](devlog/week1.md)）
-- `v1-week2`: 状态机、闪避、近战武器
+- ✅ `v1-week2`: 状态机、闪避、近战武器（已完成，详见 [devlog/week2.md](devlog/week2.md)）
 - `v1-week3`: EventBus、ScriptableObject 武器、策略切换
 - `v1-week4`: 命令模式、输入缓冲、手雷技能
 - `v1-week5`: 房间系统、Boss 战、小地图

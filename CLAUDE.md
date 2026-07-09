@@ -9,14 +9,15 @@
 
 ## 当前进度(务必保持最新)
 
-- 状态:**第 1 周(项目搭建与基础移动射击)已完成并通过验收**。
+- 状态:**第 1、2 周均已完成并通过验收;第 1 周打了 `v1-week1` 标签,第 2 周是否打 `v1-week2` 待用户确认**。
 - 已有内容:
-  - Unity 6000.3.19f1 + URP 2D 模板默认工程,`.gitignore`/`.gitattributes` 已提交,首次提交(`init`)已完成。
-  - `Assets/Scripts/Core/`(`ObjectPool.cs`、`GameManager.cs`、`CameraFollow.cs`)、`Assets/Scripts/Entities/`(`Health.cs`、`PlayerController.cs`、`EnemyController.cs`)、`Assets/Scripts/Weapons/`(`Bullet.cs`、`PlayerShooter.cs`)均由用户对照 `Reference/Scripts/...` 手动创建完成,场景搭建(Player/Bullet 预制体/BulletPool/Enemy/GameManager/摄像机)已在编辑器里完成。
-  - Play 模式验收通过:八方向移动、朝向鼠标旋转、连续开火、子弹命中敌人扣血/消失、敌人追击并周期性造成接触伤害均正常。过程中出现的笔误型 bug(接口漏实现、Tag 大小写、方法名拼写等)已修复,详见 `devlog/week1.md` 第 5 节。
-  - `devlog/week1.md` 已补全"实际完成情况"记录(区别于开工前的计划部分)。
-- 尚未创建:`Assets/Scripts/Commands/`、`Assets/Scripts/StateMachines/`、`Assets/Scripts/UI/`、`Assets/Data/`(第 2 周及以后按需创建)。命名空间约定见下方「目录结构约定」一节。
-- 下一步:开始第 2 周——状态机与敌人基础 AI(玩家 Idle/Move/Dash/Attack/Hurt、敌人 Patrol/Chase/Attack/Dead、闪避+无敌帧+受击闪白、近战武器原型)。是否要给第 1 周打 `v1-week1` 标签待用户确认(见下方 Git 约定)。
+  - Unity 6000.3.19f1 + URP 2D 模板默认工程,`.gitignore`/`.gitattributes` 已提交。
+  - 第 1 周:`Assets/Scripts/Core|Entities|Weapons` 下的 8 个文件、场景搭建均已由用户完成并通过验收,详见 `devlog/week1.md`。
+  - 第 2 周:`Assets/Scripts/StateMachines/`(`IState.cs`、`StateMachine.cs`、`Player/`、`Enemy/` 共 11 个状态相关文件)已由用户对照 `Reference/Scripts/...` 创建完成;`Health.cs`/`PlayerController.cs`/`EnemyController.cs`/`PlayerShooter.cs` 已重写/更新。核心变化:`PlayerController`/`EnemyController` 从"一个脚本管所有逻辑"重构成状态机的"上下文",`Health` 新增无敌帧和 `Damaged`/`Died` 两个 C# 事件(EventBus 正式引入前的雏形)。场景结构未变,这周没有新增 GameObject/预制体。
+  - Play 模式验收通过:闪避 + 无敌帧、近战攻击范围判定、受击闪白 + 无敌帧、敌人 Patrol/Chase/Attack/Dead 四状态切换(含调试用颜色反馈)、状态期间禁止开枪均正常。过程中出现的 bug(状态比较类型不兼容、闪避冷却减法写成赋值、判空条件 `&&`/`||` 写反、`canFire` 算出来没接进判断条件等)已修复,详见 `devlog/week2.md` 第 5 节。
+  - 命名约定新增一条:代表血量组件的公开属性用小写 `health`(用户主动选择,不是笔误),见下方「目录结构约定」。
+- 尚未创建:`Assets/Scripts/Commands/`、`Assets/Scripts/UI/`、`Assets/Data/`(第 3 周及以后按需创建)。
+- 下一步:开始第 3 周——事件系统与数据驱动武器(正式引入 EventBus、武器 ScriptableObject、策略模式切换武器、弹药限制)。
 
 **更新规则**:每完成一项里程碑(一周任务,或用户认可的阶段性成果)后:
 1. 更新本节的"已有内容 / 尚未创建 / 下一步";
@@ -44,8 +45,8 @@
 
 ## 开发节奏
 
-- 当前阶段:**第 1 周已完成,准备进入第 2 周 - 状态机与敌人基础 AI**(见 README「六周开发路线」)。
-- 第 2 周目标产出:玩家状态机(Idle/Move/Dash/Attack/Hurt)、敌人状态机(Patrol/Chase/Attack/Dead)、闪避(Dash)+ 无敌帧 + 受击闪白、近战武器原型。新增 `Assets/Scripts/StateMachines/` 目录。
+- 当前阶段:**第 2 周已完成,准备进入第 3 周 - 事件系统与数据驱动武器**(见 README「六周开发路线」)。
+- 第 3 周目标产出:EventBus 接入(UI 血条/子弹数事件更新)、武器 ScriptableObject(伤害/冷却/子弹类型)、策略模式武器切换(手枪/步枪/近战——把第 2 周写在 `PlayerAttackState` 里的近战原型和现有远程射击统一到 `IWeaponStrategy` 接口下)、弹药限制 + 补给拾取。
 
 ## 架构约定(写代码前必读)
 
@@ -80,6 +81,8 @@ Assets/Prefabs/  Assets/Scenes/  Assets/Data/  Assets/Art/  Assets/Audio/  Asset
 
 **命名空间约定**(第 1 周确立):子目录与命名空间一一对应——`Game.Core`、`Game.Entities`、`Game.Weapons`、`Game.Commands`、`Game.StateMachines`、`Game.UI`。看 `using` 就能判断这个类归哪个目录管,新文件按此规则加命名空间。
 
+**属性命名约定**(第 2 周确立,用户明确要求):`PlayerController`/`EnemyController` 上暴露 `Health` 组件引用的公开属性用**小写开头**的 `health`(不是 C# 惯例的 `Health`)。这是用户主动选择的风格,不是笔误,新代码(包括 Claude 给的参考实现)一律跟随这个写法,不要擅自"改正"回 PascalCase。
+
 ## 工程与版本约定
 
 - 引擎版本锁定 **6000.3.19f1**,不要因为个人环境不同而修改 `ProjectSettings/ProjectVersion.txt`。
@@ -93,6 +96,7 @@ Assets/Prefabs/  Assets/Scenes/  Assets/Data/  Assets/Art/  Assets/Audio/  Asset
 - 场景(`.unity`)与预制体(`.prefab`)冲突由 UnityYAMLMerge 处理;自动合并失败时在编辑器里手动解决后再提交,不要用命令行强行二选一。
 - 根目录已有 `.gitignore`(忽略 `Library/`、`Temp/`、`Logs/`、`UserSettings/`、IDE 生成文件等)与 `.gitattributes`(LFS 规则 + `merge=unityyamlmerge` 属性)。**这两个文件本身已提交**,但 UnityYAMLMerge 的合并驱动路径是本机配置,不会随仓库同步——每台开发机克隆后需按 README「冲突处理」一节各自执行一次 `git config merge.unityyamlmerge.driver ...`。
 - 首次在新机器上使用前仍需执行 `git lfs install`(注册全局 LFS 过滤器),这一步不属于仓库内容,不能靠 `.gitattributes` 自动完成。
+- **`git commit` 一律由用户自己执行**(第 2 周确立,长期有效):Claude 可以 `git add`、准备好提交信息、告诉用户要跑什么命令,但不要代替用户执行 `git commit`。打 tag(不涉及重写历史)、`git status`/`git log` 这类只读或低风险操作不受此限制。
 
 ## 给协作者的提示
 

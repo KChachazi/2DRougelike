@@ -1,21 +1,70 @@
 using UnityEngine;
+using Game.StateMachines;
+using Game.StateMachines.Enemy;
 
 namespace Game.Entities
 {
     [RequireComponent(typeof(Rigidbody2D))]
+    [RequireComponent(typeof(Health))]
     public class EnemyController : MonoBehaviour
     {
-        [SerializeField] private float moveSpeed = 2.5f;
-        [SerializeField] private int contactDamage = 10;
-        [SerializeField] private float damageCooldown = 1f;
+        [Header("巡逻")]
+        [SerializeField] private float patrolSpeed = 1.2f;
+        [SerializeField] private float patrolRadius = 2f;
 
-        private Rigidbody2D rb;
-        private Transform player;
-        private float damageTimer;
+        [Header("追击")]
+        [SerializeField] private float chaseSpeed = 2.5f;
+        [SerializeField] private float detectionRange = 4f;
+        [SerializeField] private float loseSightRange = 6f;
+
+        [Header("攻击")]
+        [SerializeField] private float attackRange = 1f;
+        [SerializeField] private int contactDamage = 10;
+        [SerializeField] private float attackCooldown = 1f;        
+
+        public Rigidbody2D Rb { get; private set; }
+        public Health health { get; private set; }
+        public SpriteRenderer SpriteRenderer { get; private set; }
+        public Transform Player { get; private set; }
+        public Vector2 SpawnPosition { get; private set; }
+
+        public float PatrolSpeed => patrolSpeed;
+        public float PatrolRadius => patrolRadius;
+        public float ChaseSpeed => chaseSpeed;
+        public float DetectionRange => detectionRange;
+        public float LoseSightRange => loseSightRange;
+        public float AttackRange => attackRange;
+        public int ContactDamage => contactDamage;
+        public float AttackCooldown => attackCooldown;
+
+        public EnemyPatrolState PatrolState { get; private set; }
+        public EnemyChaseState ChaseState { get; private set; }
+        public EnemyAttackState AttackState { get; private set; }
+        public EnemyDeadState DeadState { get; private set; }
+
+        private readonly StateMachine stateMachine = new StateMachine();
 
         private void Awake()
         {
-            rb = GetComponent<Rigidbody2D>();
+            Rb = GetComponent<Rigidbody2D>();
+            health = GetComponent<Health>();
+            SpriteRenderer = GetComponent<SpriteRenderer>();
+            SpawnPosition = Rb.position;
+
+            PatrolState = new EnemyPatrolState(this, stateMachine);
+            ChaseState = new EnemyChaseState(this, stateMachine);
+            AttackState = new EnemyAttackState(this, stateMachine);
+            DeadState = new EnemyDeadState(this, stateMachine);
+        }
+
+        private void OnEnable()
+        {
+            health.Died += OnDied;
+        }
+
+        private void OnDisable()
+        {
+            health.Died -= OnDied;
         }
 
         private void Start()
@@ -23,34 +72,36 @@ namespace Game.Entities
             GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
             if (playerObj != null)
             {
-                player = playerObj.transform;
+                Player = playerObj.transform;
             }
+
+            stateMachine.ChangeState(PatrolState);
         }
 
         private void Update()
         {
-            if (damageTimer > 0f)
-            {
-                damageTimer -= Time.deltaTime;
-            }
+            stateMachine.Tick();
         }
 
         private void FixedUpdate()
         {
-            if (player == null) return ;
-            Vector2 direction = ((Vector2)player.position - rb.position).normalized;
-            rb.MovePosition(rb.position + direction * moveSpeed * Time.fixedDeltaTime);
+            stateMachine.FixedTick();
         }
 
-        private void OnCollisionStay2D(Collision2D collision)
+        public float DistanceToPlayer()
         {
-            if (damageTimer > 0f) return ;
-            if (!collision.collider.CompareTag("Player")) return ;
-            if (collision.collider.TryGetComponent(out Health health))
-            {
-                health.TakeDamage(contactDamage);
-                damageTimer = damageCooldown;
-            }
+            return Player == null ? float.MaxValue : Vector2.Distance(Rb.position, Player.position);
+        }
+
+        public void MoveTowards(Vector2 targetPosition, float speed)
+        {
+            Vector2 direction = (targetPosition - Rb.position).normalized;
+            Rb.MovePosition(Rb.position + direction * speed * Time.fixedDeltaTime);
+        }
+
+        private void OnDied()
+        {
+            stateMachine.ChangeState(DeadState);
         }
     }
 }
