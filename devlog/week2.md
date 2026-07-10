@@ -9,7 +9,7 @@
 - 闪避(Dash)+ 无敌帧 + 受击闪白
 - 近战武器原型
 
-完成后:按 `Shift` 闪避一小段距离(闪避期间无敌);按鼠标右键近战攻击(角色短暂变黄,面前一圈范围内的敌人掉血);被敌人碰到会短暂无敌 + 白色闪烁;敌人会在你靠近时从白色(巡逻)变橙色(追击)、贴身后变红色(攻击),被打死后变灰消失;之前的移动、朝向鼠标、远程射击(左键)全部保留。
+完成后:按 `Shift` 闪避一小段距离(闪避期间无敌);按鼠标右键近战攻击(角色短暂变黄,面前一圈范围内的敌人掉血);被敌人碰到会短暂无敌 + 红色闪烁(初版写的是闪白,验收后发现角色本身就是白的、闪白看不见,改成了闪红,见第 5.2 节);敌人会在你靠近时从白色(巡逻)变橙色(追击)、贴身后变红色(攻击),被打死后变灰消失;之前的移动、朝向鼠标、远程射击(左键)全部保留。
 
 ---
 
@@ -1053,7 +1053,7 @@ namespace Game.Weapons
 - [x] 按一下 `Shift`,角色朝当前移动方向(或朝向)冲出一小段距离;冲刺途中被敌人碰到不会掉血(无敌帧生效);冲刺有冷却,连续按 `Shift` 不会连续冲刺
 - [x] 按一下鼠标右键,角色短暂变黄,前方一圈内的敌人掉血(可以站远一点确认"没在范围内就打不到")
 - [x] 攻击/闪避期间按住鼠标左键,不会打断当前动作去开枪(`CanAct` 生效)
-- [x] 被敌人碰到会白色闪烁一小段时间,这段时间内连续被撞不会连续掉血(受击无敌帧生效)
+- [x] 被敌人碰到会红色闪烁一小段时间(初版是闪白、看不见,已改红,见第 5.2 节),这段时间内连续被撞不会连续掉血(受击无敌帧生效)
 - [x] 远远站着不动,敌人保持白色在出生点附近晃悠(巡逻);走近它,颜色变橙色并开始追你;贴上后变红色并周期性扣你血
 - [x] 被追击的敌人拉开距离跑远,它会变回白色回去巡逻
 - [x] 把敌人打死(子弹或近战都行),它变灰后消失,不报错
@@ -1065,7 +1065,39 @@ namespace Game.Weapons
 - `PlayerShooter.cs`:算出了 `canFire`(是否处于 Idle/Move,可以开火)但没有写进 `if` 判断条件里,导致"攻击/闪避/受击时不能开枪"这条本周的限制完全没生效,补上 `&& canFire` 后修复。
 - 多个新文件里出现了转录时带出来的多余 `using`(`System.Data`、`JetBrains.Annotations`、`UnityEngine.UIElements`、`UnityEditor.ShaderGraph`),其中 `UnityEditor.ShaderGraph` 和第 1 周的 `UnityEditor.Callbacks` 一样,是 Editor-only 命名空间,不删的话正式打包时会编译报错。
 
-**验收结果**:闪避 + 无敌帧、近战攻击范围判定、受击闪白 + 无敌帧、敌人 Patrol/Chase/Attack/Dead 四状态切换(含颜色反馈)、状态期间禁止开枪,均已在 Play 模式下测试通过。第 2 周正式完成。
+**验收结果**:闪避 + 无敌帧、近战攻击范围判定、受击闪红 + 无敌帧、敌人 Patrol/Chase/Attack/Dead 四状态切换(含颜色反馈)、状态期间禁止开枪,均已在 Play 模式下测试通过。第 2 周正式完成。
+
+### 5.2 验收后又发现并修复的两个问题
+
+上面的 checklist 全过之后,又在实际游玩中发现了两个和「物理/渲染」有关的 bug,都和第 1 周留下的设定有关。记录如下。
+
+**问题一:静止时被敌人撞到后,角色获得一个恒定速度、一直漂,停不下来**
+
+- 现象:站着不动被怪撞一下,有概率被推着匀速滑走,按方向键也拽不回来。
+- 根因:Player 的 `Rigidbody2D` 是 **Dynamic** 且 **Linear Damping = 0**(速度不会自己衰减);移动用的是 `Rb.MovePosition(...)`,而 `MovePosition` **只改位置、不会清掉刚体自身的 `linearVelocity`**。敌人(也是 Dynamic)撞上来时,物理碰撞会塞给玩家一个 `linearVelocity`,这个速度既不衰减、`Idle`/`Hurt` 状态的 `FixedTick` 又是空的、没人清它 → 于是一直漂。
+- 修复:保留 `MovePosition` 的移动方式,只在 `PlayerController.FixedUpdate()` 的**开头加一行 `Rb.linearVelocity = Vector2.zero;`**,再跑 `stateMachine.FixedTick()`。这样每一物理帧先把碰撞塞进来的残留速度清零,`MovePosition` 再负责这一帧该有的位移——碰撞检测(互相不重叠)照常生效,但「被撞飞的残留速度」被彻底消掉。改动只有 1 行,没有改成 velocity 驱动的移动系统。
+
+  ```csharp
+  private void FixedUpdate()
+  {
+      Rb.linearVelocity = Vector2.zero;   // 新增:清掉物理碰撞残留的速度
+      stateMachine.FixedTick();
+  }
+  ```
+
+  > 记这条坑:**只要一个 Dynamic 刚体的位移是用 `MovePosition` 脚本控制的,就要留意物理碰撞会给它累积 `linearVelocity`**——要么每帧清零(本项目的做法),要么冻结相关约束,要么干脆改用 velocity 驱动移动。三选一,别让两套机制打架。
+
+**问题二:被敌人碰到后看不到「白色闪烁」**
+
+- 现象:受击的无敌帧、扣血都正常,但完全看不到闪烁效果。
+- 根因:角色的 `SpriteRenderer` 颜色本来就是白色(第 1 周用 `2D Object > Sprites > Square` 建的默认精灵就是纯白)。`PlayerHurtState` 的闪烁是在 `Color.white` 和 `originalColor` 之间切换,而 `originalColor` 记录的正是那个白色 → **白配白,肉眼看不出任何变化**。逻辑一直在正确执行,只是没有视觉差异。
+- 修复:把 `PlayerHurtState.Tick()` 里的闪烁色从 `Color.white` 改成 `Color.red`(闪红),和白色底有明显对比,受击时就是「红/白/红/白」交替,很直观。改动 1 行。
+
+  ```csharp
+  player.SpriteRenderer.color = flashOn ? Color.red : originalColor;   // 原来是 Color.white
+  ```
+
+这两处修复都由用户手动改进 `Assets/`,改完复测:静止被撞不再漂移、松手即停;被撞瞬间可见红白闪烁 + 无敌帧期间连撞不掉血。第 2 周至此彻底收尾。
 
 ---
 

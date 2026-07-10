@@ -29,7 +29,7 @@ namespace Game.StateMachines.Player
         {
             timer += Time.deltaTime;
             bool flashOn = Mathf.FloorToInt(timer / FlashInterval) % 2 == 0;
-            player.SpriteRenderer.color = flashOn ? Color.white : originalColor;
+            player.SpriteRenderer.color = flashOn ? Color.red : originalColor;
             if (timer >= player.HurtDuration)
             {
                 stateMachine.ChangeState(player.MoveInput.sqrMagnitude > 0.01f ? player.MoveState : player.IdleState);

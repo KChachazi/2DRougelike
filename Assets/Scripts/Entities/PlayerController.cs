@@ -94,6 +94,7 @@ namespace Game.Entities
 
         private void FixedUpdate()
         {
+            Rb.linearVelocity = Vector2.zero;
             stateMachine.FixedTick();
         }
 
