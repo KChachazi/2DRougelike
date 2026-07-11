@@ -1,3 +1,4 @@
+using Game.Core;
 using Game.StateMachines;
 using Game.StateMachines.Player;
 using UnityEngine;
@@ -21,15 +22,14 @@ namespace Game.Entities
         [SerializeField] private float hurtDuration = 0.3f;
         [SerializeField] private float hurtInvincibleDuration = 0.6f;
 
-        [Header("近战")]
+        [Header("近战表现")]
         [SerializeField] private float attackDuration = 0.25f;
-        [SerializeField] private float attackRange = 1f;
-        [SerializeField] private int attackDamage = 20;
 
         public Rigidbody2D Rb { get; private set; }
         public Health health { get; private set; }
         public SpriteRenderer SpriteRenderer { get; private set; }
         public Vector2 MoveInput { get; private set; }
+
         private readonly StateMachine stateMachine = new StateMachine();
         private Camera mainCamera;
         private float dashCooldownTimer;
@@ -40,8 +40,6 @@ namespace Game.Entities
         public float HurtDuration => hurtDuration;
         public float HurtInvincibleDuration => hurtInvincibleDuration;
         public float AttackDuration => attackDuration;
-        public float AttackRange => attackRange;
-        public int AttackDamage => attackDamage;
         public bool CanDash => dashCooldownTimer <= 0f;
 
         public PlayerIdleState IdleState { get; private set; }
@@ -69,26 +67,26 @@ namespace Game.Entities
         private void OnEnable()
         {
             health.Damaged += OnDamaged;
+            health.HealthChanged += OnHealthChanged;
         }
 
         private void OnDisable()
         {
             health.Damaged -= OnDamaged;
+            health.HealthChanged -= OnHealthChanged;
         }
 
         private void Start()
         {
             stateMachine.ChangeState(IdleState);
+            EventBus.Publish(new PlayerHealthChangedEvent(health.Current, health.Max)); // 广播初始满血
         }
 
         private void Update()
         {
             ReadMoveInput();
             RotateTowardsMouse();
-            if (dashCooldownTimer > 0f)
-            {
-                dashCooldownTimer -= Time.deltaTime;
-            }
+            if (dashCooldownTimer > 0f) dashCooldownTimer -= Time.deltaTime;
             stateMachine.Tick();
         }
 
@@ -103,19 +101,21 @@ namespace Game.Entities
             Rb.MovePosition(Rb.position + MoveInput * speed * Time.fixedDeltaTime);
         }
 
+        // for Dash
         public void StartDashCooldown()
         {
             dashCooldownTimer = dashCooldown;
         }
-
         public bool ConsumeDashPressed()
         {
             return Keyboard.current != null && Keyboard.current.leftShiftKey.wasPressedThisFrame;
         }
 
-        public bool ConsumeAttackPressed()
+        // 供 WeaponController 在近战开火时调用
+        // 可以切到 AttackState 播放"变黄 + 阻断"表现
+        public void TriggerAttack()
         {
-            return Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame;
+            stateMachine.ChangeState(AttackState);
         }
 
         private void ReadMoveInput()
@@ -149,6 +149,11 @@ namespace Game.Entities
         private void OnDamaged(int amount)
         {
             stateMachine.ChangeState(HurtState);
+        }
+
+        private void OnHealthChanged(int current, int max)
+        {
+            EventBus.Publish(new PlayerHealthChangedEvent(current, max));
         }
     }
 }

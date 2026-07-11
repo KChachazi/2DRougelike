@@ -21,7 +21,6 @@ namespace Game.StateMachines.Player
             timer = 0f;
             originalColor = player.SpriteRenderer.color;
             player.SpriteRenderer.color = Color.yellow;
-            PerformHit();
         }
 
         public void Tick()
@@ -38,20 +37,6 @@ namespace Game.StateMachines.Player
         public void Exit()
         {
             player.SpriteRenderer.color = originalColor;
-        }
-
-        private void PerformHit()
-        {
-            Vector2 origin = (Vector2)player.transform.position + (Vector2)player.transform.right * player.AttackRange;
-            Collider2D[] hits = Physics2D.OverlapCircleAll(origin, player.AttackRange);
-            foreach (Collider2D hit in hits)
-            {
-                if (!hit.CompareTag("Enemy")) continue;
-                if (hit.TryGetComponent(out Health health))
-                {
-                    health.TakeDamage(player.AttackDamage);
-                }
-            }
         }
     }
 }

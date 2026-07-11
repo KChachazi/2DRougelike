@@ -7,11 +7,13 @@ namespace Game.Entities
     {
         [SerializeField] private int maxHealth = 100;
         public int Current { get; private set; }
+        public int Max => maxHealth;
         public bool isDead => Current <= 0;
         public bool isInvincible { get; private set; }
 
         public event Action<int> Damaged;
         public event Action Died;
+        public event Action<int, int> HealthChanged;
 
         private float invincibleTimer;
 
@@ -42,11 +44,8 @@ namespace Game.Entities
             if (isDead || isInvincible) return ;
             Current = Mathf.Max(0, Current - amount);
             Damaged?.Invoke(amount);
-
-            if (isDead)
-            {
-                Die();
-            }
+            HealthChanged?.Invoke(Current, maxHealth);
+            if (isDead) Die();
         }
 
         private void Die()

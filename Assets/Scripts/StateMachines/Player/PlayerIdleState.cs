@@ -22,13 +22,6 @@ namespace Game.StateMachines.Player
                 stateMachine.ChangeState(player.DashState);
                 return ;
             }
-
-            if (player.ConsumeAttackPressed())
-            {
-                stateMachine.ChangeState(player.AttackState);
-                return ;
-            }
-
             if (player.MoveInput.sqrMagnitude > 0.01f)
             {
                 stateMachine.ChangeState(player.MoveState);

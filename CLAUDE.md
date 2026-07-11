@@ -78,8 +78,9 @@
 
 ## 开发节奏
 
-- 当前阶段:**第 2 周已完成,准备进入第 3 周 - 事件系统与数据驱动武器**(见 README「六周开发路线」)。
-- 第 3 周目标产出:EventBus 接入(UI 血条/子弹数事件更新)、武器 ScriptableObject(伤害/冷却/子弹类型)、策略模式武器切换(手枪/步枪/近战——把第 2 周写在 `PlayerAttackState` 里的近战原型和现有远程射击统一到 `IWeaponStrategy` 接口下)、弹药限制 + 补给拾取。
+- 当前阶段:**第 3 周文档与参考代码已下发,用户正按 4 步实现中**(见 README「六周开发路线」)。`devlog/week3.md` 已写好完整分步教程,`Reference/Scripts/` 下第 3 周所有参考实现已就位;`Assets/` 里用户尚未开始敲(以 `Assets/` 实际文件为准判断真实进度)。**不要重复生成 week3 文档**;用户回来时多半是问某一步的报错/操作,或做完某步来验收。
+- 第 3 周分 4 步(每步可编译可验收):① EventBus + 血条 UI;② 数据驱动武器(WeaponData SO + IWeaponStrategy + WeaponController,远程手枪/步枪);③ 近战收编(Sword SO,数字键 3);④ 弹药 UI + 补给拾取。四步做完再更新本文件进度 + README 日志表 + 问是否打 `v1-week3` 标签。
+- 第 3 周关键设计(便于答疑):EventBus 是 `static` 泛型事件总线(`Core/EventBus.cs` + `Core/GameEvents.cs` 里的 struct 事件);`Health` 保持通用、只发本地 `HealthChanged`,由 `PlayerController` 桥接成全局 `PlayerHealthChangedEvent`(订阅放 OnEnable、初始广播放 Start 的时序坑已在文档强调);武器 = SO 数据 + 无状态策略,冷却/弹药由 `WeaponController` 统一管;近战借 `AttackState` 做表现(`TriggerAttack`),伤害移到 `MeleeWeaponStrategy`,第 2 周 `PlayerAttackState.PerformHit` 和 Idle/Move 的右键近战分支已删。
 
 ## 架构约定(写代码前必读)
 
