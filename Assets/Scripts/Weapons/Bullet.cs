@@ -58,5 +58,7 @@ namespace Game.Weapons
                 Destroy(gameObject);
             }
         }
+
+        public void SetDamage(int value) => damage = value;
     }
 }
