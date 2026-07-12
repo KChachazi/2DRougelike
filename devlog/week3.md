@@ -882,18 +882,63 @@ namespace Game.Weapons
 | 踩补给没反应 | 当前是近战(无限弹药会跳过),或 Collider 没勾 Is Trigger,或玩家 Tag 不对 | 切到远程再踩;勾 `Is Trigger`;确认玩家 Tag = `Player` |
 | TMP 文本是乱码/不显示 | 没导入 TMP Essentials | 菜单 `Window > TextMeshPro > Import TMP Essential Resources` |
 | 子弹伤害没按武器变 | `Bullet.SetDamage` 没加,或 `RangedWeaponStrategy` 没调 | 确认 `Bullet` 有 `SetDamage`,策略里 `bullet.SetDamage(data.damage)` |
+| 报 `CS0104: EventBus 是二义性引用` | 文件里有 `using Unity.VisualScripting;`——那个包里也有个 `EventBus` 类 | **删掉这个没用到的 using**(根因)。别急着用 `using EventBus = Game.Core.EventBus;` 打补丁,那只是掩盖问题 |
+| UI 显示的武器名改不动 | 广播时用了 `CurrentWeapon.name`(SO 的**资产文件名**)而不是 `weaponName`(你定义的字段) | `WeaponChangedEvent` 里传 `CurrentWeapon.weaponName`;两者恰好同名时这个 bug 会被完美掩盖 |
 
 ---
 
 ## 本周验收总 checklist
 
-- [ ] EventBus 建好,血条随受击实时下降(UI 无任何对 Player 的硬引用)。
-- [ ] 三把武器 SO 建好,数字键 1/2/3 切换,伤害/射速手感不同。
-- [ ] 远程发子弹、近战画圈判定,分别由两个策略实现;新增武器只需加 SO(+ 必要时加策略)。
-- [ ] 弹药显示 / 消耗 / 打空拦截 / 补给拾取 / 近战 ∞ 全部正常。
-- [ ] 第 1、2 周的移动 / 闪避 / 受击 / 敌人 AI 均未被破坏。
+- [x] EventBus 建好,血条随受击实时下降(UI 无任何对 Player 的硬引用)。
+- [x] 三把武器 SO 建好,数字键 1/2/3 切换,伤害/射速手感不同。
+- [x] 远程发子弹、近战画圈判定,分别由两个策略实现;新增武器只需加 SO(+ 必要时加策略)。
+- [x] 弹药显示 / 消耗 / 打空拦截 / 补给拾取 / 近战 ∞ 全部正常。
+- [x] 第 1、2 周的移动 / 闪避 / 受击 / 敌人 AI 均未被破坏。
 
-全部通过后,这一周就完成了。届时我会更新 `CLAUDE.md` 的进度与代码结构快照、更新 `README` 的开发日志表,并问你是否要打 `v1-week3` 标签。
+**四步全部 Play 验收通过,第 3 周完成。**
+
+---
+
+## 实际完成记录(这一节是"发生了什么",不是计划)
+
+### 落地的文件
+
+**新增(9 个)**
+
+- `Core/EventBus.cs`、`Core/GameEvents.cs`——static 泛型事件总线 + 三个 `readonly struct` 事件。
+- `Weapons/WeaponData.cs`(SO + `WeaponType` 枚举)、`Weapons/IWeaponStrategy.cs`、`Weapons/RangedWeaponStrategy.cs`、`Weapons/MeleeWeaponStrategy.cs`、`Weapons/WeaponController.cs`、`Weapons/AmmoPickup.cs`。
+- `UI/HealthBarUI.cs`、`UI/AmmoUI.cs`。
+
+**修改(6 个)**
+
+- `Entities/Health.cs`——加 `Max` 属性 + `HealthChanged` 事件。
+- `Entities/PlayerController.cs`——桥接 `HealthChanged` → 全局 `PlayerHealthChangedEvent`;`Start` 广播初始血量;新增 `TriggerAttack()`;删掉 `attackRange`/`attackDamage`/`ConsumeAttackPressed()`。
+- `StateMachines/Player/PlayerIdleState.cs`、`PlayerMoveState.cs`——删掉右键近战分支。
+- `StateMachines/Player/PlayerAttackState.cs`——删掉 `PerformHit()`,只剩"变黄 + 计时"的表现。
+- `Weapons/Bullet.cs`——加 `SetDamage(int)`,让武器 SO 决定子弹伤害。
+
+**资产 / 场景**
+
+- `Assets/Data/` 下三个武器 SO:`Pistol`(Ranged/12/0.25/30)、`Rifle`(Ranged/7/0.08/90)、`Sword`(Melee/30/0.4/**-1**/range 1)。
+- Player 上 `PlayerShooter` 组件已移除,换成 `WeaponController`(脚本文件 `PlayerShooter.cs` 保留未删,只是不再挂用)。
+- 场景新增 Canvas(血条 `HealthBar_BG` + `HealthBar_Fill`、TMP 弹药文本 `AmmoText`);`Assets/Prefabs/AmmoPickup.prefab`(BoxCollider2D + Is Trigger + Gravity Scale 0)。
+- 血条 sprite 用自建的 `Assets/Art/Square`(纯白无圆角),不用内置 `UISprite`——见下面第 3 条坑。
+
+### 踩过的坑
+
+1. **`Image Type` 在 Inspector 里找不到**——`Source Image` 为 `None` 时,Unity 会把 `Image Type` 整个字段隐藏掉。给 `Source Image` 指定任意一张 sprite,它才出现,然后才能选 `Filled`。
+
+2. **血条边缘发脏**——一开始 `Source Image` 用了 Unity 内置的 `UISprite`,那是一张**带圆角的九宫格图**,而 `Image Type = Filled` 不走九宫格逻辑、直接把整张图连圆角一起横向裁切拉伸,于是填充左端出现一道压扁的暗边。改用 `Create > 2D > Sprites > Square` 生成的纯白无圆角方块后干净了。**结论:做纯色条状 UI,别用带圆角的图。**
+
+3. **`CS0104: EventBus 是二义性引用`**——`HealthBarUI` 里被 IDE 自动加了一句 `using Unity.VisualScripting;`,而那个包里**也有一个叫 `EventBus` 的类**,和我们 `Game.Core.EventBus` 撞名,编译器不知道该用哪个。当时用 `using EventBus = Game.Core.EventBus;` 起别名绕过去了,**但根因是那句用不到的 `using`**,后来直接删掉它,别名也一并删了。教训:遇到二义性,先看是不是引入了多余的 `using`,别急着打别名补丁。
+
+4. **`WeaponChangedEvent` 广播了资产文件名而不是武器数据**——`WeaponController.BroadcastWeapon()` 里写成了 `CurrentWeapon.name`。`.name` 是所有 `UnityEngine.Object` 都有的属性(= SO 的**文件名**),而 `weaponName` 才是我们在 `WeaponData` 里定义的字段。因为三个资产恰好取了同名(`Pistol.asset` 的 `weaponName` 也叫 `Pistol`),**这个 bug 被完美掩盖、验收全过**——直到你想把显示名改成中文才会发现怎么改都不生效。已改回 `CurrentWeapon.weaponName`。
+
+5. **`HealthBarUI.OnDisable` 里把 `Unsubscribe` 写成了 `Subscribe`**——复制粘贴 `OnEnable` 那行时漏改。后果是禁用时不退订、反而**又订阅一次**,委托链只增不减。因为血条从没被禁用过、场景也没重载,验收阶段完全看不出来;一旦以后加了场景切换,EventBus 就会攥着已销毁的 UI 对象报 `MissingReferenceException`。已修正。**`OnEnable` 订、`OnDisable` 退必须成对,写反了编译器一个字都不会提醒。**
+
+6. **`AmmoPickup` 的 `RequireComponent` 写成了 `Rigidbody2D`**——真正不可缺的是 `Collider2D`(没它就没有 `OnTriggerEnter2D`);`Rigidbody2D` 是可选的,因为 Trigger 只要求碰撞双方**至少一方**有刚体,而玩家已经有了。功能上没出问题(刚体 `Gravity Scale` 设了 0,补给包不会掉下去),但那是个每帧参与物理模拟的 Dynamic 刚体,纯属浪费。
+
+> 4 和 5 是这周最值得记的两个:**都属于"程序照常跑、验收照常过"的沉默 bug**。它们不会报错、不会崩,只会在几周后以完全无关的症状(改名不生效 / 切场景崩溃)找上门。这类问题只能靠 review 代码抓,测不出来。
 
 ## 下周预告:第 4 周 - 命令模式与输入缓冲
 
