@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using Game.Core;
 using Game.Entities;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace Game.Weapons
 {
@@ -46,11 +45,6 @@ namespace Game.Weapons
         private void Update()
         {
             if (cooldownTimer > 0f) cooldownTimer -= Time.deltaTime;
-            HandleSwitchInput();
-            bool canAct = playerController == null || playerController.CanAct;
-            bool firePressed = Mouse.current != null && Mouse.current.leftButton.isPressed;
-            if (firePressed && canAct && cooldownTimer <= 0f && HasAmmo())
-                FireCurrentWeapon();
         }
 
         private void FireCurrentWeapon()
@@ -69,16 +63,27 @@ namespace Game.Weapons
                 playerController.TriggerAttack();
         }
 
-        private void HandleSwitchInput()
+        public bool CanFire()
         {
-            Keyboard kb = Keyboard.current;
-            if (kb == null) return;
-            if (kb.digit1Key.wasPressedThisFrame) SwitchTo(0);
-            else if (kb.digit2Key.wasPressedThisFrame) SwitchTo(1);
-            else if (kb.digit3Key.wasPressedThisFrame) SwitchTo(2);
+            bool canAct = playerController == null || playerController.CanAct;
+            return canAct && cooldownTimer <= 0f && HasAmmo();
         }
-
-        private void SwitchTo(int index)
+        public void Fire()
+        {
+            WeaponData data = CurrentWeapon;
+            strategies[data.type].Fire(this, data);
+            cooldownTimer = data.cooldown;
+            if (data.maxAmmo >= 0)
+            {
+                currentAmmo[currentIdx] --;
+                BroadcastAmmo();
+            }
+            if (data.type == WeaponType.Melee && playerController != null)
+            {
+                playerController.TriggerAttack();
+            }
+        }
+        public void SwitchTo(int index)
         {
             if (index < 0 || index >= weapons.Length || index == currentIdx) return ;
             currentIdx = index;
@@ -86,7 +91,6 @@ namespace Game.Weapons
             BroadcastWeapon();
             BroadcastAmmo();
         }
-
         public void AddAmmo(int amount)
         {
             WeaponData data = CurrentWeapon;

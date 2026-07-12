@@ -16,11 +16,6 @@ namespace Game.StateMachines.Player
         public void Enter() { }
         public void Tick()
         {
-            if (player.ConsumeDashPressed() && player.CanDash)
-            {
-                stateMachine.ChangeState(player.DashState);
-                return ;
-            }
             if (player.MoveInput.sqrMagnitude < 0.01f)
             {
                 stateMachine.ChangeState(player.IdleState);

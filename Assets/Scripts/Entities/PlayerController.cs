@@ -84,7 +84,6 @@ namespace Game.Entities
 
         private void Update()
         {
-            ReadMoveInput();
             RotateTowardsMouse();
             if (dashCooldownTimer > 0f) dashCooldownTimer -= Time.deltaTime;
             stateMachine.Tick();
@@ -96,20 +95,15 @@ namespace Game.Entities
             stateMachine.FixedTick();
         }
 
+        public void SetMoveInput(Vector2 input)
+        {
+            MoveInput = input;
+        }
         public void Move(float speed)
         {
             Rb.MovePosition(Rb.position + MoveInput * speed * Time.fixedDeltaTime);
         }
 
-        // for Dash
-        public void StartDashCooldown()
-        {
-            dashCooldownTimer = dashCooldown;
-        }
-        public bool ConsumeDashPressed()
-        {
-            return Keyboard.current != null && Keyboard.current.leftShiftKey.wasPressedThisFrame;
-        }
 
         // 供 WeaponController 在近战开火时调用
         // 可以切到 AttackState 播放"变黄 + 阻断"表现
@@ -117,20 +111,14 @@ namespace Game.Entities
         {
             stateMachine.ChangeState(AttackState);
         }
-
-        private void ReadMoveInput()
+        // 供 DashCommand 调用
+        public void TriggerDash()
         {
-            Keyboard kb = Keyboard.current;
-            if (kb == null)
-            {
-                MoveInput = Vector2.zero;
-                return ;
-            }
-            float x = (kb.dKey.isPressed || kb.rightArrowKey.isPressed ? 1f : 0f)
-                    - (kb.aKey.isPressed || kb.leftArrowKey.isPressed ? 1f : 0f);
-            float y = (kb.wKey.isPressed || kb.upArrowKey.isPressed ? 1f : 0f)
-                    - (kb.sKey.isPressed || kb.downArrowKey.isPressed ? 1f : 0f);
-            MoveInput = new Vector2(x, y).normalized;
+            stateMachine.ChangeState(DashState);
+        }
+        public void StartDashCooldown()
+        {
+            dashCooldownTimer = dashCooldown;
         }
 
         private void RotateTowardsMouse()

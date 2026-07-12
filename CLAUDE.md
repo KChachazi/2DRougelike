@@ -20,7 +20,7 @@
   - 第 3 周:分 4 步全部完成并通过 Play 验收(EventBus + 血条 → 数据驱动武器 → 近战收编 → 弹药 UI + 拾取)。新增 9 个脚本(`Core/EventBus`、`Core/GameEvents`、`Weapons/` 下 6 个武器系统文件、`UI/` 下 2 个)、修改 6 个(`Health`、`PlayerController`、`Bullet`、玩家 Idle/Move/Attack 三个状态);新增 `Assets/Data/` 下三个武器 SO、Canvas(血条 + TMP 弹药文本)、`AmmoPickup.prefab`、`Assets/Art/Square` sprite。详见 `devlog/week3.md`。
   - 第 3 周抓到两个**"程序照常跑、验收照常过"的沉默 bug**(`devlog/week3.md`「实际完成记录」第 4、5 条):① `WeaponController` 广播武器名时用了 `CurrentWeapon.name`(SO 的**资产文件名**)而非 `weaponName` 字段——因资产恰好同名而被完全掩盖;② `HealthBarUI.OnDisable` 把 `Unsubscribe` 写成 `Subscribe`,退订变成重复订阅,因血条从未被禁用而不显形。两者都已修正。**这类 bug 测不出来,只能 review 代码抓——以后每周验收后仍要过一遍代码。**
 - 尚未创建:`Assets/Scripts/Commands/`(第 4 周创建)。`Assets/Scripts/UI/`、`Assets/Data/`、`Assets/Art/`、`Assets/Prefabs/` 已在第 3 周落地。
-- 下一步:开始第 4 周——命令模式与输入缓冲(输入封装成 Command 对象,为连招/回放留接口),并开始房间生成(`RoomConfig` SO + 简单工厂)。
+- 下一步:第 4 周——命令模式与输入缓冲(**文档与参考代码已下发,用户实现中**)。注意房间生成是**第 5 周**的内容,不是第 4 周(以 README 六周路线为准)。
 
 **更新规则**:每完成一项里程碑(一周任务,或用户认可的阶段性成果)后:
 1. 更新本节的"已有内容 / 尚未创建 / 下一步";
@@ -95,8 +95,10 @@
 
 ## 开发节奏
 
-- 当前阶段:**第 3 周已完成并验收,准备进入第 4 周 - 命令模式与输入缓冲**(见 README「六周开发路线」)。
-- 第 4 周目标产出:输入封装成 Command 对象(`Assets/Scripts/Commands/`,为连招/输入缓冲/回放留接口)、输入缓冲队列;并开始房间生成(`RoomConfig` ScriptableObject + 简单工厂,房间/敌群数据驱动,不写死在场景里)。房间切换、敌群刷新的通知走第 3 周建好的 `EventBus`。
+- 当前阶段:**第 4 周文档与参考代码已下发,用户正按 4 步实现中**(见 README「六周开发路线」)。`devlog/week4.md` 已写好完整分步教程,`Reference/Scripts/` 下第 4 周参考实现已就位(`Commands/` 7 个新文件、`Weapons/Grenade`+`GrenadeThrower`、`UI/CooldownUI`,另修改 `GameEvents`/`PlayerController`/`WeaponController`/`PlayerIdleState`/`PlayerMoveState`)。**不要重复生成 week4 文档**。
+- 第 4 周分 4 步(每步可编译可验收):① 命令模式 + 输入统一(**纯重构,验收标准是"行为和第 3 周完全一样"**);② 体会输入缓冲(不写代码,做 `bufferDuration = 0` 的对比实验);③ 手雷(非指向性范围技能,`Q` 键);④ 技能冷却环形 UI。
+- 第 4 周关键设计(便于答疑):`ICommand` 只有 `CanExecute()`/`Execute()` 两个方法,**分开是为了"先问后做"——输入缓冲全靠这个**;`PlayerInputHandler` 成为**全项目唯一读键盘鼠标的地方**,`PlayerController`/状态类/`WeaponController` 全部不再读输入;**持续动作**(移动/连发)直接执行不入队,**离散动作**(闪避/手雷)进 `InputBuffer` 排队(有寿命 + 有容量 + 一帧只放一个);手雷不需要 `Collider2D`(伤害靠爆炸瞬间 `OverlapCircleAll`)。
+- **第 4 周新增的坑(答疑高频)**:① `PlayerInputHandler` 写 `MoveInput`、`PlayerController` 读 `MoveInput`,**必须在 `Project Settings > Script Execution Order` 里把 `PlayerInputHandler` 设为 `-100`**,否则移动慢一帧、发飘;② 手雷是池化对象且**爆炸时会改自己的 scale/color**,`OnEnable` 必须复位所有状态,否则第二颗手雷会顶着上一颗的爆炸造型出场(一个巨大的橙色球飞出去)。
 - **分步下发的做法在第 3 周被验证有效,继续沿用**:大周拆成若干"每步可编译、可 Play 验收"的小步(第 3 周是 4 步),每步末尾给 ✅ 验收清单,用户做完一步回来验收再进下一步。
 - **每步验收通过后仍要 review 代码**:第 3 周两个最严重的 bug(`.name` vs `weaponName`、`Unsubscribe` 写成 `Subscribe`)都是"程序照常跑、验收照常过"的沉默 bug,只能靠读代码抓出来。别因为"玩起来没问题"就跳过代码检查。
 
