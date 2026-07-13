@@ -667,11 +667,13 @@ namespace Game.Weapons
         [Tooltip("爆炸特效停留多久后回池")]
         [SerializeField] private float effectDuration = 0.15f;
 
-        private Rigidbody2D rb;
-        private SpriteRenderer sr;
-        private Vector3 originalScale;
-        private Color originalColor;
+        [Header("表现(两个子物体)")]
+        [Tooltip("手雷本体:方块 sprite,飞行时显示")]
+        [SerializeField] private GameObject bodyVisual;
+        [Tooltip("爆炸范围:圆形 sprite,大小由脚本按 explosionRadius 设置")]
+        [SerializeField] private GameObject explosionVisual;
 
+        private Rigidbody2D rb;
         private float timer;
         private bool exploded;
 
@@ -680,9 +682,6 @@ namespace Game.Weapons
         private void Awake()
         {
             rb = GetComponent<Rigidbody2D>();
-            sr = GetComponent<SpriteRenderer>();
-            originalScale = transform.localScale;
-            originalColor = sr.color;
         }
 
         private void OnEnable()
@@ -690,8 +689,9 @@ namespace Game.Weapons
             // 池化对象:所有会变的状态都必须复位!
             timer = 0f;
             exploded = false;
-            transform.localScale = originalScale;
-            sr.color = originalColor;
+
+            bodyVisual.SetActive(true);         // 本体露出来
+            explosionVisual.SetActive(false);   // 爆炸圈藏起来
 
             rb.linearDamping = drag;
             rb.linearVelocity = transform.right * throwSpeed;
@@ -726,9 +726,11 @@ namespace Game.Weapons
                 }
             }
 
-            // 临时爆炸表现:撑成爆炸范围那么大 + 半透明橙色(有粒子特效后替换掉)
-            transform.localScale = Vector3.one * explosionRadius * 2f;
-            sr.color = new Color(1f, 0.4f, 0f, 0.5f);
+            // 本体消失,爆炸圈按判定半径撑到正确大小。
+            // 圆形 sprite 直径 = 1 unit,所以 localScale = 半径 * 2 = 直径 —— 视觉圆严格等于判定圆。
+            bodyVisual.SetActive(false);
+            explosionVisual.transform.localScale = Vector3.one * explosionRadius * 2f;
+            explosionVisual.SetActive(true);
         }
 
         private void ReturnToPool()
@@ -737,7 +739,7 @@ namespace Game.Weapons
             else Destroy(gameObject);
         }
 
-        // 在 Scene 视图里选中手雷时画出爆炸范围,方便调参
+        // 在 Scene 视图里选中手雷时画出真实判定范围,方便调参 / 核对表现是否对得上
         private void OnDrawGizmosSelected()
         {
             Gizmos.color = Color.red;
@@ -747,7 +749,13 @@ namespace Game.Weapons
 }
 ```
 
-**⚠️ 池化对象的老规矩,这次格外要注意**:`OnEnable` 里把 `timer`、`exploded`、`localScale`、`color` **全部复位**。手雷爆炸时会把自己撑大、变橙,如果不在 `OnEnable` 复位,**下一颗从池里取出来的手雷会顶着上一颗的爆炸造型出场**(一个巨大的橙色半透明球飞出去)。这是对象池最经典的 bug,你在 `Bullet` 里没遇到只是因为子弹不改变自己的外观。
+**为什么表现要拆成两个子物体?**
+
+因为**手雷本体是方的,爆炸范围是圆的**。如果复用同一个 `SpriteRenderer`"把自己撑大",本体什么形状、爆炸就什么形状——而伤害判定是 `OverlapCircleAll`(圆),方块爆炸圈会让玩家误判范围(四个角看着能炸到、实际炸不到)。**表现必须和判定对得上**,所以本体(方块)和爆炸圈(圆)各用一个子物体,爆炸时藏掉前者、放出后者。
+
+爆炸圈的大小由脚本按 `explosionRadius` 算(`localScale = 半径 × 2 = 直径`),**不在 Inspector 里手填**——这样你以后调整爆炸半径,视觉圈会自动跟上,永远不会和判定脱节。
+
+**⚠️ 池化对象的老规矩**:`OnEnable` 里把 `timer`、`exploded`、**两个子物体的显隐**全部复位。手雷爆炸时会把本体藏起来、把爆炸圈放出来,如果不复位,**下一颗从池里取出来的手雷会顶着上一颗的爆炸造型出场**(一个巨大的橙色圆飞出去)。这是对象池最经典的 bug,你在 `Bullet` 里没遇到只是因为子弹不改变自己的外观。
 
 ### 3.4 修改 `Assets/Scripts/Core/GameEvents.cs`
 
@@ -772,16 +780,35 @@ public readonly struct GrenadeThrownEvent
 
 **A. 做手雷预制体**
 
-1. Hierarchy 右键 `2D Object > Sprites > Square`,改名 `Grenade`。
-2. `Transform` → `Scale` 设 `(0.3, 0.3, 1)`(小一点,像颗手雷)。
-3. `SpriteRenderer` → `Color` 调成深绿或黑色。
-4. `Add Component` → `Rigidbody2D`:
+目标结构(**本体和爆炸圈是两个子物体**,原因见 3.3 末尾):
+
+```
+Grenade            ← root: Scale 必须 (1,1,1)! Rigidbody2D + Grenade.cs,没有 SpriteRenderer
+├── Body           ← Square sprite, Scale (0.3, 0.3, 1), 深绿色      手雷本体
+└── Explosion      ← Circle sprite, 橙色半透明, 默认 inactive         爆炸范围
+```
+
+1. Hierarchy 右键 `Create Empty`,改名 `Grenade`。确认它的 `Transform > Scale` 是 **`(1, 1, 1)`**。
+   > ⚠️ **root 的 Scale 必须是 1**:子物体的 `localScale` 会被父级叠乘。root 若是 0.3,脚本给爆炸圈算出来的大小会再被乘 0.3,直接缩水成一小坨,和判定半径对不上。**缩放要放在 `Body` 子物体上,root 保持 1。**
+2. `Add Component` → `Rigidbody2D`:
    - `Body Type` = **`Dynamic`**;
    - `Gravity Scale` = **`0`**(俯视角,没有重力);
    - `Linear Damping` 不用管(脚本里会设成 `drag`)。
-5. **不要加 Collider2D**——手雷飞行途中不和任何东西交互,伤害完全靠爆炸瞬间的 `OverlapCircleAll`。
-6. `Add Component` → `Grenade`,参数用默认值(`throwSpeed 8`、`fuseTime 1`、`explosionRadius 2.5`、`damage 40`)。
+3. **不要加 Collider2D**——手雷飞行途中不和任何东西交互,伤害完全靠爆炸瞬间的 `OverlapCircleAll`。
+4. **建本体**:右键 `Grenade` → `2D Object > Sprites > Square`,改名 `Body`。
+   - `Scale` 设 `(0.3, 0.3, 1)`(小一点,像颗手雷);
+   - `SpriteRenderer > Color` 调成深绿或黑色。
+5. **建爆炸圈**:右键 `Grenade` → `2D Object > Sprites > Circle`,改名 `Explosion`。
+   - `SpriteRenderer > Color` 设成**半透明橙**(比如 RGBA = `255, 100, 0, 130`);
+   - `Scale` 填多少都无所谓——**脚本会按 `explosionRadius` 覆盖它**;
+   - 在 Inspector **最顶部取消勾选**(默认隐藏,爆炸时才由脚本激活)。
+6. 选中 root `Grenade` → `Add Component` → `Grenade` 脚本:
+   - 参数用默认值(`throwSpeed 8`、`fuseTime 1`、`explosionRadius 2.5`、`damage 40`);
+   - **`Body Visual` 拖入子物体 `Body`**;
+   - **`Explosion Visual` 拖入子物体 `Explosion`**。
 7. 把 `Grenade` 从 Hierarchy **拖进 `Assets/Prefabs/`** 做成预制体,然后**把场景里的那个删掉**。
+
+> 💡 想确认视觉和判定对齐:Play 时在 Scene 视图里选中飞行中的手雷,`OnDrawGizmosSelected` 会画一个**红色线框圆**(真实判定范围)。爆炸时的橙色圆应该和它**完全重合**。
 
 **B. 做手雷对象池**
 
@@ -897,6 +924,8 @@ namespace Game.UI
 | 缓冲不起作用(挥砍中按 Shift 无效) | `bufferDuration` 是 `0`,或 `buffer.Tick()` 没在 `Update` 里调 | 检查 Inspector 的 `Buffer Duration`;确认 `Update` 末尾有 `buffer.Tick()` |
 | 按 `Q` 没反应(步骤 3 之后) | `GrenadeThrower` 组件是在 Play 之后才挂的;或 `Grenade Pool` 没拖 | **重新进一次 Play**(`Awake` 里 `GetComponent` 只跑一次);检查 Inspector 引用 |
 | 第二颗手雷是个巨大的橙色球 | `OnEnable` 里没复位 `localScale` / `color` / `exploded` | 池化对象**所有会变的状态**都必须在 `OnEnable` 复位 |
+| 爆炸范围显示成**矩形** | 本体和爆炸圈复用了同一个 `SpriteRenderer`(把方块本体撑大),但判定是 `OverlapCircleAll`(圆) | 拆成两个子物体:`Body`(方块)+ `Explosion`(圆),爆炸时藏前者、放后者。见步骤 3.5 A |
+| 爆炸圈明显比判定范围**小一圈** | 预制体 **root 的 Scale 不是 1**,子物体的 `localScale` 被父级叠乘缩小了 | root 保持 `(1,1,1)`,把缩放放到 `Body` 子物体上 |
 | 手雷扔出去不动 | `Rigidbody2D` 的 `Body Type` 不是 `Dynamic`,或 `throwSpeed` 是 0 | 检查预制体的刚体设置 |
 | 手雷往下掉 | `Gravity Scale` 不是 0 | 预制体 `Rigidbody2D > Gravity Scale = 0` |
 | 冷却遮罩不转 / 不出现 | `Image Type` 不是 `Filled`,或 `Fill Method` 不是 `Radial 360` | 见步骤 4.2 第 2 条;`Source Image` 为空时 `Image Type` 会被隐藏(第 3 周的坑) |

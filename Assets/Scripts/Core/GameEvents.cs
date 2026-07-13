@@ -21,4 +21,10 @@ namespace Game.Core
         public readonly string WeaponName;
         public WeaponChangedEvent(string weaponName) { WeaponName = weaponName; }
     }
+
+    public readonly struct GrenadeThrownEvent
+    {
+        public readonly float Cooldown;
+        public GrenadeThrownEvent(float cooldown) { Cooldown = cooldown; }
+    }
 }
