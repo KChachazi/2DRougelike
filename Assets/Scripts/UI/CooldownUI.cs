@@ -6,17 +6,21 @@ namespace Game.UI
 {
     public class CooldownUI : MonoBehaviour
     {
+        [Tooltip("UI SkillId")]
+        [SerializeField] private SkillId skill;
         [Tooltip("技能图标上的遮罩")]
         [SerializeField] private Image cooldownMask;
+        
 
         private float remaining;
         private float total;
 
-        private void OnEnable()  => EventBus.Subscribe<GrenadeThrownEvent>(OnGrenadeThrown);
-        private void OnDisable() => EventBus.Subscribe<GrenadeThrownEvent>(OnGrenadeThrown);
+        private void OnEnable()  => EventBus.Subscribe<SkillCooldownStartedEvent>(OnCooldownStarted);
+        private void OnDisable() => EventBus.Unsubscribe<SkillCooldownStartedEvent>(OnCooldownStarted);
 
-        private void OnGrenadeThrown(GrenadeThrownEvent e)
+        private void OnCooldownStarted(SkillCooldownStartedEvent e)
         {
+            if (e.Skill != skill) return;
             remaining = e.Cooldown;
             total = e.Cooldown;
         }

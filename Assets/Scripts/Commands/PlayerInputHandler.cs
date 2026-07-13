@@ -23,6 +23,7 @@ namespace Game.Commands
         private AttackCommand attackCommand;
         private DashCommand dashCommand;
         private GrenadeCommand grenadeCommand;
+        private SwitchWeaponCommand switchWeaponCommand;
 
         public InputBuffer Buffer => buffer;
 
@@ -37,6 +38,7 @@ namespace Game.Commands
             attackCommand = new AttackCommand(weapon);
             dashCommand = new DashCommand(player);
             grenadeCommand = new GrenadeCommand(player, grenadeThrower);
+            switchWeaponCommand = new SwitchWeaponCommand(weapon);
         }
 
         private void Update()
@@ -85,10 +87,16 @@ namespace Game.Commands
         private void ReadWeaponSwitch()
         {
             Keyboard kb = Keyboard.current;
-            if (kb == null || weapon == null) return ;
-            if (kb.digit1Key.wasPressedThisFrame) weapon.SwitchTo(0);
-            else if (kb.digit2Key.wasPressedThisFrame) weapon.SwitchTo(1);
-            else if (kb.digit3Key.wasPressedThisFrame) weapon.SwitchTo(2);
+            if (kb == null) return ;
+            if (kb.digit1Key.wasPressedThisFrame) TrySwitchWeapon(0);
+            else if (kb.digit2Key.wasPressedThisFrame) TrySwitchWeapon(1);
+            else if (kb.digit3Key.wasPressedThisFrame) TrySwitchWeapon(2);
+        }
+        private void TrySwitchWeapon(int index)
+        {
+            switchWeaponCommand.SwitchIndex(index);
+            if (switchWeaponCommand.CanExecute())
+                switchWeaponCommand.Execute();
         }
     }
 }

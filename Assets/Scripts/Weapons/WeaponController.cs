@@ -14,6 +14,7 @@ namespace Game.Weapons
 
         public ObjectPool BulletPool => bulletPool;
         public Transform FirePoint => firePoint;
+        public int WeaponCount => weapons.Length;
 
         private PlayerController playerController;
         private readonly Dictionary<WeaponType, IWeaponStrategy> strategies = 

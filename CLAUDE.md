@@ -9,7 +9,7 @@
 
 ## 当前进度(务必保持最新)
 
-- 状态:**第 1、2、3 周均已完成并通过验收;第 1 周打了 `v1-week1` 标签,第 2/3 周是否打 `v1-week2`/`v1-week3` 待用户确认**。
+- 状态:**第 1、2、3、4 周均已完成并通过验收;`v1-week1`/`v1-week2`/`v1-week3` 标签已打**。
 - 已有内容:
   - Unity 6000.3.19f1 + URP 2D 模板默认工程,`.gitignore`/`.gitattributes` 已提交。
   - 第 1 周:`Assets/Scripts/Core|Entities|Weapons` 下的 8 个文件、场景搭建均已由用户完成并通过验收,详见 `devlog/week1.md`。
@@ -19,45 +19,56 @@
   - 命名约定新增一条:代表血量组件的公开属性用小写 `health`(用户主动选择,不是笔误),见下方「目录结构约定」。
   - 第 3 周:分 4 步全部完成并通过 Play 验收(EventBus + 血条 → 数据驱动武器 → 近战收编 → 弹药 UI + 拾取)。新增 9 个脚本(`Core/EventBus`、`Core/GameEvents`、`Weapons/` 下 6 个武器系统文件、`UI/` 下 2 个)、修改 6 个(`Health`、`PlayerController`、`Bullet`、玩家 Idle/Move/Attack 三个状态);新增 `Assets/Data/` 下三个武器 SO、Canvas(血条 + TMP 弹药文本)、`AmmoPickup.prefab`、`Assets/Art/Square` sprite。详见 `devlog/week3.md`。
   - 第 3 周抓到两个**"程序照常跑、验收照常过"的沉默 bug**(`devlog/week3.md`「实际完成记录」第 4、5 条):① `WeaponController` 广播武器名时用了 `CurrentWeapon.name`(SO 的**资产文件名**)而非 `weaponName` 字段——因资产恰好同名而被完全掩盖;② `HealthBarUI.OnDisable` 把 `Unsubscribe` 写成 `Subscribe`,退订变成重复订阅,因血条从未被禁用而不显形。两者都已修正。**这类 bug 测不出来,只能 review 代码抓——以后每周验收后仍要过一遍代码。**
-- 尚未创建:`Assets/Scripts/Commands/`(第 4 周创建)。`Assets/Scripts/UI/`、`Assets/Data/`、`Assets/Art/`、`Assets/Prefabs/` 已在第 3 周落地。
-- 下一步:第 4 周——命令模式与输入缓冲(**文档与参考代码已下发,用户实现中**)。注意房间生成是**第 5 周**的内容,不是第 4 周(以 README 六周路线为准)。
+  - 第 4 周:分 4 步全部完成并通过 Play 验收(命令模式重构 → 体会输入缓冲 → 手雷 → 冷却 UI),**外加三个课后练习全做了**(`SwitchWeaponCommand`、`DebugText` 可视化缓冲队列、`CooldownUI` 通用化)。新增 11 个脚本(`Commands/` 8 个、`Weapons/Grenade`+`GrenadeThrower`、`UI/CooldownUI`+`DebugText`)、修改 5 个;新增 `Grenade.prefab`、`GrenadePool`、技能图标 + 环形冷却 UI。详见 `devlog/week4.md`。
+  - 第 4 周又抓到三个沉默 bug(`devlog/week4.md`「踩过的坑」4/5/6):① `InputBuffer.Empty()` 写成 `Count > 0`(语义反了);② **`CooldownUI.OnDisable` 又把 `Unsubscribe` 写成 `Subscribe`——和第 3 周 `HealthBarUI` 一模一样的错误,同一个坑踩了两次**;③ `SwitchWeaponCommand` 的 `index <= WeaponCount` off-by-one。**验收后 review 代码这条规矩必须保留。**
+- 目录已全部落地:`Core`/`Entities`/`Weapons`/`StateMachines`/`UI`/`Commands` + `Data`/`Art`/`Prefabs`。
+- 下一步:第 5 周——房间生成与关卡流程(`RoomConfig` SO + 简单工厂 + 房间切换;计划引入 Cinemachine,需先装包)。
 
 **更新规则**:每完成一项里程碑(一周任务,或用户认可的阶段性成果)后:
 1. 更新本节的"已有内容 / 尚未创建 / 下一步";
 2. 在 `devlog/week<N>.md` 写入该周的**实际完成记录**(不是计划,是发生了什么);
 3. 若达到 README 中周任务的验收标准,同步更新 README 底部"开发日志与标签"表,并询问用户是否要打 `v1-week<N>` 标签(打标签会写入共享历史,先确认再执行)。
 
-## 当前代码结构快照(截至第 3 周末,写代码前速查)
+## 当前代码结构快照(截至第 4 周末,写代码前速查)
 
-> "代码实际长什么样"的速查表,方便新对话快速定位。真实进度以 `Assets/` 为准;下面每条都对应已经落地的文件。第 4 周起有新增/重构时同步更新本节。
+> "代码实际长什么样"的速查表,方便新对话快速定位。真实进度以 `Assets/` 为准;下面每条都对应已经落地的文件。第 5 周起有新增/重构时同步更新本节。
 
-**脚本清单(`Assets/Scripts/`,共 28 个 `.cs`)**
+**脚本清单(`Assets/Scripts/`,共 39 个 `.cs`)**
 
 - `Core/`
   - `GameManager.cs`——单例(`Instance`),`[SerializeField] player` 只读暴露为 `Player`。目前很轻,只做单例 + Player 引用。
   - `ObjectPool.cs`——通用对象池(`Queue<GameObject>` + `prewarmCount` 预热),`Get(pos,rot)`/`Release`;同文件定义 `IPoolable` 接口(池化对象持有回自己池的引用,取出时自动回填)。
   - `CameraFollow.cs`——`LateUpdate` 跟随 `target` + `offset`,锁 Z。
   - **`EventBus.cs`**(第 3 周)——`static` 泛型事件总线,`Dictionary<Type, Delegate>` 按事件类型分发;`Subscribe<T>`/`Unsubscribe<T>`/`Publish<T>`/`Clear`,外加 `[RuntimeInitializeOnLoadMethod]` 在进 Play 时清空(防 domain reload 关闭时 static 残留)。
-  - **`GameEvents.cs`**(第 3 周)——三个 `readonly struct` 事件:`PlayerHealthChangedEvent(Current,Max)`、`AmmoChangedEvent(Current,Max)`(**`Max = -1` 约定为无限弹药**)、`WeaponChangedEvent(WeaponName)`。新增跨模块通知就在这里加 struct。
+  - **`GameEvents.cs`**(第 3 周,第 4 周扩充)——`readonly struct` 事件集中定义:`PlayerHealthChangedEvent(Current,Max)`、`AmmoChangedEvent(Current,Max)`(**`Max = -1` 约定为无限弹药**)、`WeaponChangedEvent(WeaponName)`、**`SkillCooldownStartedEvent(SkillId, Cooldown)`**(第 4 周)。同文件还有 **`SkillId` 枚举**(`Dash`/`Grenade`)——**技能标识用枚举不用字符串**(编译期检查 + Inspector 下拉,不会拼错)。新增跨模块通知就在这里加 struct。
 - `Entities/`
   - `Health.cs`——通用血量组件。`Current`/`Max`/`isDead`/`isInvincible`,`SetInvincible(duration)` 无敌帧,`TakeDamage`(无敌或已死直接跳过);三个 C# 事件:`Damaged(int)`、`Died()`、**`HealthChanged(current,max)`**(第 3 周加)。**Health 保持通用、不认识"玩家"/"UI",只发本地事件**。
-  - `PlayerController.cs`——玩家状态机"上下文":持有 `Rb`/`health`/`SpriteRenderer`/`MoveInput` + 5 个状态实例 + `stateMachine`;`Update` 采集输入 + 朝向鼠标 + 跑 `Tick`,`FixedUpdate` **先 `Rb.linearVelocity = Vector2.zero` 再跑 `FixedTick`**;暴露 `CanAct`(仅 Idle/Move 为真,供开火判断)、`CanDash`、`TriggerAttack()`(供 `WeaponController` 切近战表现)。**它还负责把 `health.HealthChanged` 桥接成全局 `PlayerHealthChangedEvent`**,并在 `Start` 广播一次初始血量。
+  - `PlayerController.cs`——玩家状态机"上下文":持有 `Rb`/`health`/`SpriteRenderer`/`MoveInput` + 5 个状态实例 + `stateMachine`;`Update` 只做**朝向鼠标 + 冷却 + `Tick`**(**第 4 周起不再读键盘**),`FixedUpdate` **先 `Rb.linearVelocity = Vector2.zero` 再跑 `FixedTick`**。供外部调用的入口:`SetMoveInput(v)`(由 `MoveCommand` 写入)、`TriggerDash()`(由 `DashCommand` 调)、`TriggerAttack()`(由 `WeaponController` 近战时调);只读暴露 `CanAct`(仅 Idle/Move 为真)、`CanDash`。**它还负责把 `health.HealthChanged` 桥接成全局 `PlayerHealthChangedEvent`**(`Start` 广播一次初始血量),并在 `StartDashCooldown()` 里广播 `SkillCooldownStartedEvent(SkillId.Dash, ...)`。
   - `EnemyController.cs`——敌人状态机"上下文":持有 4 个状态 + `SpawnPosition` + `Player` 引用;`MoveTowards`/`DistanceToPlayer` 工具方法。
 - `Weapons/`(第 3 周重构成"数据 + 策略")
   - `WeaponData.cs`——武器 SO(`[CreateAssetMenu]` → `Create > Game > Weapon Data`),字段 `weaponName`/`type`/`damage`/`cooldown`/`maxAmmo`/`range`,外加 `WeaponType { Ranged, Melee }` 枚举。资产在 `Assets/Data/`:`Pistol`/`Rifle`/`Sword`。
   - `IWeaponStrategy.cs`——`void Fire(WeaponController controller, WeaponData data)`。**策略无状态**,冷却/弹药由 controller 管,数值从 data 读。
   - `RangedWeaponStrategy.cs`——从 `controller.BulletPool` 取子弹、按 `FirePoint` 朝向发射,并 `bullet.SetDamage(data.damage)`。
   - `MeleeWeaponStrategy.cs`——角色前方 `range` 处 `OverlapCircleAll(range)`,圈内 `Enemy` 扣血(逻辑从第 2 周 `PlayerAttackState.PerformHit` 搬来)。
-  - `WeaponController.cs`——**武器系统主体**(挂 Player,取代已移除的 `PlayerShooter` 组件)。持有 `WeaponData[] weapons` + `int[] currentAmmo`(每把武器各记一份,切枪不清零)+ `Dictionary<WeaponType, IWeaponStrategy>`;`Update` 里管冷却、数字键 1/2/3 切枪、左键开火(条件:`CanAct && cooldown<=0 && HasAmmo()`);近战开火后额外 `playerController.TriggerAttack()`。弹药/武器变化通过 `EventBus` 广播,**它不认识 UI**。
+  - `WeaponController.cs`——**武器系统主体**(挂 Player,取代已移除的 `PlayerShooter` 组件)。持有 `WeaponData[] weapons` + `int[] currentAmmo`(每把武器各记一份,切枪不清零)+ `Dictionary<WeaponType, IWeaponStrategy>`。**第 4 周起不再读输入**:`Update` 里只剩冷却倒计时,对外暴露**能力**——`CanFire()`(= `CanAct && cooldown<=0 && HasAmmo()`)、`Fire()`、`SwitchTo(index)`、`AddAmmo(n)`、`WeaponCount`。近战开火后额外 `playerController.TriggerAttack()`。弹药/武器变化通过 `EventBus` 广播,**它不认识 UI**。
   - `Bullet.cs`——`IPoolable` 子弹,`FixedUpdate` 用 `linearVelocity` 前进 + 计时回收,`OnTriggerEnter2D` 命中 `Enemy` 扣血后回池;**`SetDamage(int)` 让武器 SO 覆盖伤害**(所以不需要为每把枪做子弹预制体)。
   - `AmmoPickup.cs`——`OnTriggerEnter2D` 碰到 `Player` → `WeaponController.AddAmmo(amount)` → `Destroy`。无限弹药武器(近战)会被 `AddAmmo` 直接跳过。
+  - **`Grenade.cs`**(第 4 周)——`IPoolable` 手雷。`OnEnable` 给初速 + 阻尼,引信烧完 `Explode()`:`OverlapCircleAll` 范围伤害(**非指向性,不需要 Collider2D**),然后藏本体、放出爆炸圈、计时回池。**表现是两个子物体**(`Body` 方块 / `Explosion` 圆),爆炸圈大小由脚本按 `explosionRadius` 算(`localScale = 半径 × 2`),**保证视觉圆 == 判定圆**。
+  - **`GrenadeThrower.cs`**(第 4 周,挂 Player)——只管冷却 + 从池里取一颗手雷丢出去;`Throw()` 里广播 `SkillCooldownStartedEvent(SkillId.Grenade, cooldown)`。
   - `PlayerShooter.cs`——**已废弃**,组件已从 Player 移除,文件保留未删。新代码不要再用它。
+- **`Commands/`**(第 4 周新建,命名空间 `Game.Commands`)
+  - `ICommand.cs`——`bool CanExecute()` + `void Execute()`。**两者分开是为了"先问后做"——输入缓冲全靠这个。**
+  - `InputBuffer.cs`——**纯 C# 类**(由 `PlayerInputHandler` 内部 `new`)。`Queue<BufferedCommand>`,三条规则:**过期就丢**(`Time.time > ExpireTime`)、**不能执行就留在队里等**、**一帧最多执行一个**。另有 `Count`/`Empty()`/`Peek()`(供 Debug UI 用)。
+  - `MoveCommand`/`AttackCommand`/`DashCommand`/`GrenadeCommand`/`SwitchWeaponCommand`——命令实例**只 new 一次、反复复用**(避免每帧 GC)。
+  - `PlayerInputHandler.cs`(挂 Player)——**全项目唯一读键盘鼠标的地方**。**持续动作**(移动/按住左键连发)每帧直接 `Execute()`,**不入队**;**离散动作**(闪避 `Shift` / 手雷 `Q`)`buffer.Enqueue(...)` 排队;**切枪**(1/2/3)立即执行。`Update` 末尾 `buffer.Tick()`。
 - `UI/`(第 3 周新建)
   - `HealthBarUI.cs`——订阅 `PlayerHealthChangedEvent`,设 `Image.fillAmount = (float)Current/Max`。**对 Player/Health 零引用**。
   - `AmmoUI.cs`——订阅 `AmmoChangedEvent` + `WeaponChangedEvent`(两个事件分别到达,各自缓存后 `Refresh()` 重拼文本);`Max < 0` 显示 `∞`。
+  - **`CooldownUI.cs`**(第 4 周)——**通用技能冷却环形遮罩**。`[SerializeField] SkillId skill` 决定自己盯哪个技能,订阅 `SkillCooldownStartedEvent` 后 `if (e.Skill != skill) return;` 过滤。**一个脚本服务任意技能**:加新技能只需加枚举值 + 挂个组件选中它,UI 代码不改。收到事件后**自己倒计时**(不靠每帧广播)。
+  - **`DebugText.cs`**(第 4 周,调试用)——显示输入缓冲队列长度 + 队首命令名,`display` 开关控制显隐。
 - `StateMachines/`
   - `IState.cs`(Enter/Tick/FixedTick/Exit)+ `StateMachine.cs`(`CurrentState`/`ChangeState`/`Tick`/`FixedTick`,**纯 C# 类,非 MonoBehaviour**,controller 内部 `new` 一个)。
-  - `Player/`:Idle / Move / Dash / Attack / Hurt 五态(**Idle/Move 的右键近战分支、Attack 的 `PerformHit` 已在第 3 周删除**,`AttackState` 现在只做"变黄 + 计时"的表现)。 `Enemy/`:Patrol / Chase / Attack / Dead 四态。
+  - `Player/`:Idle / Move / Dash / Attack / Hurt 五态。**状态类已彻底不读输入**(第 3 周删了右键近战分支和 `PerformHit`,第 4 周删了读 Shift 的闪避分支),现在只根据当前数据决定状态转换。 `Enemy/`:Patrol / Chase / Attack / Dead 四态。
 
 **几个已确立的实现事实/约定(改代码前注意)**
 
@@ -68,11 +79,17 @@
 5. **武器 = SO 数据 + 无状态策略**:新增一把武器 = 建一个 `WeaponData` 资产;新增一种开火方式 = 加一个 `IWeaponStrategy` 实现 + 在 `WeaponController.Awake` 的字典里注册。**不要把冷却/弹药状态塞进策略,也不要把开火行为塞进 SO。** 从 SO 取显示名用 `weaponName` 字段,**不是 `.name`**(那是资产文件名,week3 踩过)。
 6. **伤害判定分三条路**:玩家近战 = `MeleeWeaponStrategy` 的 `OverlapCircleAll`;玩家远程 = `Bullet.OnTriggerEnter2D`(伤害由 `SetDamage` 从武器 SO 注入);敌人 = `EnemyAttackState` 距离判定 + `attackCooldown` 周期扣血(**不走物理碰撞回调**)。
 7. **调试用颜色反馈(临时)**:各状态 `Enter` 改 `SpriteRenderer.color`(玩家攻击黄、受击红闪;敌人巡逻白/追击橙/攻击红/死亡灰),`Exit` 还原。有动画后会替换掉,状态机逻辑不依赖颜色。
-8. **输入 API**:一次性动作(闪避/切枪)用 `wasPressedThisFrame`,持续动作(开火/移动)用 `isPressed`。全部走新版 Input System(`Keyboard.current`/`Mouse.current`)。**近战和远程都是左键开火**(由当前武器决定行为),第 2 周的"右键近战"已废除。
+8. **输入全部收拢在 `PlayerInputHandler`**(第 4 周确立):`PlayerController`、状态类、`WeaponController` **一律不读键盘鼠标**,它们只对外暴露"能力"(`TryXxx`/`CanXxx`),由命令来调。新增一个玩家动作 = 加一个 `ICommand` 实现 + 在 `PlayerInputHandler` 里绑定按键。**别再在别的地方写 `Keyboard.current`。**
+9. **输入 API**:一次性动作(闪避/手雷/切枪)用 `wasPressedThisFrame`,持续动作(开火/移动)用 `isPressed`。全部走新版 Input System。**近战和远程都是左键开火**(由当前武器决定行为)。
+10. **命令入不入队,看它会不会被拒绝**:**离散动作**(闪避/手雷——有 `CanAct`/冷却前置条件,按下时常常做不了)进 `InputBuffer` 排队,条件一满足立刻执行(这就是"跟手"的来源);**持续动作**(移动/连发)和**无条件动作**(切枪)直接执行,缓冲对它们只会带来延迟。
+11. **队列存的是引用,不是快照**(第 4 周踩过):带参数的命令若"共享实例 + 可变字段",**绝不能入队**——排队期间参数会被后来的操作改掉。要么每个参数值一个实例 + `readonly` 字段(能安全入队),要么保证立即执行(`MoveCommand`/`SwitchWeaponCommand` 走的这条)。
+12. **`PlayerInputHandler` 的执行顺序必须是 `-100`**:它写 `MoveInput`、`PlayerController` 读 `MoveInput`,Unity 不保证两个 `Update` 的先后。这个设置存在 `.meta` 里(会随 git 提交),不是全局配置。**凡是 A 写 B 读同一份数据,执行顺序就必须显式指定。**
 
-**场景(`SampleScene.unity`)关键物体**:Player(Tag `Player`,挂 `PlayerController`/`Health`/**`WeaponController`**/Rigidbody2D[Dynamic,Damping 0]/SpriteRenderer)、Enemy(Tag `Enemy`)、子弹对象池(挂 `ObjectPool`)、GameManager、Camera(挂 `CameraFollow`)、**Canvas**(血条 `HealthBar_BG` + `HealthBar_Fill`[Image Type=Filled]、TMP 文本 `AmmoText`)。预制体:`Assets/Prefabs/AmmoPickup.prefab`(BoxCollider2D + Is Trigger,Gravity Scale 0)。
+**场景(`SampleScene.unity`)关键物体**:Player(Tag `Player`,挂 `PlayerController`/`Health`/`WeaponController`/**`PlayerInputHandler`**/**`GrenadeThrower`**/Rigidbody2D[Dynamic,Damping 0]/SpriteRenderer)、Enemy(Tag `Enemy`)、子弹对象池 + **手雷对象池**(各挂一个 `ObjectPool`)、GameManager、Camera(挂 `CameraFollow`)、**Canvas**(血条、TMP 弹药文本、**手雷/闪避两个技能图标 + 环形冷却遮罩**、Debug 文本)。预制体:`AmmoPickup.prefab`、**`Grenade.prefab`**(root Scale 必须 1 + Rigidbody2D[Dynamic,Gravity 0,**无 Collider2D**] + 子物体 `Body`/`Explosion`)。
 
-**UI 素材注意**:血条填充用的是自建的 `Assets/Art/Square`(纯白无圆角)。**别用 Unity 内置的 `UISprite`**——那是带圆角的九宫格图,配 `Image Type = Filled` 时圆角会被裁切拉伸成脏边(week3 踩过)。
+**UI 素材注意**:血条填充用的是自建的 `Assets/Art/Square`(纯白无圆角)。**别用 Unity 内置的 `UISprite`**——那是带圆角的九宫格图,配 `Image Type = Filled` 时圆角会被裁切拉伸成脏边(week3 踩过)。环形冷却遮罩用 `Image Type = Filled` + `Fill Method = Radial 360`。
+
+**表现必须和判定对得上**(week4 踩过):手雷的伤害判定是圆(`OverlapCircleAll`),所以爆炸的**视觉**也必须是圆——本体(方块)和爆炸圈(圆)拆成两个子物体,且爆炸圈大小**由脚本按判定半径算**,不在 Inspector 手填(手填的数字迟早和判定脱节)。调不明白手感时,先用 `OnDrawGizmosSelected` 把判定范围画出来看一眼。
 
 ## 协作背景与文档要求(重要,长期有效)
 
@@ -95,10 +112,12 @@
 
 ## 开发节奏
 
-- 当前阶段:**第 4 周文档与参考代码已下发,用户正按 4 步实现中**(见 README「六周开发路线」)。`devlog/week4.md` 已写好完整分步教程,`Reference/Scripts/` 下第 4 周参考实现已就位(`Commands/` 7 个新文件、`Weapons/Grenade`+`GrenadeThrower`、`UI/CooldownUI`,另修改 `GameEvents`/`PlayerController`/`WeaponController`/`PlayerIdleState`/`PlayerMoveState`)。**不要重复生成 week4 文档**。
-- 第 4 周分 4 步(每步可编译可验收):① 命令模式 + 输入统一(**纯重构,验收标准是"行为和第 3 周完全一样"**);② 体会输入缓冲(不写代码,做 `bufferDuration = 0` 的对比实验);③ 手雷(非指向性范围技能,`Q` 键);④ 技能冷却环形 UI。
-- 第 4 周关键设计(便于答疑):`ICommand` 只有 `CanExecute()`/`Execute()` 两个方法,**分开是为了"先问后做"——输入缓冲全靠这个**;`PlayerInputHandler` 成为**全项目唯一读键盘鼠标的地方**,`PlayerController`/状态类/`WeaponController` 全部不再读输入;**持续动作**(移动/连发)直接执行不入队,**离散动作**(闪避/手雷)进 `InputBuffer` 排队(有寿命 + 有容量 + 一帧只放一个);手雷不需要 `Collider2D`(伤害靠爆炸瞬间 `OverlapCircleAll`)。
-- **第 4 周新增的坑(答疑高频)**:① `PlayerInputHandler` 写 `MoveInput`、`PlayerController` 读 `MoveInput`,**必须在 `Project Settings > Script Execution Order` 里把 `PlayerInputHandler` 设为 `-100`**,否则移动慢一帧、发飘;② 手雷是池化对象且**爆炸时会改自己的 scale/color**,`OnEnable` 必须复位所有状态,否则第二颗手雷会顶着上一颗的爆炸造型出场(一个巨大的橙色球飞出去)。
+- 当前阶段:**第 4 周已完成并验收(含三个课后练习),准备进入第 5 周 - 房间生成与关卡流程**(见 README「六周开发路线」)。
+- 第 5 周目标产出:`RoomConfig`(ScriptableObject)数据驱动房间的敌人/道具布局、简单工厂生成敌群、房间清空后开门并切换到下一个房间。房间切换/敌群刷新的通知走 `EventBus`。**计划引入 Cinemachine 做摄像机过渡——需要先通过 Package Manager 安装,装完要在 CLAUDE.md「工程与版本约定」和 README「运行要求」里补一笔。**
+- **分步下发的做法已连续两周验证有效,继续沿用**:大周拆成若干"每步可编译、可 Play 验收"的小步(第 3、4 周都是 4 步),每步末尾给 ✅ 验收清单,用户做完一步回来验收再进下一步。**纯重构的步骤,验收标准就写"行为和上周完全一样"**(第 4 周步骤 1 这么做的,效果很好)。
+- **课后练习值得继续出**:第 4 周出了三道(`SwitchWeaponCommand`、可视化缓冲队列、通用化 `CooldownUI`),用户全做了,而且第一道让他真正撞上了"队列存引用不是快照"这个坑——**比直接讲有效得多**。
+- **每步验收通过后必须 review 代码**:目前已经抓到 7 个"程序照常跑、验收照常过"的沉默 bug(`.name` vs `weaponName`、`Unsubscribe` 写成 `Subscribe` **两次**、`Empty()` 语义反了、off-by-one 等)。**这类问题测不出来,只能读代码。别因为"玩起来没问题"就跳过。**
+- **`Subscribe`/`Unsubscribe` 配对已经错过两次**(week3 `HealthBarUI`、week4 `CooldownUI`)。快速自查命令:`grep -rn "EventBus.Subscribe\|EventBus.Unsubscribe" Assets/Scripts/`——一眼就能看出哪个文件订了没退。若再犯,应考虑引入 `EventListener<T>` 基类把配对封进去,**让写错变得不可能**。
 - **分步下发的做法在第 3 周被验证有效,继续沿用**:大周拆成若干"每步可编译、可 Play 验收"的小步(第 3 周是 4 步),每步末尾给 ✅ 验收清单,用户做完一步回来验收再进下一步。
 - **每步验收通过后仍要 review 代码**:第 3 周两个最严重的 bug(`.name` vs `weaponName`、`Unsubscribe` 写成 `Subscribe`)都是"程序照常跑、验收照常过"的沉默 bug,只能靠读代码抓出来。别因为"玩起来没问题"就跳过代码检查。
 

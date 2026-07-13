@@ -34,6 +34,9 @@ namespace Game.Commands
                 queue.Dequeue();
             queue.Enqueue(new BufferedCommand(command, Time.time + bufferDuration));
         }
+
+        public bool Empty() => queue.Count == 0;
+        public ICommand Peek() => queue.Peek().Command;
         
         public void Tick()
         {

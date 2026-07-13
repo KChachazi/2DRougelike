@@ -25,7 +25,7 @@ namespace Game.Weapons
             Transform origin = throwPoint != null ? throwPoint : transform;
             grenadePool.Get(origin.position, origin.rotation);
             cooldownTimer = cooldown;
-            EventBus.Publish(new GrenadeThrownEvent(cooldown));
+            EventBus.Publish(new SkillCooldownStartedEvent(SkillId.Grenade, cooldown));
         }
     }
 }

@@ -69,26 +69,22 @@ namespace Game.Entities
             health.Damaged += OnDamaged;
             health.HealthChanged += OnHealthChanged;
         }
-
         private void OnDisable()
         {
             health.Damaged -= OnDamaged;
             health.HealthChanged -= OnHealthChanged;
         }
-
         private void Start()
         {
             stateMachine.ChangeState(IdleState);
             EventBus.Publish(new PlayerHealthChangedEvent(health.Current, health.Max)); // 广播初始满血
         }
-
         private void Update()
         {
             RotateTowardsMouse();
             if (dashCooldownTimer > 0f) dashCooldownTimer -= Time.deltaTime;
             stateMachine.Tick();
         }
-
         private void FixedUpdate()
         {
             Rb.linearVelocity = Vector2.zero;
@@ -119,6 +115,7 @@ namespace Game.Entities
         public void StartDashCooldown()
         {
             dashCooldownTimer = dashCooldown;
+            EventBus.Publish(new SkillCooldownStartedEvent(SkillId.Dash, dashCooldown));
         }
 
         private void RotateTowardsMouse()

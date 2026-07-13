@@ -934,18 +934,79 @@ namespace Game.UI
 
 ## 本周验收总 checklist
 
-- [ ] 所有玩家输入统一由 `PlayerInputHandler` 采集,`PlayerController` / 状态类 / `WeaponController` **都不再读键盘鼠标**。
-- [ ] 四个命令(`Move`/`Attack`/`Dash`/`Grenade`)实现同一个 `ICommand` 接口。
-- [ ] 输入缓冲生效:挥砍期间按 `Shift`,挥砍结束立刻闪避;`bufferDuration = 0` 时输入被丢弃(对比确认)。
-- [ ] 按 `Q` 扔手雷:飞行 → 滑停 → 引信 → 范围爆炸 → 回池,连扔不出现"巨型橙球"。
-- [ ] 手雷冷却 UI 环形遮罩与实际冷却同步。
-- [ ] 第 1~3 周的功能(移动/闪避/射击/切枪/近战/受击/血条/弹药/拾取)全部未被破坏。
+- [x] 所有玩家输入统一由 `PlayerInputHandler` 采集,`PlayerController` / 状态类 / `WeaponController` **都不再读键盘鼠标**。
+- [x] 四个命令(`Move`/`Attack`/`Dash`/`Grenade`)实现同一个 `ICommand` 接口。
+- [x] 输入缓冲生效:挥砍期间按 `Shift`,挥砍结束立刻闪避;`bufferDuration = 0` 时输入被丢弃(对比确认)。
+- [x] 按 `Q` 扔手雷:飞行 → 滑停 → 引信 → 范围爆炸 → 回池,连扔不出现"巨型橙球"。
+- [x] 手雷冷却 UI 环形遮罩与实际冷却同步。
+- [x] 第 1~3 周的功能(移动/闪避/射击/切枪/近战/受击/血条/弹药/拾取)全部未被破坏。
+
+**四步全部 Play 验收通过,三个课后练习也全部完成。第 4 周完成。**
 
 ## 课后练习(选做,但很值得)
 
 1. **`SwitchWeaponCommand`**:把切枪也做成命令(带一个 `index` 参数)。这会让你想清楚一个问题:**带参数的命令,实例还能复用吗?** (提示:可以为每把武器各建一个命令实例,或者像 `MoveCommand` 那样用 `SetIndex`。)
 2. **在屏幕上显示缓冲队列长度**:`PlayerInputHandler` 已经暴露了 `Buffer` 属性(`buffer.Count`)。做一个 Debug 文本显示它,你就能**亲眼看到**命令在队列里排队、执行、过期的全过程——对理解这套机制帮助极大。
 3. **闪避冷却也做个 UI**:`PlayerController` 已经有 `CanDash` 和 `dashCooldown` 了,照着 `CooldownUI` 再做一个。会遇到一个设计问题:**要不要为闪避也发一个事件?** 还是把 `CooldownUI` 改成通用的(能接受任意技能的冷却事件)?
+
+**三个练习都做了,成果见下面的"实际完成记录"。**
+
+---
+
+## 实际完成记录(这一节是"发生了什么",不是计划)
+
+### 落地的文件
+
+**新增(11 个)**
+
+- `Commands/`:`ICommand`、`InputBuffer`、`MoveCommand`、`AttackCommand`、`DashCommand`、`GrenadeCommand`、`PlayerInputHandler`,外加练习 1 的 **`SwitchWeaponCommand`**(共 8 个)。
+- `Weapons/`:`Grenade`、`GrenadeThrower`。
+- `UI/`:`CooldownUI`;外加练习 2 的 **`DebugText`**(显示缓冲队列长度 + 队首命令名)。
+
+**修改(5 个)**
+
+- `Core/GameEvents.cs`——新增 `SkillId` 枚举 + `SkillCooldownStartedEvent`(见下面练习 3)。
+- `Entities/PlayerController.cs`——删掉 `ReadMoveInput()` 和 `ConsumeDashPressed()`(输入归 `PlayerInputHandler`);新增 `SetMoveInput()`、`TriggerDash()`;`StartDashCooldown()` 里广播闪避冷却事件。
+- `Weapons/WeaponController.cs`——`Update` 里不再读输入,只剩冷却;对外暴露 `CanFire()`/`Fire()`/`SwitchTo()`/`WeaponCount`。
+- `StateMachines/Player/PlayerIdleState.cs`、`PlayerMoveState.cs`——删掉读 Shift 的闪避分支。**至此状态类彻底不读输入了。**
+
+**资产 / 场景 / 设置**
+
+- `Assets/Prefabs/Grenade.prefab`:root(Scale 1,Rigidbody2D Dynamic + Gravity 0,无 Collider2D)+ 子物体 `Body`(方块 sprite)+ `Explosion`(圆形 sprite,默认 inactive)。
+- 场景新增 `GrenadePool`(`ObjectPool`,prewarm 5);Player 上挂 `PlayerInputHandler` + `GrenadeThrower`;Canvas 新增手雷/闪避两个技能图标 + 环形冷却遮罩 + Debug 文本。
+- **`Project Settings > Script Execution Order`:`PlayerInputHandler = -100`**(必须,否则 `MoveInput` 慢一帧)。
+
+### 三个课后练习的成果
+
+1. **`SwitchWeaponCommand`(带参数的命令)**——采用"单实例 + `SwitchIndex(index)` + **立即执行、绝不入队**"的方案。
+   > 这道题的核心是:**队列里存的是引用,不是快照**。如果把"共享实例 + 可变 index"的命令扔进 `InputBuffer`,排队期间后来的操作会把 `index` 改掉,执行时读到的是"最新值"而非"入队时的值"——先按 `1` 再按 `2`,那次"切到 1"会凭空消失。所以答案不是"能复用"或"不能复用",而是:**取决于它会不会被延迟执行**。`MoveCommand` 能共享实例,正因为它每帧立即执行。要想安全入队,就得改成"每把武器一个实例 + `readonly index`",让编译器来保证。
+2. **`DebugText`(可视化缓冲队列)**——显示 `Buffer(N): 队首命令名`。挥砍时按 `Shift`,能亲眼看到 `Buffer(1): DashCommand` 出现、卡住、然后在动作结束的瞬间被执行掉。**这个练习对理解缓冲机制帮助极大。**
+3. **通用化 `CooldownUI`**——没有为闪避新开一个事件,而是把 `GrenadeThrownEvent` 升级成通用的 **`SkillCooldownStartedEvent(SkillId skill, float cooldown)`**,配一个 `SkillId` 枚举(`Dash`/`Grenade`)。`CooldownUI` 上挂一个 `[SerializeField] SkillId skill`,收到事件后 `if (e.Skill != skill) return;` 过滤掉不属于自己的。
+   > 于是**一个脚本服务任意多个技能**:加新技能只需加个枚举值 + 场景里挂个 `CooldownUI` 选中它,UI 代码一行不改。发布方各管各的——手雷在 `GrenadeThrower.Throw()` 里发,闪避在 `PlayerController.StartDashCooldown()` 里发(冷却的起点本来就在那儿,不用为了 UI 去动状态机)。
+   > 之所以用**枚举**而不是字符串当标识:枚举有编译期检查 + Inspector 下拉,不可能拼错——第 3 周在 `.name` vs `weaponName` 上栽过一次,不能再给自己挖字符串的坑。
+
+### 踩过的坑
+
+1. **IDE 偷偷加 `using`**——补全时选中了别的命名空间里的同名类型,VSCode 自动往文件顶部塞 `using`。栽了两次:`using Unity.VisualScripting;`(那个包里**也有个 `EventBus`**,导致 `CS0104 二义性引用`)、`using UnityEditor;`(**混进运行时代码,打包会炸**)。
+   > 根治:在 `.vscode/settings.json` 里关掉未导入命名空间的补全(`dotnet.completion.showCompletionItemsFromUnimportedNamespaces: false`),并开启保存时自动整理 using。**遇到二义性错误,先看是不是多了个没用到的 `using`,别急着用 `using X = Y;` 起别名打补丁——那只是掩盖问题。**
+
+2. **手雷爆炸范围显示成矩形**——最初的实现是让手雷"自己变身":把本体的 `localScale` 撑大、`color` 改成半透明橙。但本体是方块,撑大了还是方块,而伤害判定是 `OverlapCircleAll`(**圆**)——**表现和判定对不上**,玩家会以为矩形四个角也能炸到。
+   > 改成把**本体(方块)和爆炸圈(圆)拆成两个子物体**,爆炸时藏前者、放后者;爆炸圈的大小由脚本按 `explosionRadius` 算(`localScale = 半径 × 2`),不在 Inspector 里手填——**手填的数字迟早会和判定脱节**。
+   > 附带好处:需要在 `OnEnable` 里复位的池化状态**变少了**(不用再记 `originalScale`/`originalColor`)。
+
+3. **改结构后手雷不爆炸了**——`Awake` 里还留着旧版的 `spriteRenderer = GetComponent<SpriteRenderer>();` + `originalColor = spriteRenderer.color;`。但新结构里 sprite 搬到了子物体上,**root 已经没有 `SpriteRenderer`** 了 → `null` → `NullReferenceException` → `Awake` 当场中断。**重构时,旧字段没删干净比新代码写错更难发现。**
+
+4. **`InputBuffer.Empty()` 的语义反了**——写成了 `=> queue.Count > 0`(这其实是"非空")。于是 `DebugText` 的两个分支全部走反,空队列时走进 `else` 调用 `Peek()` → `InvalidOperationException` 每帧刷屏,文本从没更新过。
+   > **函数名和实现对不上,是最阴险的一类 bug**:编译器不管,读代码的人会想当然地按名字理解它。
+
+5. **`CooldownUI.OnDisable` 又把 `Unsubscribe` 写成了 `Subscribe`**——**和第 3 周 `HealthBarUI` 一模一样的错误,同一个坑踩了两次**。复制 `OnEnable` 那行改函数名时,漏改了方法名。
+   > 连续两周犯同一个错,说明它不是偶然:`OnEnable`/`OnDisable` 是两行几乎一样的代码,靠人眼校对必然会漏。**要根治,就得把"容易写错的东西"变成"不可能写错"**——比如抽一个 `EventListener<T>` 基类,把订阅/退订配对封进去,子类只实现 `OnEvent()`,根本没有写错的机会。
+   > 临时办法:每周验收后 `grep -rn "EventBus.Subscribe\|EventBus.Unsubscribe" Assets/Scripts/` 扫一遍,一眼就能看出哪个文件订了没退。
+
+6. **`SwitchWeaponCommand.CanExecute()` 的 off-by-one**——写成 `index <= weapon.WeaponCount`。`WeaponCount` 是 3,合法下标是 0/1/2,`<= 3` 会放行越界的 `index == 3`。没炸只是因为只绑了三个数字键、且 `SwitchTo()` 内部还有一层防护兜着。
+   > **`Count` 是"有几个",下标是"第几个",两者永远差 1。** 拿 `Count`/`Length` 做边界判断时出现 `<=`,基本就是错的。
+
+> 第 4、5、6 条又是三个**"程序照常跑、验收照常过"的沉默 bug**(语义反了 / 退订变订阅 / 边界差一)。加上第 3 周那两个,已经是第五、六、七个了——**这类问题永远测不出来,只能靠 review 代码抓。**
 
 ## 下周预告:第 5 周 - 房间生成与关卡流程
 

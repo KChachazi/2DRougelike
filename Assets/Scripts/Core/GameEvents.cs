@@ -2,6 +2,12 @@ using UnityEngine;
 
 namespace Game.Core
 {
+    public enum SkillId
+    {
+        Dash,
+        Grenade,
+    }
+
     public readonly struct PlayerHealthChangedEvent
     {
         public readonly int Current;
@@ -22,9 +28,10 @@ namespace Game.Core
         public WeaponChangedEvent(string weaponName) { WeaponName = weaponName; }
     }
 
-    public readonly struct GrenadeThrownEvent
+    public readonly struct SkillCooldownStartedEvent
     {
+        public readonly SkillId Skill;
         public readonly float Cooldown;
-        public GrenadeThrownEvent(float cooldown) { Cooldown = cooldown; }
+        public SkillCooldownStartedEvent(SkillId skill, float cooldown) { Skill = skill; Cooldown = cooldown; }
     }
 }

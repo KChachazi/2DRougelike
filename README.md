@@ -155,7 +155,7 @@ Assets/
 - ✅ `v1-week1`: 基础移动射击、敌人追击、对象池（已完成，详见 [devlog/week1.md](devlog/week1.md)）
 - ✅ `v1-week2`: 状态机、闪避、近战武器（已完成，详见 [devlog/week2.md](devlog/week2.md)）
 - ✅ `v1-week3`: EventBus、ScriptableObject 武器、策略切换、弹药与拾取（已完成，详见 [devlog/week3.md](devlog/week3.md)）
-- `v1-week4`: 命令模式、输入缓冲、手雷技能
+- ✅ `v1-week4`: 命令模式、输入缓冲、手雷技能、技能冷却 UI（已完成，详见 [devlog/week4.md](devlog/week4.md)）
 - `v1-week5`: 房间系统、Boss 战、小地图
 - `v1-week6`: 打磨、特效、性能优化
 
