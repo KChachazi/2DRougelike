@@ -25,6 +25,7 @@ namespace Game.Entities
         public Rigidbody2D Rb { get; private set; }
         public Health health { get; private set; }
         public SpriteRenderer SpriteRenderer { get; private set; }
+        public Color OriginalColor { get; private set; }
         public Transform Player { get; private set; }
         public Vector2 SpawnPosition { get; private set; }
 
@@ -49,6 +50,7 @@ namespace Game.Entities
             Rb = GetComponent<Rigidbody2D>();
             health = GetComponent<Health>();
             SpriteRenderer = GetComponent<SpriteRenderer>();
+            OriginalColor = SpriteRenderer.color;
             SpawnPosition = Rb.position;
 
             PatrolState = new EnemyPatrolState(this, stateMachine);

@@ -20,6 +20,7 @@ namespace Game.StateMachines.Enemy
 
         public void Enter()
         {
+            enemy.SpriteRenderer.color = enemy.OriginalColor;
             PickNewTarget();
         }
 
