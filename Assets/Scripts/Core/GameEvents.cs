@@ -2,12 +2,6 @@ using UnityEngine;
 
 namespace Game.Core
 {
-    public enum SkillId
-    {
-        Dash,
-        Grenade,
-    }
-
     public readonly struct PlayerHealthChangedEvent
     {
         public readonly int Current;
@@ -15,23 +9,53 @@ namespace Game.Core
         public PlayerHealthChangedEvent(int current, int max) { Current = current; Max = max; }
     }
 
+    /* ------------- 武器 ------------- */
     public readonly struct AmmoChangedEvent
     {
         public readonly int Current;
         public readonly int Max; // Max 为 -1 时表示无限子弹，比如近战
         public AmmoChangedEvent(int current, int max) { Current = current; Max = max; }
     }
-
     public readonly struct WeaponChangedEvent
     {
         public readonly string WeaponName;
         public WeaponChangedEvent(string weaponName) { WeaponName = weaponName; }
     }
 
+    /* ------------- 技能 ------------- */
+    public enum SkillId
+    {
+        Dash,
+        Grenade,
+    }
     public readonly struct SkillCooldownStartedEvent
     {
         public readonly SkillId Skill;
         public readonly float Cooldown;
         public SkillCooldownStartedEvent(SkillId skill, float cooldown) { Skill = skill; Cooldown = cooldown; }
     }
+
+    /* ------------- 关卡 ------------- */
+    public enum RoomType
+    {
+        Normal,
+        Boss,
+    }
+    public readonly struct LevelStartedEvent
+    {
+        public readonly RoomType[] RoomTypes;
+        public LevelStartedEvent(RoomType[] roomTypes) { RoomTypes = roomTypes; }
+    }
+    public readonly struct RoomEnteredEvent
+    {
+        public readonly int Index;
+        public RoomEnteredEvent(int index) { Index = index; }
+    }
+    public readonly struct RoomClearedEvent
+    {
+        public readonly int Index;
+        public RoomClearedEvent(int index) { Index = index; }
+    }
+    public readonly struct DoorEnteredEvent { }
+    public readonly struct LevelCompletedEvent { }
 }

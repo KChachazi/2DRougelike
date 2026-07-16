@@ -120,6 +120,7 @@ Assets/
 │   ├── Weapons/       # 武器接口、策略、ScriptableObject 定义
 │   ├── Commands/      # 命令模式相关类
 │   ├── StateMachines/ # 状态机实现
+│   ├── Level/         # 房间生成、门、关卡流程
 │   └── UI/            # UI 控制脚本
 ├── Prefabs/          # 预制体
 ├── Scenes/           # 场景文件
@@ -135,6 +136,7 @@ Assets/
 
 - Unity 6000.3.19f1（建议使用相同版本打开，避免 ProjectSettings/Library 差异）
 - Input System package（已包含在项目依赖中，见 `Packages/manifest.json`）
+- Cinemachine 3.1.7（第 5 周房间摄像机过渡，已包含在项目依赖中）
 - 已配置 Git LFS 的客户端（若拉取时发现资源丢失，请执行 `git lfs pull`）
 
 ---
@@ -156,7 +158,7 @@ Assets/
 - ✅ `v1-week2`: 状态机、闪避、近战武器（已完成，详见 [devlog/week2.md](devlog/week2.md)）
 - ✅ `v1-week3`: EventBus、ScriptableObject 武器、策略切换、弹药与拾取（已完成，详见 [devlog/week3.md](devlog/week3.md)）
 - ✅ `v1-week4`: 命令模式、输入缓冲、手雷技能、技能冷却 UI（已完成，详见 [devlog/week4.md](devlog/week4.md)）
-- `v1-week5`: 房间系统、Boss 战、小地图
+- ✅ `v1-week5`: 房间系统、关卡流程、Cinemachine 过渡、Boss 房、小地图（已完成，详见 [devlog/week5.md](devlog/week5.md)）
 - `v1-week6`: 打磨、特效、性能优化
 
 ---

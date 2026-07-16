@@ -1,0 +1,64 @@
+using UnityEngine;
+using UnityEngine.UI;
+using Game.Core;
+
+namespace Game.UI
+{
+    public class MinimapUI : MonoBehaviour
+    {
+        [SerializeField] private Transform iconContainer;
+        [SerializeField] private Image iconPrefab;
+
+        [Header("颜色")]
+        [SerializeField] private Color currentColor     = new Color(1f, 0.9f, 0.2f);
+        [SerializeField] private Color clearedColor     = new Color(0.3f, 0.7f, 0.4f);
+        [SerializeField] private Color bossColor        = new Color(0.85f, 0.25f, 0.25f);
+        [SerializeField] private Color unvisitedColor   = new Color(0.35f, 0.35f, 0.4f);
+
+        private Image[] icons;
+        private RoomType[] roomTypes;
+        private bool[] clearedFlags;
+        private int currentIndex = -1;
+
+        private void OnEnable()
+        {
+            EventBus.Subscribe<LevelStartedEvent>(OnLevelStarted);
+            EventBus.Subscribe<RoomEnteredEvent>(OnRoomEntered);
+            EventBus.Subscribe<RoomClearedEvent>(OnRoomCleared);
+        }
+        private void OnDisable()
+        {
+            EventBus.Unsubscribe<LevelStartedEvent>(OnLevelStarted);
+            EventBus.Unsubscribe<RoomEnteredEvent>(OnRoomEntered);
+            EventBus.Unsubscribe<RoomClearedEvent>(OnRoomCleared);
+        }
+
+        private void OnLevelStarted(LevelStartedEvent e)
+        {
+            for (int i = iconContainer.childCount - 1; i >= 0; i --)
+                Destroy(iconContainer.GetChild(i).gameObject);
+            roomTypes = e.RoomTypes;
+            clearedFlags = new bool[roomTypes.Length];
+            icons = new Image[roomTypes.Length];
+            for (int i = 0; i < roomTypes.Length; i ++)
+                icons[i] = Instantiate(iconPrefab, iconContainer);
+            Refresh();
+        }
+        private void OnRoomEntered(RoomEnteredEvent e) { currentIndex = e.Index; Refresh(); }
+        private void OnRoomCleared(RoomClearedEvent e) { clearedFlags[e.Index] = true; Refresh(); }
+
+        private void Refresh()
+        {
+            if (icons == null) return ;
+            for (int i = 0; i < icons.Length; i ++)
+                icons[i].color = GetColor(i);
+        }
+        private Color GetColor(int index)
+        {
+            if (index == currentIndex) return currentColor;
+            if (clearedFlags[index]) return clearedColor;
+            if (roomTypes[index] == RoomType.Boss) return bossColor;
+            return unvisitedColor;
+        }
+    }
+}
