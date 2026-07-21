@@ -1023,6 +1023,8 @@ GameObject:
   m_Component:
   - component: {fileID: 824877882}
   - component: {fileID: 824877881}
+  - component: {fileID: 824877884}
+  - component: {fileID: 824877883}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -1058,6 +1060,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 707254680}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &824877883
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 824877880}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f1ac48db84be7f438b58960733832fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Core.CombatFeedback
+  hitStopDuration: 0.04
+  hitShakeIntensity: 0.12
+  hitShakeDuration: 0.1
+  deathShakeIntensity: 0.3
+  deathShakeDuration: 0.25
+  hitSparkPool: {fileID: 2080130161}
+  deathBurstPool: {fileID: 1440987572}
+--- !u!114 &824877884
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 824877880}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f436cf722692c8841b36ca0686cb30b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Core.HitStop
 --- !u!1 &898347954
 GameObject:
   m_ObjectHideFlags: 0
@@ -1368,7 +1401,56 @@ Transform:
   m_Children:
   - {fileID: 1826852016}
   - {fileID: 1768273999}
+  - {fileID: 2080130160}
+  - {fileID: 1440987573}
   m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1440987571
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1440987573}
+  - component: {fileID: 1440987572}
+  m_Layer: 0
+  m_Name: DeathBurstPool
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1440987572
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1440987571}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17ea600d018f87d49bea0dc30a410fc8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Core.ObjectPool
+  prefab: {fileID: 8917743075163587278, guid: 5dca39e3496cbff4ab76c7166b226592, type: 3}
+  prewarmCount: 8
+  debugMode: 0
+--- !u!4 &1440987573
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1440987571}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 21.574139, y: 4.90414, z: -10}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1400016032}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1592984343
 GameObject:
@@ -1567,6 +1649,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Game.Core.ObjectPool
   prefab: {fileID: 896888657865255275, guid: e7a2835d680fbb544a989e194a6f76ed, type: 3}
   prewarmCount: 5
+  debugMode: 0
 --- !u!1 &1826852015
 GameObject:
   m_ObjectHideFlags: 0
@@ -1613,6 +1696,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Game.Core.ObjectPool
   prefab: {fileID: 8591178759127387321, guid: 6d9d4ef29d652c24f8bcf7dab2fa6ab6, type: 3}
   prewarmCount: 20
+  debugMode: 0
 --- !u!1 &1906024048
 GameObject:
   m_ObjectHideFlags: 0
@@ -1850,7 +1934,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.UI.DebugText
   debugText: {fileID: 2034243655}
-  display: 1
+  display: 0
   playerInputHandler: {fileID: 764213637}
 --- !u!114 &2034243655
 MonoBehaviour:
@@ -1952,6 +2036,53 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2034243652}
   m_CullTransparentMesh: 1
+--- !u!1 &2080130159
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2080130160}
+  - component: {fileID: 2080130161}
+  m_Layer: 0
+  m_Name: 'HitSparkPool '
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2080130160
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2080130159}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 21.574139, y: 4.90414, z: -10}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1400016032}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2080130161
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2080130159}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17ea600d018f87d49bea0dc30a410fc8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Core.ObjectPool
+  prefab: {fileID: 8917743075163587278, guid: 2431837f7b5d3584aadaed122f9100cd, type: 3}
+  prewarmCount: 20
+  debugMode: 0
 --- !u!1001 &2181359053324555077
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2138,9 +2269,9 @@ SceneRoots:
   - {fileID: 619394802}
   - {fileID: 764213631}
   - {fileID: 1400016032}
+  - {fileID: 707254680}
   - {fileID: 1906024052}
   - {fileID: 1993065702}
   - {fileID: 2181359053324555077}
   - {fileID: 1002377086}
   - {fileID: 795358366}
-  - {fileID: 707254680}

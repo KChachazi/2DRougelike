@@ -15,13 +15,23 @@ namespace Game.Core
 
         private readonly Queue<GameObject> pool = new Queue<GameObject>();
 
+        [Tooltip("Debug: 检测")]
+        [SerializeField] private bool debugMode = true;
+        private readonly HashSet<GameObject> inPool = new HashSet<GameObject>();
+        private int totalCreated;
+        public int TotalCreated => totalCreated;
+        public int InPoolCount => pool.Count;
+        public int ActiveCount => totalCreated - pool.Count;
+
         private void Awake()
         {
+            totalCreated = 0;
             for (int i = 0; i < prewarmCount; i ++)
             {
                 GameObject instance = CreateInstance();
                 instance.SetActive(false);
                 pool.Enqueue(instance);
+                if (debugMode) inPool.Add(instance);
             }
         }
 
@@ -32,6 +42,7 @@ namespace Game.Core
             {
                 poolable.Pool = this;
             }
+            totalCreated ++;
             return instance;
         }
 
@@ -41,11 +52,18 @@ namespace Game.Core
             GameObject instance = pool.Count > 0 ? pool.Dequeue() : CreateInstance();
             instance.transform.SetPositionAndRotation(position, rotation);
             instance.SetActive(true);
+            if (debugMode) inPool.Remove(instance);
             return instance;
         }
 
         public void Release(GameObject instance)
         {
+            if (instance == null) return ;
+            if (debugMode && !inPool.Add(instance))
+            {
+                Debug.LogError($"[ObjectPool] '{instance.name}' 被重复 Release!", instance);
+                return ;
+            }
             instance.SetActive(false);
             pool.Enqueue(instance);
         }

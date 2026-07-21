@@ -58,4 +58,23 @@ namespace Game.Core
     }
     public readonly struct DoorEnteredEvent { }
     public readonly struct LevelCompletedEvent { }
+
+    /* ------------- 表现 ------------- */
+    public readonly struct EnemyDamagedEvent
+    {
+        public readonly Vector2 Position;
+        public readonly int Damage;
+        public EnemyDamagedEvent(Vector2 position, int damage) { Position = position; Damage = damage; }
+    }
+    public readonly struct EnemyDiedEvent
+    {
+        public readonly Vector2 Position;
+        public EnemyDiedEvent(Vector2 position) { Position = position; }
+    }
+    public readonly struct ScreenShakeEvent
+    {
+        public readonly float Intensity;
+        public readonly float Duration;
+        public ScreenShakeEvent(float intensity, float duration) { Intensity = intensity; Duration = duration; }
+    }
 }

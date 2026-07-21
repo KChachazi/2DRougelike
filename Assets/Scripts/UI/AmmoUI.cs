@@ -25,6 +25,7 @@ namespace Game.UI
 
         private void OnAmmoChanged(AmmoChangedEvent e)
         {
+            if (current == e.Current && max == e.Max) return ;
             current = e.Current;
             max = e.Max;
             Refresh();

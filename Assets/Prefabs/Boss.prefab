@@ -187,8 +187,8 @@ MonoBehaviour:
   patrolSpeed: 1.2
   patrolRadius: 2
   chaseSpeed: 2
-  detectionRange: 4
-  loseSightRange: 6
+  detectionRange: 8
+  loseSightRange: 11
   attackRange: 1.7
   contactDamage: 20
   attackCooldown: 1

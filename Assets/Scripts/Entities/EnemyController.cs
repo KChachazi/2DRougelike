@@ -1,4 +1,5 @@
 using UnityEngine;
+using Game.Core;
 using Game.StateMachines;
 using Game.StateMachines.Enemy;
 
@@ -58,17 +59,16 @@ namespace Game.Entities
             AttackState = new EnemyAttackState(this, stateMachine);
             DeadState = new EnemyDeadState(this, stateMachine);
         }
-
         private void OnEnable()
         {
+            health.Damaged += OnDamaged;
             health.Died += OnDied;
         }
-
         private void OnDisable()
         {
+            health.Damaged -= OnDamaged;
             health.Died -= OnDied;
         }
-
         private void Start()
         {
             GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
@@ -84,7 +84,6 @@ namespace Game.Entities
         {
             stateMachine.Tick();
         }
-
         private void FixedUpdate()
         {
             stateMachine.FixedTick();
@@ -94,15 +93,18 @@ namespace Game.Entities
         {
             return Player == null ? float.MaxValue : Vector2.Distance(Rb.position, Player.position);
         }
-
         public void MoveTowards(Vector2 targetPosition, float speed)
         {
             Vector2 direction = (targetPosition - Rb.position).normalized;
             Rb.MovePosition(Rb.position + direction * speed * Time.fixedDeltaTime);
         }
-
+        private void OnDamaged(int amount)
+        {
+            EventBus.Publish(new EnemyDamagedEvent(Rb.position, amount));
+        }
         private void OnDied()
         {
+            EventBus.Publish(new EnemyDiedEvent(Rb.position));
             stateMachine.ChangeState(DeadState);
         }
     }

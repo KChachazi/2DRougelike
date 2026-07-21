@@ -804,6 +804,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8053676628460151054}
   - component: {fileID: 3290921674243268709}
+  - component: {fileID: 660914656286884549}
   m_Layer: 0
   m_Name: RoomCamera
   m_TagString: Untagged
@@ -869,6 +870,18 @@ MonoBehaviour:
       BarrelClipping: 0.25
       Anamorphism: 0
   BlendHint: 0
+--- !u!114 &660914656286884549
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8754854461005477652}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4eb952742975ae44fb28b0219bc8fb6c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Core.ScreenShake
 --- !u!1 &9140873808060427569
 GameObject:
   m_ObjectHideFlags: 0

@@ -9,7 +9,7 @@
 
 ## 当前进度(务必保持最新)
 
-- 状态:**第 1~5 周均已完成并通过验收;`v1-week1`~`v1-week4` 标签已打**。
+- 状态:**六周全部完成并通过验收;`v1-week1`~`v1-week5` 标签已打,`v1-week6` 待确认。V1(2D 版本)收官。**
 - 已有内容:
   - Unity 6000.3.19f1 + URP 2D 模板默认工程,`.gitignore`/`.gitattributes` 已提交。
   - 第 1 周:`Assets/Scripts/Core|Entities|Weapons` 下的 8 个文件、场景搭建均已由用户完成并通过验收,详见 `devlog/week1.md`。
@@ -23,35 +23,41 @@
   - 第 4 周又抓到三个沉默 bug(`devlog/week4.md`「踩过的坑」4/5/6):① `InputBuffer.Empty()` 写成 `Count > 0`(语义反了);② **`CooldownUI.OnDisable` 又把 `Unsubscribe` 写成 `Subscribe`——和第 3 周 `HealthBarUI` 一模一样的错误,同一个坑踩了两次**;③ `SwitchWeaponCommand` 的 `index <= WeaponCount` off-by-one。**验收后 review 代码这条规矩必须保留。**
   - 第 5 周:分 4 步全部完成并通过 Play 验收(RoomConfig SO + 工厂 + Room → Door + LevelManager → Cinemachine 过渡 → 小地图 + Boss 房)。新增 6 个脚本(`Level/` 5 个 + `UI/MinimapUI`)、修改 `GameEvents`(加 `RoomType` + 5 个关卡事件);新增 `Room.prefab`(**房间做成了预制体**,3 个实例各 override config/位置)、`Boss.prefab`、`RoomIcon.prefab`、`BossRoomConfig` 等 3 个 RoomConfig;装了 **Cinemachine 3.1.7**。详见 `devlog/week5.md`。
   - 第 5 周的坑(`devlog/week5.md`「踩过的坑」):① `OnDestory` **拼写错**(Unity 魔法方法靠方法名匹配,拼错则永不调用,编译器不报);② `LevelManager.currentIndex` 初始值写成 `1`(应为 `-1`)——**第 8 个沉默 bug**,被"正好有 3 个房间"掩盖着;③ **修 bug 引入回归**:为了让 Boss 显紫,直接删掉 `EnemyPatrolState` 里的 `Color.white`,结果普通敌人追击后永远卡在橙色——正解是记 `OriginalColor` 而非硬编码本色。
-- 目录已全部落地:`Core`/`Entities`/`Weapons`/`StateMachines`/`UI`/`Commands`/**`Level`** + `Data`/`Art`/`Prefabs`。
-- 下一步:第 6 周(最后一周)——打磨与收尾(音效、粒子特效、屏幕震动、Profiler 性能分析、构建打包)。
+  - 第 6 周:分 4 步全部完成并通过验收(手感三件套 → 粒子特效 → Profiler/GC 优化 → 架构图 + 打包)。新增 4 个脚本(`Core/HitStop`+`ScreenShake`+`CombatFeedback`+`PooledParticle`)、修改 5 个;新增 `HitSpark`/`DeathSpark` 粒子预制体 + 池;README 加了 Mermaid 架构图;**成功构建出可运行的 Windows exe**。详见 `devlog/week6.md`。
+  - 第 6 周的坑:① `ScreenShake.OnDisable` 漏复位 `localPosition` → 震动中切房间画面留歪;② **Unity 6 废弃了 `OverlapCircleNonAlloc`(→`OverlapCircle`+`ContactFilter2D`)和 `ContactFilter2D.NoFilter()`(→静态属性 `noFilter`)**——2D 物理 API 清理,碰到的代码都要跟着改(但只涉及 2 个文件,因为物理查询集中在 `MeleeWeaponStrategy`+`Grenade`);③ Boss `detectionRange 8 > loseSightRange 6` 破坏迟滞 → 状态频闪(退出阈值必须比进入阈值宽);④ `ObjectPool` 预热对象漏登记 `inPool` → 诊断误报。用户还自主把"命中震屏"改成"仅击杀震屏"(手感判断优于文档默认值)。
+- 目录已全部落地:`Core`/`Entities`/`Weapons`/`StateMachines`/`UI`/`Commands`/`Level` + `Data`/`Art`/`Prefabs`。
+- 下一步:**V1 结束**。README 规划的 V2(3D 化)、V3(联机)是后续大版本。`EventBus`/`ICommand`/`IWeaponStrategy`/`RoomConfig` 这几层不认识 2D Sprite/物理,理论上可原样迁移。
 
 **更新规则**:每完成一项里程碑(一周任务,或用户认可的阶段性成果)后:
 1. 更新本节的"已有内容 / 尚未创建 / 下一步";
 2. 在 `devlog/week<N>.md` 写入该周的**实际完成记录**(不是计划,是发生了什么);
 3. 若达到 README 中周任务的验收标准,同步更新 README 底部"开发日志与标签"表,并询问用户是否要打 `v1-week<N>` 标签(打标签会写入共享历史,先确认再执行)。
 
-## 当前代码结构快照(截至第 5 周末,写代码前速查)
+## 当前代码结构快照(V1 收官,写代码前速查)
 
-> "代码实际长什么样"的速查表,方便新对话快速定位。真实进度以 `Assets/` 为准;下面每条都对应已经落地的文件。第 6 周起有新增/重构时同步更新本节。
+> "代码实际长什么样"的速查表,方便新对话快速定位。真实进度以 `Assets/` 为准;下面每条都对应已经落地的文件。
 
-**脚本清单(`Assets/Scripts/`,共 45 个 `.cs`)**
+**脚本清单(`Assets/Scripts/`,共 49 个 `.cs`)**
 
 - `Core/`
   - `GameManager.cs`——单例(`Instance`),`[SerializeField] player` 只读暴露为 `Player`。目前很轻,只做单例 + Player 引用。
-  - `ObjectPool.cs`——通用对象池(`Queue<GameObject>` + `prewarmCount` 预热),`Get(pos,rot)`/`Release`;同文件定义 `IPoolable` 接口(池化对象持有回自己池的引用,取出时自动回填)。
+  - `ObjectPool.cs`——通用对象池(`Queue<GameObject>` + `prewarmCount` 预热),`Get(pos,rot)`/`Release`;同文件定义 `IPoolable` 接口。**第 6 周加了泄漏诊断**:`debugMode` + `inPool` HashSet 检测重复 Release(**预热时也要 `inPool.Add`,否则误报**)、`ActiveCount` 统计(只涨不落=泄漏)。发布前把 `debugMode` 关掉。
   - `CameraFollow.cs`——`LateUpdate` 跟随 `target` + `offset`,锁 Z。
   - **`EventBus.cs`**(第 3 周)——`static` 泛型事件总线,`Dictionary<Type, Delegate>` 按事件类型分发;`Subscribe<T>`/`Unsubscribe<T>`/`Publish<T>`/`Clear`,外加 `[RuntimeInitializeOnLoadMethod]` 在进 Play 时清空(防 domain reload 关闭时 static 残留)。
-  - **`GameEvents.cs`**(第 3 周起,逐周扩充)——`readonly struct` 事件集中定义:`PlayerHealthChangedEvent(Current,Max)`、`AmmoChangedEvent(Current,Max)`(**`Max = -1` 约定为无限弹药**)、`WeaponChangedEvent(WeaponName)`、`SkillCooldownStartedEvent(SkillId, Cooldown)`(第 4 周);**第 5 周加**:`LevelStartedEvent(RoomType[])`、`RoomEnteredEvent(int)`、`RoomClearedEvent(int)`、`DoorEnteredEvent`(空)、`LevelCompletedEvent`(空)。同文件还有 **`SkillId`**(`Dash`/`Grenade`)和 **`RoomType`**(`Normal`/`Boss`)两个枚举——**标识用枚举不用字符串**(编译期检查 + Inspector 下拉,不会拼错)。**`RoomType` 放这儿而不是 `Level/`,是因为 `GameEvents` 要用它——底层不能依赖上层。** 新增跨模块通知就在这里加 struct。
+  - **`GameEvents.cs`**(第 3 周起,逐周扩充)——`readonly struct` 事件集中定义:血量/弹药/武器/技能冷却(3~4 周)、关卡 5 个事件(5 周)、**战斗反馈 3 个(6 周):`EnemyDamagedEvent(Position,Damage)`/`EnemyDiedEvent(Position)`(语义事件)、`ScreenShakeEvent(Intensity,Duration)`(表现指令)**。同文件有 `SkillId`(`Dash`/`Grenade`)和 `RoomType`(`Normal`/`Boss`)枚举——**标识用枚举不用字符串**;**枚举/`RoomType` 放 `Core` 因为 `GameEvents` 要用它,底层不能依赖上层**。新增跨模块通知就在这里加 struct。
+  - **`HitStop.cs`**(第 6 周)——静态单例,`Do(duration)` 把 `timeScale`→0、**`WaitForSecondsRealtime`**(绝不能用 `WaitForSeconds`,否则永久卡死)后恢复;重入 `StopCoroutine` 打断上一次。
+  - **`ScreenShake.cs`**(第 6 周)——**挂每台 RoomCamera**,订阅 `ScreenShakeEvent`,抖 vcam 自己的 `localPosition`(不碰 Cinemachine API);**`unscaledDeltaTime`**(HitStop 时 timeScale=0)、`Mathf.Max` 不累加、`OnDisable` 复位。只有当前房间的 vcam active、会响应——inactive 的自动退订。
+  - **`CombatFeedback.cs`**(第 6 周,挂 GameManager)——订阅语义事件 `EnemyDamagedEvent`/`EnemyDiedEvent`,翻译成表现(`HitStop.Do` + 发 `ScreenShakeEvent` + 从池取粒子)。**手感参数(停顿时长/震动强度)全集中在这一个 Inspector 面板**——伤害源不该知道"打中要震多少屏"。
+  - **`PooledParticle.cs`**(第 6 周)——`IPoolable` 一次性粒子,`lifeTime` 从 `ParticleSystem` 自己算(不手填);预制体 `Stop Action` 必须 `None`(不能 `Destroy`)、取消 `Looping`。
 - `Entities/`
   - `Health.cs`——通用血量组件。`Current`/`Max`/`isDead`/`isInvincible`,`SetInvincible(duration)` 无敌帧,`TakeDamage`(无敌或已死直接跳过);三个 C# 事件:`Damaged(int)`、`Died()`、**`HealthChanged(current,max)`**(第 3 周加)。**Health 保持通用、不认识"玩家"/"UI",只发本地事件**。
   - `PlayerController.cs`——玩家状态机"上下文":持有 `Rb`/`health`/`SpriteRenderer`/`MoveInput` + 5 个状态实例 + `stateMachine`;`Update` 只做**朝向鼠标 + 冷却 + `Tick`**(**第 4 周起不再读键盘**),`FixedUpdate` **先 `Rb.linearVelocity = Vector2.zero` 再跑 `FixedTick`**。供外部调用的入口:`SetMoveInput(v)`(由 `MoveCommand` 写入)、`TriggerDash()`(由 `DashCommand` 调)、`TriggerAttack()`(由 `WeaponController` 近战时调);只读暴露 `CanAct`(仅 Idle/Move 为真)、`CanDash`。**它还负责把 `health.HealthChanged` 桥接成全局 `PlayerHealthChangedEvent`**(`Start` 广播一次初始血量),并在 `StartDashCooldown()` 里广播 `SkillCooldownStartedEvent(SkillId.Dash, ...)`。
-  - `EnemyController.cs`——敌人状态机"上下文":持有 4 个状态 + `SpawnPosition` + `Player` 引用;`MoveTowards`/`DistanceToPlayer` 工具方法。
+  - `EnemyController.cs`——敌人状态机"上下文":持有 4 个状态 + `SpawnPosition` + `Player` 引用 + **`OriginalColor`(本色,PatrolState 恢复用,别硬编码 Color.white)**;`MoveTowards`/`DistanceToPlayer` 工具方法。**第 6 周桥接 `Health.Damaged`/`Died` → 全局 `EnemyDamagedEvent`/`EnemyDiedEvent`**(供 `CombatFeedback` 做手感)。**`detectionRange < loseSightRange` 是迟滞设计,别调反**(否则临界距离状态频闪)。
 - `Weapons/`(第 3 周重构成"数据 + 策略")
   - `WeaponData.cs`——武器 SO(`[CreateAssetMenu]` → `Create > Game > Weapon Data`),字段 `weaponName`/`type`/`damage`/`cooldown`/`maxAmmo`/`range`,外加 `WeaponType { Ranged, Melee }` 枚举。资产在 `Assets/Data/`:`Pistol`/`Rifle`/`Sword`。
   - `IWeaponStrategy.cs`——`void Fire(WeaponController controller, WeaponData data)`。**策略无状态**,冷却/弹药由 controller 管,数值从 data 读。
   - `RangedWeaponStrategy.cs`——从 `controller.BulletPool` 取子弹、按 `FirePoint` 朝向发射,并 `bullet.SetDamage(data.damage)`。
-  - `MeleeWeaponStrategy.cs`——角色前方 `range` 处 `OverlapCircleAll(range)`,圈内 `Enemy` 扣血(逻辑从第 2 周 `PlayerAttackState.PerformHit` 搬来)。
+  - `MeleeWeaponStrategy.cs`——角色前方 `range` 处 `Physics2D.OverlapCircle(点,半径,filter,复用缓冲区)`(第 6 周从 `OverlapCircleAll` 改成零分配版),圈内 `Enemy` 扣血。**filter 用 `ContactFilter2D.noFilter`**(Unity 6:`NonAlloc`/`NoFilter()` 都已废弃,分别改成 `OverlapCircle` 重载 / 静态属性 `noFilter`)。缓冲区固定 16,超出被无视。
   - `WeaponController.cs`——**武器系统主体**(挂 Player,取代已移除的 `PlayerShooter` 组件)。持有 `WeaponData[] weapons` + `int[] currentAmmo`(每把武器各记一份,切枪不清零)+ `Dictionary<WeaponType, IWeaponStrategy>`。**第 4 周起不再读输入**:`Update` 里只剩冷却倒计时,对外暴露**能力**——`CanFire()`(= `CanAct && cooldown<=0 && HasAmmo()`)、`Fire()`、`SwitchTo(index)`、`AddAmmo(n)`、`WeaponCount`。近战开火后额外 `playerController.TriggerAttack()`。弹药/武器变化通过 `EventBus` 广播,**它不认识 UI**。
   - `Bullet.cs`——`IPoolable` 子弹,`FixedUpdate` 用 `linearVelocity` 前进 + 计时回收,`OnTriggerEnter2D` 命中 `Enemy` 扣血后回池;**`SetDamage(int)` 让武器 SO 覆盖伤害**(所以不需要为每把枪做子弹预制体)。
   - `AmmoPickup.cs`——`OnTriggerEnter2D` 碰到 `Player` → `WeaponController.AddAmmo(amount)` → `Destroy`。无限弹药武器(近战)会被 `AddAmmo` 直接跳过。
@@ -94,11 +100,14 @@
 12. **`PlayerInputHandler` 的执行顺序必须是 `-100`**:它写 `MoveInput`、`PlayerController` 读 `MoveInput`,Unity 不保证两个 `Update` 的先后。这个设置存在 `.meta` 里(会随 git 提交),不是全局配置。**凡是 A 写 B 读同一份数据,执行顺序就必须显式指定。**
 13. **"局部事件 + 上层桥接"是本项目的固定套路**(第 3 周确立,第 5 周第二次用):通用组件只发局部 C# 事件(`Health.HealthChanged`、`Room.RoomCleared`),因为它不知道自己的"身份";由知道身份的上层(`PlayerController`、`LevelManager`)接住、补上身份、再 `EventBus.Publish` 成全局事件。**新模块遵循这个套路,别让底层组件直接广播带身份的全局事件。**
 14. **依赖会变的外部库时,只依赖它最稳定的那一面**(第 5 周 Cinemachine 踩过):`Room` 的摄像机字段是 `GameObject` + `SetActive`,**不引用任何 Cinemachine API**。于是 CM 2.x→3.x 把类名/命名空间/字段全改了,我们的代码依然编译得过(只有文档里的菜单路径要更新)。
-15. **敌人不走对象池是刻意的**:对象池的收益是"避免**高频**创建销毁的 GC 抖动"。子弹每秒几十发→池化;敌人进房间时一次性生成一批→池化收益接近零,却要多管一套生命周期。**架构约定是工具不是教条。**
+15. **池化看频率不看类型**:对象池的收益是"避免**高频**创建销毁的 GC 抖动"。子弹每秒几十发、命中粒子每命中一个→池化;敌人进房间时一次性生成一批→池化收益接近零,却要多管一套生命周期,所以**不池化**。**判断标准是"多频繁",不是"是什么"**——架构约定是工具不是教条。
+16. **语义事件 vs 表现指令**(第 6 周确立):`EnemyDamagedEvent`("敌人受伤了",只陈述事实)是**语义事件**;`ScreenShakeEvent`("震屏 X 强度")是**表现指令**。伤害源只发语义事件,由 `CombatFeedback` 决定"该有什么表现"再发表现指令。**伤害源不该知道"打中要震多少屏"**;手感参数全集中在 `CombatFeedback` 一个面板。
+17. **`timeScale=0` 期间要继续走的东西必须用 unscaled 时间**:`HitStop` 用 `WaitForSecondsRealtime`(不是 `WaitForSeconds`),`ScreenShake` 用 `Time.unscaledDeltaTime`——否则命中停顿会让它们当场冻住(HitStop 甚至永久卡死)。
+18. **迟滞(hysteresis)**:任何"进入条件"和"退出条件"用不同阈值的地方,退出阈值要比进入阈值宽,留出缓冲区,否则临界点附近会抖动。敌人 AI 的 `detectionRange`(进入追击,小)< `loseSightRange`(退出追击,大)就是例子。
 
-**场景(`SampleScene.unity`)关键物体**:Player(Tag `Player`,挂 `PlayerController`/`Health`/`WeaponController`/`PlayerInputHandler`/`GrenadeThrower`/Rigidbody2D[Dynamic,Damping 0]/SpriteRenderer)、子弹池 + 手雷池(各挂 `ObjectPool`)、GameManager、**`Main Camera`(挂 `CinemachineBrain`,`CameraFollow` 已禁用)**、**`LevelManager`**(rooms 数组按顺序拖 3 个房间)、**3 个 `Room.prefab` 实例**(x = 0/30/60,各 override `config`)、**Canvas**(血条、TMP 弹药文本、手雷/闪避技能图标 + 环形冷却遮罩、Debug 文本、**`Minimap`**[Horizontal Layout Group])。**敌人不再手摆在场景里**——全部由 `RoomConfig` 生成。
+**场景(`SampleScene.unity`)关键物体**:Player(Tag `Player`,挂 `PlayerController`/`Health`/`WeaponController`/`PlayerInputHandler`/`GrenadeThrower`/Rigidbody2D[Dynamic,Damping 0]/SpriteRenderer)、子弹池 + 手雷池 + **命中/死亡粒子池**(各挂 `ObjectPool`)、**GameManager(挂 `HitStop` + `CombatFeedback`)**、**`Main Camera`(挂 `CinemachineBrain`,`CameraFollow` 已禁用)**、**`LevelManager`**(rooms 数组按顺序拖 3 个房间)、**3 个 `Room.prefab` 实例**(x = 0/30/60,各 override `config`,每个 `RoomCamera` 上挂 `ScreenShake`)、**Canvas**(血条、TMP 弹药文本、技能图标 + 环形冷却遮罩、Debug 文本、`Minimap`)。**敌人不再手摆在场景里**——全部由 `RoomConfig` 生成。
 
-**预制体(`Assets/Prefabs/`)**:`Enemy`、**`Boss`**(Scale 2/紫/300 血)、`Bullet`、`Grenade`(root Scale 必须 1 + Rigidbody2D[Dynamic,Gravity 0,**无 Collider2D**] + 子物体 `Body`/`Explosion`)、`AmmoPickup`、`CooldownIcon`、**`RoomIcon`**、**`Room`**(房间做成了预制体:围墙 + `EntryPoint` + `Contents` + `Door` + `RoomCamera`[inactive])。**`Assets/Data/` 只放 ScriptableObject,预制体一律放 `Assets/Prefabs/`**(第 4、5 周各放错过一次)。
+**预制体(`Assets/Prefabs/`)**:`Enemy`、`Boss`(Scale 2/紫/300 血)、`Bullet`、`Grenade`(root Scale 1 + Rigidbody2D[无 Collider2D] + 子物体 `Body`/`Explosion`)、`AmmoPickup`、`CooldownIcon`、`RoomIcon`、`Room`(围墙 + `EntryPoint` + `Contents` + `Door` + `RoomCamera`[inactive])、**`HitSpark`/`DeathSpark`**(粒子,`Stop Action=None`、取消 `Looping`)。**`Assets/Data/` 只放 ScriptableObject,预制体一律放 `Assets/Prefabs/`**。
 
 **UI 素材注意**:血条填充用的是自建的 `Assets/Art/Square`(纯白无圆角)。**别用 Unity 内置的 `UISprite`**——那是带圆角的九宫格图,配 `Image Type = Filled` 时圆角会被裁切拉伸成脏边(week3 踩过)。环形冷却遮罩用 `Image Type = Filled` + `Fill Method = Radial 360`。
 
@@ -125,8 +134,9 @@
 
 ## 开发节奏
 
-- 当前阶段:**第 5 周已完成并验收,准备进入第 6 周(最后一周)- 打磨与收尾**(见 README「六周开发路线」)。
-- 第 6 周目标产出(README):音效、粒子特效、屏幕震动、性能分析(Profiler)、构建打包。这是收尾周,会把五周的成果整体过一遍,补上"让它像个游戏"的最后一层。
+- 当前阶段:**六周全部完成,V1(2D)收官**。六篇 `devlog/week1~6.md` 均已写完实际完成记录;`v1-week1`~`v1-week5` 标签已打,`v1-week6` 待用户确认。
+- **下一步(如果继续)**:README 规划的 V2(3D 化)、V3(联机)。迁移时 `EventBus`/`ICommand`/`IWeaponStrategy`/`RoomConfig`/`StateMachine` 这几层不认识 2D Sprite/物理,理论上可原样搬;要改的是 `Bullet`/`MoveTowards`/`OverlapCircle` 这些碰 2D 物理和渲染的地方。
+- **发布前清理清单**(答疑用):`ObjectPool.debugMode` 关掉、`DebugText.display` 关掉、清临时 `Debug.Log`;打包时 `Build Settings > Scenes In Build` 必须勾上场景(否则黑屏),构建目录别选在项目内(会递归导入)。
 - **分步下发的做法已连续三周验证有效,继续沿用**:大周拆成若干"每步可编译、可 Play 验收"的小步(第 3、4、5 周都是 4 步),每步末尾给 ✅ 验收清单,用户做完一步回来验收再进下一步。**纯重构的步骤,验收标准就写"行为和上周完全一样"**(第 4 周步骤 1 这么做的,效果很好)。**"不写代码、只做对比实验"的步骤也很有价值**(第 4 周步骤 2 让用户把 `bufferDuration` 调成 0 体会差异)。
 - **课后练习值得继续出**:第 4 周出了三道,用户全做了,而且第一道让他真正撞上了"队列存引用不是快照"这个坑——**比直接讲有效得多**。第 5 周出了三道(清空奖励该放哪、Boss 血条要不要新事件、房间可重进要处理哪些状态)。
 - **每步验收通过后必须 review 代码**:目前已经抓到 **8 个**"程序照常跑、验收照常过"的沉默 bug(`.name` vs `weaponName`、`Unsubscribe` 写成 `Subscribe` **两次**、`Empty()` 语义反了、`index <= Count` off-by-one、`currentIndex` 初始值写成 1、`OnDestory` 拼写等)。**这类问题测不出来,只能读代码。**

@@ -30,6 +30,9 @@ namespace Game.Weapons
 
         private float timer;
         private bool exploded;
+        private const int MaxHits = 32;
+        private readonly Collider2D[] hitBuffer = new Collider2D[MaxHits];
+        private readonly ContactFilter2D filter = ContactFilter2D.noFilter;
 
         public ObjectPool Pool { get; set; }
 
@@ -63,12 +66,11 @@ namespace Game.Weapons
         {
             exploded = true;
             rb.linearVelocity = Vector2.zero;
-
-            Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, explosionRadius);
-            foreach (Collider2D hit in hits)
+            int count = Physics2D.OverlapCircle(transform.position, explosionRadius, filter, hitBuffer);
+            for (int i = 0; i < count; i ++)
             {
-                if (!hit.CompareTag("Enemy")) continue;
-                if (hit.TryGetComponent(out Health health))
+                if (!hitBuffer[i].CompareTag("Enemy")) continue;
+                if (hitBuffer[i].TryGetComponent(out Health health))
                     health.TakeDamage(damage);
             }
 

@@ -28,6 +28,63 @@
 | 房间生成           | RoomConfig (ScriptableObject) + 简单工厂 | 关卡数据驱动，房间布局和敌群可迅速调整   |
 | 资源管理           | Addressables (可选) 或 Resources 目录 | 渐进式引入，V1 可暂用 Resources，V2 切 Addressables |
 
+### 架构总览（V1 完成时）
+
+```mermaid
+graph TD
+    subgraph Input[输入层]
+        PIH[PlayerInputHandler<br/>唯一读键鼠的地方]
+        IB[InputBuffer<br/>离散动作排队]
+        CMD[ICommand<br/>Move/Attack/Dash/Grenade]
+    end
+
+    subgraph Entity[实体层]
+        PC[PlayerController<br/>状态机上下文]
+        EC[EnemyController]
+        HP[Health<br/>通用组件·只发局部事件]
+        FSM[StateMachine<br/>状态类驱动]
+    end
+
+    subgraph Weapon[武器层]
+        WC[WeaponController<br/>冷却·弹药]
+        WS[IWeaponStrategy<br/>Ranged/Melee]
+        WD[(WeaponData SO)]
+    end
+
+    subgraph Level[关卡层]
+        LM[LevelManager<br/>唯一知道房间顺序]
+        RM[Room<br/>不知道自己是第几个]
+        DR[Door<br/>不知道通向哪]
+        RC[(RoomConfig SO)]
+    end
+
+    subgraph Core[核心层]
+        EB{{EventBus<br/>全局事件总线}}
+        OP[ObjectPool]
+        CF[CombatFeedback]
+    end
+
+    subgraph UI[表现层]
+        UIS[HealthBar / Ammo / Cooldown / Minimap]
+        JUICE[HitStop / ScreenShake / 粒子]
+    end
+
+    PIH --> IB --> CMD
+    CMD --> PC & WC
+    WC --> WS --> WD
+    PC --> FSM
+    HP -.局部事件.-> PC & EC
+    RM -.局部事件.-> LM
+    PC & EC & LM -.桥接.-> EB
+    WC & DR --> EB
+    EB --> UIS & CF
+    CF --> JUICE
+    LM --> RM --> RC
+    WS & CF --> OP
+```
+
+**看这张图的两个要点**：① `EventBus` 是枢纽，但**没有一条箭头是双向的**——UI 只订阅、游戏逻辑只发布，这就是"模块间零硬引用"。② 所有 `-.局部事件.->` 后面都跟着 `-.桥接.->`——**通用组件只发局部事件，"身份"由知道身份的上层补上再广播**（这个套路在 `Health→PlayerController`、`Health→EnemyController`、`Room→LevelManager` 重复了三次）。
+
 ---
 
 ## 🗺️ 六周开发路线
@@ -159,7 +216,7 @@ Assets/
 - ✅ `v1-week3`: EventBus、ScriptableObject 武器、策略切换、弹药与拾取（已完成，详见 [devlog/week3.md](devlog/week3.md)）
 - ✅ `v1-week4`: 命令模式、输入缓冲、手雷技能、技能冷却 UI（已完成，详见 [devlog/week4.md](devlog/week4.md)）
 - ✅ `v1-week5`: 房间系统、关卡流程、Cinemachine 过渡、Boss 房、小地图（已完成，详见 [devlog/week5.md](devlog/week5.md)）
-- `v1-week6`: 打磨、特效、性能优化
+- ✅ `v1-week6`: 命中停顿、屏幕震动、粒子特效、GC 优化、对象池泄漏诊断、构建打包（已完成，详见 [devlog/week6.md](devlog/week6.md)）
 
 ---
 
