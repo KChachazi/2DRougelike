@@ -11,7 +11,7 @@
 - **引擎**：Unity 6.3 LTS (6000.3.19f1)，2D + URP 模板
 - **目标**：在 6 周内实现完整的房间战斗、敌人 AI、数据驱动武器系统，并沉淀一套与引擎低耦合的核心逻辑（可复用于后续 3D 和联机版本）。
 - **参考游戏**：《Soul Knight》（元气骑士）
-- **当前状态**：项目已初始化（URP 2D 模板 + Input System），尚未开始第 1 周开发，详见 [CLAUDE.md](CLAUDE.md) 中的“当前进度”
+- **当前状态**：六周计划全部完成，V1（2D 版）收官，`v1-week1`~`v1-week6` 标签已打，详见 [CLAUDE.md](CLAUDE.md) 中的“当前进度”
 
 ---
 
@@ -216,7 +216,7 @@ Assets/
 - ✅ `v1-week3`: EventBus、ScriptableObject 武器、策略切换、弹药与拾取（已完成，详见 [devlog/week3.md](devlog/week3.md)）
 - ✅ `v1-week4`: 命令模式、输入缓冲、手雷技能、技能冷却 UI（已完成，详见 [devlog/week4.md](devlog/week4.md)）
 - ✅ `v1-week5`: 房间系统、关卡流程、Cinemachine 过渡、Boss 房、小地图（已完成，详见 [devlog/week5.md](devlog/week5.md)）
-- ✅ `v1-week6`: 命中停顿、屏幕震动、粒子特效、GC 优化、对象池泄漏诊断、构建打包（已完成，详见 [devlog/week6.md](devlog/week6.md)）
+- ✅ `v1-week6`: 命中停顿、屏幕震动、粒子特效、GC 优化、对象池泄漏诊断、构建打包、通关收尾（已完成，详见 [devlog/week6.md](devlog/week6.md)）
 
 ---
 

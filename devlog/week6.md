@@ -162,6 +162,7 @@ namespace Game.Core
 **⚠️ 两个必须理解的坑:**
 
 **① `WaitForSeconds` 在这里是死路。** 它按**缩放时间**计时,而我们刚把 `timeScale` 设成了 0 —— 缩放时间根本不流逝,协程会**永远卡在那儿,游戏再也不会恢复**。必须用 `WaitForSecondsRealtime`(真实时间)。
+
 > 这是 Unity 里最经典的坑之一。记住规则:**任何在 `timeScale = 0` 期间需要继续走的东西(暂停菜单动画、hit stop、UI 过渡),都必须用 unscaled 时间。**
 
 **② 重入必须处理。** 连续命中时,第二次 `Do()` 会启动新协程。如果不 `StopCoroutine` 掉第一个,第一个协程醒来后会把 `timeScale` 设回 1 —— **把第二次的停顿吃掉**。
@@ -291,6 +292,7 @@ namespace Game.Core
 1. **`HitStop` + `CombatFeedback`**:选中场景里的 `GameManager` → `Add Component` → `HitStop`,再 `Add Component` → `CombatFeedback`。特效那两个池子先留空(步骤 2 配)。
 2. **`ScreenShake`**:对**每一台** `RoomCamera`(3 个房间各一台)→ `Add Component` → `ScreenShake`。
    > 注意 vcam 是 inactive 的,在 Hierarchy 里展开房间才能选到它。
+   >
 3. 保存场景。
 
 ### ✅ 步骤 1 验收
@@ -357,11 +359,11 @@ namespace Game.Core
 
 这两个正好是**对照组**:
 
-| | 敌人 | 命中火花 |
-|---|---|---|
+|          | 敌人               | 命中火花                              |
+| -------- | ------------------ | ------------------------------------- |
 | 生成频率 | 进房间时一次性一批 | **每命中一次一个**,一梭子几十个 |
-| 池化收益 | 接近零 | 很大 |
-| 结论 | 不池化 | **池化** |
+| 池化收益 | 接近零             | 很大                                  |
+| 结论     | 不池化             | **池化**                        |
 
 **判断标准从来不是"它是什么",而是"它多频繁"。** 这就是第 5 周说的"架构约定是工具不是教条"的具体含义。
 
@@ -622,9 +624,11 @@ graph TD
 1. 菜单 `File > Build Settings`(Unity 6 里可能叫 `Build Profiles`)。
 2. **`Scenes In Build`**:点 `Add Open Scenes`,确保 `SampleScene` 在列表里且**打勾**。
    > 忘了这步的话,打出来的包会是一个**纯黑窗口**——这是新手最常见的打包问题。
+   >
 3. `Platform` 选 `Windows`,`Architecture` 选 `x86_64`。
 4. 点 `Build`,选一个**空文件夹**(比如 `F:\2d\Build\`)。
    > ⚠️ **千万别选项目目录里的文件夹**,否则 Unity 会把构建产物又当成资源导入,陷入递归。
+   >
 5. 等它编译完,双击生成的 `.exe`。
 6. **`Alt + F4` 退出**(我们没做退出按钮)。
 
@@ -646,30 +650,30 @@ graph TD
 
 ## 常见问题排查
 
-| 现象 | 可能原因 | 排查 |
-|---|---|---|
-| **游戏一打中敌人就永久卡死** | `HitStop` 用了 `WaitForSeconds`(timeScale=0 时它永不返回) | 改成 `WaitForSecondsRealtime` |
-| 画面停了但不震 | `ScreenShake` 用了 `Time.deltaTime` | 改成 `Time.unscaledDeltaTime` |
-| 连续命中时震动越来越猛 | `intensity` 写成了累加 | 用 `Mathf.Max(intensity, e.Intensity)` |
-| 切房间后画面歪了 | `ScreenShake.OnDisable` 没复位 `localPosition` | 加上复位 |
-| 完全没有震动 | `ScreenShake` 只挂在了一台 vcam 上 | **每台 `RoomCamera` 都要挂** |
-| 粒子只播一次就再也不出现 | `Stop Action` 设成了 `Destroy`,池化对象被销毁了 | 改成 `None` |
-| 粒子一直在喷不停 | `Looping` 没取消勾选 | 取消 `Looping`,用 `Bursts` |
-| `Active Count` 只涨不落 | 有对象没被 `Release`(泄漏) | 看是哪个池,检查它的回收路径 |
-| Console 报"被重复 Release" | 同一对象有两条回收路径同时触发 | 加一个 `released` 标记,或检查逻辑 |
-| 打包出来是黑屏 | `Scenes In Build` 里没加场景 | `Build Settings` → `Add Open Scenes` |
-| 手感像卡顿而不是打击感 | `hitStopDuration` 太长 | 调到 `0.03~0.05` |
+| 现象                               | 可能原因                                                      | 排查                                      |
+| ---------------------------------- | ------------------------------------------------------------- | ----------------------------------------- |
+| **游戏一打中敌人就永久卡死** | `HitStop` 用了 `WaitForSeconds`(timeScale=0 时它永不返回) | 改成`WaitForSecondsRealtime`            |
+| 画面停了但不震                     | `ScreenShake` 用了 `Time.deltaTime`                       | 改成`Time.unscaledDeltaTime`            |
+| 连续命中时震动越来越猛             | `intensity` 写成了累加                                      | 用`Mathf.Max(intensity, e.Intensity)`   |
+| 切房间后画面歪了                   | `ScreenShake.OnDisable` 没复位 `localPosition`            | 加上复位                                  |
+| 完全没有震动                       | `ScreenShake` 只挂在了一台 vcam 上                          | **每台 `RoomCamera` 都要挂**      |
+| 粒子只播一次就再也不出现           | `Stop Action` 设成了 `Destroy`,池化对象被销毁了           | 改成`None`                              |
+| 粒子一直在喷不停                   | `Looping` 没取消勾选                                        | 取消`Looping`,用 `Bursts`             |
+| `Active Count` 只涨不落          | 有对象没被`Release`(泄漏)                                   | 看是哪个池,检查它的回收路径               |
+| Console 报"被重复 Release"         | 同一对象有两条回收路径同时触发                                | 加一个`released` 标记,或检查逻辑        |
+| 打包出来是黑屏                     | `Scenes In Build` 里没加场景                                | `Build Settings` → `Add Open Scenes` |
+| 手感像卡顿而不是打击感             | `hitStopDuration` 太长                                      | 调到`0.03~0.05`                         |
 
 ---
 
 ## 本周验收总 checklist
 
-- [x] 命中有顿挫感 + 屏幕震动 + 火花;击杀有更大的反馈。
-- [x] 手感参数全部集中在 `CombatFeedback` 一个面板上,调整不用改代码。
-- [x] 反馈系统**不认识子弹/近战/手雷** —— 它只订阅 `EnemyDamagedEvent`。
-- [x] Profiler 里稳态 GC Alloc 接近 0;范围查询改成零分配重载,行为不变。
-- [x] 对象池有泄漏诊断,`Active Count` 正常回落。
-- [x] README 有架构图,能打出可运行的 exe。
+- [X] 命中有顿挫感 + 屏幕震动 + 火花;击杀有更大的反馈。
+- [X] 手感参数全部集中在 `CombatFeedback` 一个面板上,调整不用改代码。
+- [X] 反馈系统**不认识子弹/近战/手雷** —— 它只订阅 `EnemyDamagedEvent`。
+- [X] Profiler 里稳态 GC Alloc 接近 0;范围查询改成零分配重载,行为不变。
+- [X] 对象池有泄漏诊断,`Active Count` 正常回落。
+- [X] README 有架构图,能打出可运行的 exe。
 
 **四步全部完成并验收。第 6 周完成 —— V1(2D 版本)六周全部结束。**
 
@@ -702,15 +706,15 @@ graph TD
 ### 踩过的坑
 
 1. **屏幕震动导致摄像机永久错位**——`ScreenShake.OnDisable` 里最初漏了复位 `localPosition`。震动途中一切房间,那台摄像机就带着随机偏移量被关掉,下次进这个房间画面是歪的。**任何"会被关掉又打开"的东西,都要想想它带着什么状态离开**(和池化对象要复位状态是同一类问题)。
-
 2. **`Physics2D.OverlapCircleNonAlloc` 在 Unity 6 已废弃**(CS0618)——Unity 说"零分配已经做进常规 `OverlapCircle` 了",要改用 `OverlapCircle(点, 半径, ContactFilter2D, 缓冲区)`。**紧接着 `ContactFilter2D.NoFilter()` 方法也废弃了**,改成静态属性 `ContactFilter2D.noFilter`。连着两个废弃警告,是"依赖外部 API"的真实成本:Unity 6 对 2D 物理 API 做了一轮清理,碰到的代码都得跟着改。
+
    > **但改动只涉及两个文件**(`MeleeWeaponStrategy`、`Grenade`),因为物理查询本来就集中在这两处。教训不是"背新 API"(下版本可能又变),而是**把"会变的东西"隔离在尽量少的地方**。对照第 5 周的 Cinemachine:那次我们**没碰它的 API**(只用 `SetActive`),所以升级一行没坏;这次 `OverlapCircle` 是核心物理 API、绕不开,就得跟着改——**能封的封、封不了的也要集中。**
-
+   >
 3. **Boss 追踪边缘紫/橙频闪**——把 Boss 的 `detectionRange` 调到 8,但 `loseSightRange` 还是 6,**两者大小关系反了**。距离在 6~8 之间时,Patrol(距离≤8→追)和 Chase(距离>6→巡逻)两个转换同时成立,状态机每帧横跳。
+
    > 根因是破坏了**迟滞(hysteresis)**:`detectionRange`(发现)应该**小**、`loseSightRange`(跟丢)应该**大**,中间那段"死区"就是防抖动的。修法是 `loseSightRange` 调到 11(> 8)。**任何"进入条件"和"退出条件"用不同阈值的地方,退出阈值都要比进入阈值宽松**——AI、声音开关、UI 显隐,只要"临界点附近抖",先查这个。
-
+   >
 4. **`ObjectPool` 预热对象没登记进 `inPool`**——`Awake` 预热时 `Enqueue` 了但没 `inPool.Add`,导致诊断用的 `inPool` 从第一帧起就和"实际在池里的对象"不同步,重复 Release 检测会漏报。**诊断代码自己有 bug,比没有更糟——它让你误信一个错误的信号。**
-
 5. **Profiler 判读**——第一次打开 Profiler,看到的 12KB GC 全是 URP(渲染管线)自己的分配,不是游戏代码;而且选中的是一个 474ms 的尖峰帧(暂停那一帧),不代表常态。**读 Profiler 的核心技能是分清"引擎"和"我的代码",以及"尖峰帧不算数"。** 好消息:游戏脚本几乎不分配内存——前五周的对象池 + struct 事件习惯,已经把 GC 控制得很好了。
 
 ### 手感调整(用户自己的判断,比文档默认值好)
@@ -721,14 +725,14 @@ graph TD
 
 到这里,V1(2D 版本)完成了。回头看你实际造出来的东西:
 
-| 周 | 模式 | 它买到了什么 |
-|---|---|---|
-| 1 | 对象池、Game Loop | 子弹不再 Instantiate/Destroy,帧率稳 |
-| 2 | 状态机(状态类) | 加一个状态 = 加一个类,不动别人 |
-| 3 | EventBus、策略 + SO | **UI 对游戏逻辑零引用**;加武器 = 加个资产 |
-| 4 | 命令模式 + 输入缓冲 | 输入统一到一处;"跟手"的手感 |
-| 5 | 简单工厂 + 数据驱动关卡 | 加房间 = 加个资产,不碰场景 |
-| 6 | 事件驱动的表现层 | 手感参数集中一处;性能可测量 |
+| 周 | 模式                    | 它买到了什么                                    |
+| -- | ----------------------- | ----------------------------------------------- |
+| 1  | 对象池、Game Loop       | 子弹不再 Instantiate/Destroy,帧率稳             |
+| 2  | 状态机(状态类)          | 加一个状态 = 加一个类,不动别人                  |
+| 3  | EventBus、策略 + SO     | **UI 对游戏逻辑零引用**;加武器 = 加个资产 |
+| 4  | 命令模式 + 输入缓冲     | 输入统一到一处;"跟手"的手感                     |
+| 5  | 简单工厂 + 数据驱动关卡 | 加房间 = 加个资产,不碰场景                      |
+| 6  | 事件驱动的表现层        | 手感参数集中一处;性能可测量                     |
 
 **但比这些更值钱的,是你踩过的坑和形成的判断力**:
 
@@ -740,3 +744,84 @@ graph TD
 - **"修 bug 时只盯症状会引入回归"** —— 删掉 `Color.white` 让 Boss 变紫了,却让普通敌人卡在橙色。
 
 **下一步(V2/V3)**:README 里写的 3D 化和联机。你会发现 `EventBus`、`ICommand`、`IWeaponStrategy`、`RoomConfig` 这几层**基本能原样搬过去** —— 因为它们从不认识 `Sprite`、不认识 2D 物理。这就是六周前定下"低耦合、可迁移"这个目标的意义。
+
+---
+
+## 补充:通关收尾流程(2026-07-25,六周结束后)
+
+> 决定在正式进入 V1.5(武器/伤害深化)之前,先把游戏从"能跑"补成"从头到尾完整"——目的是录一段"打三关→通关"的完整流程视频。这一步**不是新功能**,而是给已经存在的信号接一个 UI 表现层,顺手修了一个附带发现的小 bug。
+
+### 发现:通关信号其实早就有了
+
+[`LevelManager.EnterRoom`](../Assets/Scripts/Level/LevelManager.cs) 里,当玩家走出最后一个房间的门(索引越界)时,五周前就已经在广播 `EventBus.Publish(new LevelCompletedEvent())`——只是这个事件从第 5 周写下那一刻起就没人订阅,所以打完 Boss 走出门,表面上什么都没发生。这次要做的是**新增订阅者**,不是新逻辑。
+
+### 新增 `Assets/Scripts/UI/VictoryUI.cs`
+
+参考实现在 `Reference/Scripts/UI/VictoryUI.cs`:
+
+```csharp
+using Game.Core;
+using UnityEngine;
+
+namespace Game.UI
+{
+    public class VictoryUI : MonoBehaviour
+    {
+        [SerializeField] private GameObject victoryPanel;
+        [SerializeField] private bool freezeTimeOnVictory = true;
+
+        private void Awake()
+        {
+            if (victoryPanel != null) victoryPanel.SetActive(false);
+        }
+
+        private void OnEnable() => EventBus.Subscribe<LevelCompletedEvent>(OnLevelCompleted);
+        private void OnDisable() => EventBus.Unsubscribe<LevelCompletedEvent>(OnLevelCompleted);
+
+        private void OnLevelCompleted(LevelCompletedEvent e)
+        {
+            if (victoryPanel != null) victoryPanel.SetActive(true);
+            if (freezeTimeOnVictory) Time.timeScale = 0f;
+        }
+    }
+}
+```
+
+**设计要点**:
+
+- 和 `HealthBarUI`/`MinimapUI` 同一套路——**只订阅 `EventBus`,不认识 `LevelManager`/`Room`**。
+- 收到事件后把 `Time.timeScale` 设成 0,冻结整个场景(物理、动画、敌人全部停住),给通关那一刻一个干净的定格画面,呼应本周步骤 1 里 `HitStop` 用过的同一手法。开关做成 `[SerializeField]`,不想要这个效果可以在 Inspector 关掉。
+- `victoryPanel` 一开始是关闭状态的 GameObject——**脚本必须挂在常驻激活的物体上**(比如 Canvas 根物体),不能挂在面板自己身上,否则面板关闭时 `OnEnable` 根本不会跑,永远订阅不到事件。这是"订阅放在 `OnEnable`"这条铁律的一个容易踩的反例。
+
+**Unity 编辑器操作**:
+
+1. Hierarchy 里的 Canvas 根物体叫 `UI`,右键 → `UI > Panel`,改名 `VictoryPanel`,颜色改黑色、Alpha ≈ 160。
+2. `VictoryPanel` 下右键 → `UI > Text - TextMeshPro`,改名 `VictoryText`,内容填"恭喜通关!",居中、字号调大(如 72)。
+3. 取消勾选 `VictoryPanel` 左上角的激活勾(先手动关一次,双保险)。
+4. 选中 `UI`(Canvas 根物体,不是 `VictoryPanel`)→ `Add Component` → `VictoryUI` → 把 `VictoryPanel` 拖进 `Victory Panel` 槽。
+5. `Ctrl+S` 保存场景。
+
+### 顺手修的 bug:小地图"当前房间"高亮卡死
+
+搭 `VictoryUI` 时用户追问了一句"离开第三个房间后,左上角小地图对不对"——一查,[`MinimapUI.cs:47`](../Assets/Scripts/UI/MinimapUI.cs#L47) 只在收到 `RoomEnteredEvent` 时才更新 `currentIndex`(当前房间,显示黄色)。但离开最后一个房间走的是"索引越界→直接 `return`"这条分支([`LevelManager.cs:34-41`](../Assets/Scripts/Level/LevelManager.cs#L34-L41)),**根本不会再发一次 `RoomEnteredEvent`**。结果 `currentIndex` 永远停在 Boss 房,小地图上 Boss 房会**永远显示"当前所在"的黄色**,盖掉它本该有的"已清空"绿色——即便玩家早已经通关离开。
+
+修法:让 `MinimapUI` 也订阅 `LevelCompletedEvent`,通关时把 `currentIndex` 重置成 `-1`:
+
+```csharp
+// OnEnable / OnDisable 里各加一行成对的 Subscribe / Unsubscribe<LevelCompletedEvent>
+
+// 离开最后一个房间时 LevelManager 不会再发 RoomEnteredEvent，
+// currentIndex 若不重置会永远停在 Boss 房，把它的"已清空"绿色错误地盖成"当前"黄色。
+private void OnLevelCompleted(LevelCompletedEvent e) { currentIndex = -1; Refresh(); }
+```
+
+完整代码见 `Reference/Scripts/UI/MinimapUI.cs`。**注意背景(相机画面)不用改**:`LevelManager` 索引越界时故意不调用 `rooms[currentIndex].Exit()`,所以 Boss 房的摄像机会保持开启、画面不会黑屏——这本来就是正确行为,配合 `VictoryUI` 的冻结,画面定格在 Boss 房是预期效果。
+
+### ✅ 验收
+
+- [ ] 依次打完 3 个房间(含 Boss),走出 Boss 房的门 → 画面定格 + 弹出"恭喜通关!"面板。
+- [ ] 通关瞬间,左上角小地图上 **Boss 房显示绿色(已清空)**,不是黄色。
+- [ ] 通关前正常游玩时,小地图的"当前房间"高亮(黄色)仍然正常跟随房间切换(没有被这次改动破坏)。
+- [ ] 背景画面在通关瞬间**不会黑屏**,停在离开 Boss 房那一刻的画面上。
+
+这一节验收通过后,V1 才算真正意义上"从头到尾完整"。之后转入 V1.5(武器/伤害深化,Decorator + 状态异常系统)。

@@ -25,12 +25,14 @@ namespace Game.UI
             EventBus.Subscribe<LevelStartedEvent>(OnLevelStarted);
             EventBus.Subscribe<RoomEnteredEvent>(OnRoomEntered);
             EventBus.Subscribe<RoomClearedEvent>(OnRoomCleared);
+            EventBus.Subscribe<LevelCompletedEvent>(OnLevelCompleted);
         }
         private void OnDisable()
         {
             EventBus.Unsubscribe<LevelStartedEvent>(OnLevelStarted);
             EventBus.Unsubscribe<RoomEnteredEvent>(OnRoomEntered);
             EventBus.Unsubscribe<RoomClearedEvent>(OnRoomCleared);
+            EventBus.Unsubscribe<LevelCompletedEvent>(OnLevelCompleted);
         }
 
         private void OnLevelStarted(LevelStartedEvent e)
@@ -46,7 +48,7 @@ namespace Game.UI
         }
         private void OnRoomEntered(RoomEnteredEvent e) { currentIndex = e.Index; Refresh(); }
         private void OnRoomCleared(RoomClearedEvent e) { clearedFlags[e.Index] = true; Refresh(); }
-
+        private void OnLevelCompleted(LevelCompletedEvent e) { currentIndex = -1; Refresh(); }
         private void Refresh()
         {
             if (icons == null) return ;

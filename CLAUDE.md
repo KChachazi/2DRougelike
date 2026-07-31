@@ -9,7 +9,7 @@
 
 ## 当前进度(务必保持最新)
 
-- 状态:**六周全部完成并通过验收;`v1-week1`~`v1-week5` 标签已打,`v1-week6` 待确认。V1(2D 版本)收官。**
+- 状态:**六周全部完成并通过验收;`v1-week1`~`v1-week6` 六个标签已全部补打(2026-07-25,本地),尚未 `push` 到远程。V1(2D 版本)收官,V1.5(深化)启动中。**
 - 已有内容:
   - Unity 6000.3.19f1 + URP 2D 模板默认工程,`.gitignore`/`.gitattributes` 已提交。
   - 第 1 周:`Assets/Scripts/Core|Entities|Weapons` 下的 8 个文件、场景搭建均已由用户完成并通过验收,详见 `devlog/week1.md`。
@@ -25,8 +25,16 @@
   - 第 5 周的坑(`devlog/week5.md`「踩过的坑」):① `OnDestory` **拼写错**(Unity 魔法方法靠方法名匹配,拼错则永不调用,编译器不报);② `LevelManager.currentIndex` 初始值写成 `1`(应为 `-1`)——**第 8 个沉默 bug**,被"正好有 3 个房间"掩盖着;③ **修 bug 引入回归**:为了让 Boss 显紫,直接删掉 `EnemyPatrolState` 里的 `Color.white`,结果普通敌人追击后永远卡在橙色——正解是记 `OriginalColor` 而非硬编码本色。
   - 第 6 周:分 4 步全部完成并通过验收(手感三件套 → 粒子特效 → Profiler/GC 优化 → 架构图 + 打包)。新增 4 个脚本(`Core/HitStop`+`ScreenShake`+`CombatFeedback`+`PooledParticle`)、修改 5 个;新增 `HitSpark`/`DeathSpark` 粒子预制体 + 池;README 加了 Mermaid 架构图;**成功构建出可运行的 Windows exe**。详见 `devlog/week6.md`。
   - 第 6 周的坑:① `ScreenShake.OnDisable` 漏复位 `localPosition` → 震动中切房间画面留歪;② **Unity 6 废弃了 `OverlapCircleNonAlloc`(→`OverlapCircle`+`ContactFilter2D`)和 `ContactFilter2D.NoFilter()`(→静态属性 `noFilter`)**——2D 物理 API 清理,碰到的代码都要跟着改(但只涉及 2 个文件,因为物理查询集中在 `MeleeWeaponStrategy`+`Grenade`);③ Boss `detectionRange 8 > loseSightRange 6` 破坏迟滞 → 状态频闪(退出阈值必须比进入阈值宽);④ `ObjectPool` 预热对象漏登记 `inPool` → 诊断误报。用户还自主把"命中震屏"改成"仅击杀震屏"(手感判断优于文档默认值)。
+- **通关收尾**(2026-07-25):新增 `UI/VictoryUI.cs`(订阅 `LevelCompletedEvent`,通关弹出恭喜面板 + 冻结时间);修复 `MinimapUI` 离开最终房间后 `currentIndex` 不重置导致 Boss 房图标卡在黄色的问题。**V1 至此才真正"从头到尾完整"。**
 - 目录已全部落地:`Core`/`Entities`/`Weapons`/`StateMachines`/`UI`/`Commands`/`Level` + `Data`/`Art`/`Prefabs`。
-- 下一步:**V1 结束**。README 规划的 V2(3D 化)、V3(联机)是后续大版本。`EventBus`/`ICommand`/`IWeaponStrategy`/`RoomConfig` 这几层不认识 2D Sprite/物理,理论上可原样迁移。
+- **2026-07-25 换机说明**:项目从另一台电脑通过 GitHub 拉取到当前机器,`Reference/`(gitignore,不进版本库)在新机器上是空的,已根据本文件记录 + `Assets/Scripts/` 现状 1:1 复原(`Reference/Scripts/` 镜像 `Assets/Scripts/`,51 个文件)。同时发现旧机器上的 `v1-week*` 标签从未真正打过/未推送,已在本机补打并核对 README 状态描述。
+- 下一步:**V1(2D 核心玩法)收官,进入 V1.5(深化阶段)**,而不是立刻做 V2(3D 化)——用户判断"核心玩法刚搭起来,3D 化为时过早",且学习目标是把游戏编程模式吃透,武器系统这类还有明显深挖空间。V2/V3 推迟为更后面的大版本,`EventBus`/`ICommand`/`IWeaponStrategy`/`RoomConfig` 这几层设计上不认识 2D Sprite/物理,理论上可原样迁移,不会因为推迟而过时。
+  - **V1.5 四个方向,已确定优先级**(2026-07-25 讨论确定):
+    1. **武器/伤害深化**(Decorator 装饰器 + 状态异常系统)——**下一步就做这个**。给武器叠加"燃烧/冰冻/击退"等附加效果,`Health` 上加 DoT/减速/易伤。风险最低、复用现有 `IWeaponStrategy`+`WeaponData` 地基,不涉及关卡/AI。
+    2. 敌人 AI 深化(行为树/技能系统)——现有敌人是固定 4 态 FSM,换成行为树支持多敌人类型/远近战编队/Boss 多阶段技能。难度最高,放在①之后是为了复用状态异常系统。
+    3. 程序化关卡生成——`LevelManager` 从固定房间数组换成图结构/规则驱动拓扑(分支、宝箱房、商店房)。放在①②之后,是因为地图生成的价值取决于房间里能放的敌人/武器池够不够丰富。
+    4. 存档系统(Memento + 云存模式)——难度最低但最独立,放最后是因为越往后做,要序列化的状态(强化、图鉴、进度)越稳定,能少返工。
+  - **尚未开始**:V1.5 的四个方向目前都还没有具体设计/代码,下一次对话应从"武器/伤害深化"的详细方案(装饰器接口设计、状态异常怎么挂在 `Health` 上、是否需要新的 `GameEvents`)开始,遵循「协作背景与文档要求」一节的详细文档标准。
 
 **更新规则**:每完成一项里程碑(一周任务,或用户认可的阶段性成果)后:
 1. 更新本节的"已有内容 / 尚未创建 / 下一步";
@@ -37,7 +45,7 @@
 
 > "代码实际长什么样"的速查表,方便新对话快速定位。真实进度以 `Assets/` 为准;下面每条都对应已经落地的文件。
 
-**脚本清单(`Assets/Scripts/`,共 49 个 `.cs`)**
+**脚本清单(`Assets/Scripts/`,共 50 个 `.cs`)**
 
 - `Core/`
   - `GameManager.cs`——单例(`Instance`),`[SerializeField] player` 只读暴露为 `Player`。目前很轻,只做单例 + Player 引用。
@@ -73,7 +81,8 @@
   - `HealthBarUI.cs`——订阅 `PlayerHealthChangedEvent`,设 `Image.fillAmount = (float)Current/Max`。**对 Player/Health 零引用**。
   - `AmmoUI.cs`——订阅 `AmmoChangedEvent` + `WeaponChangedEvent`(两个事件分别到达,各自缓存后 `Refresh()` 重拼文本);`Max < 0` 显示 `∞`。
   - **`CooldownUI.cs`**(第 4 周)——**通用技能冷却环形遮罩**。`[SerializeField] SkillId skill` 决定自己盯哪个技能,订阅 `SkillCooldownStartedEvent` 后 `if (e.Skill != skill) return;` 过滤。**一个脚本服务任意技能**:加新技能只需加枚举值 + 挂个组件选中它,UI 代码不改。收到事件后**自己倒计时**(不靠每帧广播)。
-  - **`MinimapUI.cs`**(第 5 周)——一排格子代表房间。订阅 `LevelStartedEvent`(按房间数生成格子)/`RoomEnteredEvent`(高亮当前)/`RoomClearedEvent`(标记已清)。**不认识 `LevelManager`、不认识 `Room`**。颜色优先级:当前(黄) > 已清空(绿) > Boss 未清(红) > 没去过(灰)。
+  - **`MinimapUI.cs`**(第 5 周)——一排格子代表房间。订阅 `LevelStartedEvent`(按房间数生成格子)/`RoomEnteredEvent`(高亮当前)/`RoomClearedEvent`(标记已清)/**`LevelCompletedEvent`(通关重置 currentIndex)**。**不认识 `LevelManager`、不认识 `Room`**。颜色优先级:当前(黄) > 已清空(绿) > Boss 未清(红) > 没去过(灰)。
+  - **`VictoryUI.cs`**(第 6 周通关收尾)——挂 Canvas 根物体,订阅 `LevelCompletedEvent`,显示胜利面板 + 可选冻结时间(`freezeTimeOnVictory`)。**和 `HealthBarUI`/`MinimapUI` 同一套路:只订阅 EventBus,不认识任何游戏逻辑。**
 - **`Level/`**(第 5 周新建,命名空间 `Game.Level`)
   - `RoomConfig.cs`——房间 SO(`Create > Game > Room Config`):`roomName`/`type`/`enemySpawns[]`/`pickupSpawns[]`。生成位置用**相对房间中心的 `localPosition`**(所以同一份配置能被任意位置的房间复用)。同文件有 `EnemySpawn`/`PickupSpawn` 两个 `[System.Serializable] struct`。资产在 `Assets/Data/`:`Room_1_Config`/`Room_2_Config`/`BossRoomConfig`。
   - `EnemyFactory.cs`——**静态简单工厂**,`Create(prefab, worldPos, parent)`。现在只包了一层 `Instantiate`,价值在于**以后改生成逻辑(池化/按难度调血/生成时注册)只有这一个入口**。**敌人刻意不走对象池**——生成频率极低(进房间时一次性一批),池化收益接近零。
@@ -134,8 +143,8 @@
 
 ## 开发节奏
 
-- 当前阶段:**六周全部完成,V1(2D)收官**。六篇 `devlog/week1~6.md` 均已写完实际完成记录;`v1-week1`~`v1-week5` 标签已打,`v1-week6` 待用户确认。
-- **下一步(如果继续)**:README 规划的 V2(3D 化)、V3(联机)。迁移时 `EventBus`/`ICommand`/`IWeaponStrategy`/`RoomConfig`/`StateMachine` 这几层不认识 2D Sprite/物理,理论上可原样搬;要改的是 `Bullet`/`MoveTowards`/`OverlapCircle` 这些碰 2D 物理和渲染的地方。
+- 当前阶段:**六周全部完成,V1(2D)收官,V1.5(深化)启动**。六篇 `devlog/week1~6.md` 均已写完实际完成记录;`v1-week1`~`v1-week6` 六个标签已本地补打(未 push)。
+- **下一步**:先做 V1.5——武器/伤害深化(Decorator + 状态异常)→ 敌人 AI 深化(行为树)→ 程序化关卡生成 → 存档系统,四个方向的优先级理由见上方「当前进度」。README 规划的 V2(3D 化)、V3(联机)推迟到 V1.5 之后:迁移时 `EventBus`/`ICommand`/`IWeaponStrategy`/`RoomConfig`/`StateMachine` 这几层不认识 2D Sprite/物理,理论上可原样搬;要改的是 `Bullet`/`MoveTowards`/`OverlapCircle` 这些碰 2D 物理和渲染的地方。
 - **发布前清理清单**(答疑用):`ObjectPool.debugMode` 关掉、`DebugText.display` 关掉、清临时 `Debug.Log`;打包时 `Build Settings > Scenes In Build` 必须勾上场景(否则黑屏),构建目录别选在项目内(会递归导入)。
 - **分步下发的做法已连续三周验证有效,继续沿用**:大周拆成若干"每步可编译、可 Play 验收"的小步(第 3、4、5 周都是 4 步),每步末尾给 ✅ 验收清单,用户做完一步回来验收再进下一步。**纯重构的步骤,验收标准就写"行为和上周完全一样"**(第 4 周步骤 1 这么做的,效果很好)。**"不写代码、只做对比实验"的步骤也很有价值**(第 4 周步骤 2 让用户把 `bufferDuration` 调成 0 体会差异)。
 - **课后练习值得继续出**:第 4 周出了三道,用户全做了,而且第一道让他真正撞上了"队列存引用不是快照"这个坑——**比直接讲有效得多**。第 5 周出了三道(清空奖励该放哪、Boss 血条要不要新事件、房间可重进要处理哪些状态)。
