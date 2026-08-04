@@ -922,6 +922,7 @@ GameObject:
   - component: {fileID: 764213636}
   - component: {fileID: 764213637}
   - component: {fileID: 764213638}
+  - component: {fileID: 764213639}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -1114,9 +1115,9 @@ MonoBehaviour:
   bulletPool: {fileID: 1826852017}
   firePoint: {fileID: 700471052}
   weapons:
-  - {fileID: 11400000, guid: e68d7a66abfd0994fbb95edd78f384fd, type: 2}
-  - {fileID: 11400000, guid: 5ae7362f7026dc84fbdeb48c358721e8, type: 2}
-  - {fileID: 11400000, guid: c7a0242918a90fa4598c87d0c7cff9a0, type: 2}
+  - {fileID: 11400000, guid: 9d45d92cd7c86bc4bb5ddba39c9c2939, type: 2}
+  - {fileID: 11400000, guid: 435a9314d3820464fa61f8e03b681518, type: 2}
+  - {fileID: 11400000, guid: d907fb7f7e48ad04ca7f0968b7e1a69a, type: 2}
 --- !u!114 &764213637
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1146,6 +1147,19 @@ MonoBehaviour:
   grenadePool: {fileID: 1768274000}
   throwPoint: {fileID: 700471052}
   cooldown: 3
+--- !u!114 &764213639
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 764213628}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ee91a2aa130f5c44870e6e987020117, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Entities.StatusEffectManager
+  knockbackSpeed: 8
 --- !u!1001 &795358366
 PrefabInstance:
   m_ObjectHideFlags: 0

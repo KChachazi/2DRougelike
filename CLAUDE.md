@@ -1,4 +1,4 @@
-# CLAUDE.md
+﻿# CLAUDE.md
 
 > 本文件面向在本仓库中协作的 Claude Code:每次新对话开始时应先读取本文件,用以恢复项目背景、当前进度与既定约定,避免在多次对话之间产生不一致的假设或重复造轮子。
 > 若本文件描述与代码库实际状态冲突,**以代码库当前状态为准**;发现冲突或完成里程碑后,请顺手更新本文件对应章节,让下一次对话能无缝衔接。
@@ -9,7 +9,7 @@
 
 ## 当前进度(务必保持最新)
 
-- 状态:**六周全部完成并通过验收;`v1-week1`~`v1-week6` 六个标签已全部补打(2026-07-25,本地),尚未 `push` 到远程。V1(2D 版本)收官,V1.5(深化)启动中。**
+- 状态:**六周全部完成并通过验收;`v1-week1`~`v1-week6` 六个标签已全部补打(2026-07-25,本地),尚未 `push` 到远程。V1(2D 版本)收官,V1.5(深化)进行中——方向①(武器/伤害深化)已完成并通过 Play 验收(2026-08-04)。**
 - 已有内容:
   - Unity 6000.3.19f1 + URP 2D 模板默认工程,`.gitignore`/`.gitattributes` 已提交。
   - 第 1 周:`Assets/Scripts/Core|Entities|Weapons` 下的 8 个文件、场景搭建均已由用户完成并通过验收,详见 `devlog/week1.md`。
@@ -28,13 +28,14 @@
 - **通关收尾**(2026-07-25):新增 `UI/VictoryUI.cs`(订阅 `LevelCompletedEvent`,通关弹出恭喜面板 + 冻结时间);修复 `MinimapUI` 离开最终房间后 `currentIndex` 不重置导致 Boss 房图标卡在黄色的问题。**V1 至此才真正"从头到尾完整"。**
 - 目录已全部落地:`Core`/`Entities`/`Weapons`/`StateMachines`/`UI`/`Commands`/`Level` + `Data`/`Art`/`Prefabs`。
 - **2026-07-25 换机说明**:项目从另一台电脑通过 GitHub 拉取到当前机器,`Reference/`(gitignore,不进版本库)在新机器上是空的,已根据本文件记录 + `Assets/Scripts/` 现状 1:1 复原(`Reference/Scripts/` 镜像 `Assets/Scripts/`,51 个文件)。同时发现旧机器上的 `v1-week*` 标签从未真正打过/未推送,已在本机补打并核对 README 状态描述。
+- **V1.5-1 武器/伤害深化**(2026-08-04):**已完成并写入 `Assets/`,Play 验收通过**。新增 8 个脚本、更新 10 个脚本。核心变更:① 新增 `Core/StatusEffectTypes`(枚举+配置 struct) + `Core/DamageInfo`(伤害包 readonly struct,替代裸传 int);② 新增 `Entities/StatusEffectManager`(状态异常管理器:DoT Tick、减速/易伤倍率);③ 新增 `Weapons/WeaponStrategyDecorator`(抽象基类)+ `BurningDecorator`/`FreezingDecorator`/`KnockbackDecorator` 三个具体装饰器(文件保留,暂不参与自动装配——留给运行时 Buff 系统);④ `IWeaponStrategy.Fire` 签名从 `(WeaponController, WeaponData)` 改为 `(WeaponController, DamageInfo)`,整条伤害链路统一走 DamageInfo;⑤ `WeaponData` 新增 7 个元素效果字段(Burn/Freeze/Knockback,全部默认 0 向后兼容);⑥ `WeaponController` 新增 `BuildDamageInfo()` 作为 SO→DamageInfo 唯一翻译点,`BuildStrategy` 已删除(Decorator 不自动包裹);⑦ `Health` 新增 `TakeDamage(DamageInfo)` 重载(自动读易伤倍率);⑧ `EnemyController.MoveTowards` 自动乘 `SpeedMultiplier`(冰冻减速);⑨ `GameEvents` 预埋 `StatusAppliedEvent`/`StatusExpiredEvent`。**验收后修正**:击退从 `StatusEffectManager.ApplyKnockback`(velocity 方式,被 MovePosition 覆盖)改为独立状态 `EnemyKnockbackState`(线性衰减位移,走 MovePosition 统一移动方式)。Decorator 文件保留但不自动包裹 SO 字段,留给未来 BuffManager 运行时调用。详细设计+完整代码见 `devlog/V1.5-1.md`。
 - 下一步:**V1(2D 核心玩法)收官,进入 V1.5(深化阶段)**,而不是立刻做 V2(3D 化)——用户判断"核心玩法刚搭起来,3D 化为时过早",且学习目标是把游戏编程模式吃透,武器系统这类还有明显深挖空间。V2/V3 推迟为更后面的大版本,`EventBus`/`ICommand`/`IWeaponStrategy`/`RoomConfig` 这几层设计上不认识 2D Sprite/物理,理论上可原样迁移,不会因为推迟而过时。
   - **V1.5 四个方向,已确定优先级**(2026-07-25 讨论确定):
-    1. **武器/伤害深化**(Decorator 装饰器 + 状态异常系统)——**下一步就做这个**。给武器叠加"燃烧/冰冻/击退"等附加效果,`Health` 上加 DoT/减速/易伤。风险最低、复用现有 `IWeaponStrategy`+`WeaponData` 地基,不涉及关卡/AI。
+    1. **武器/伤害深化**(Decorator 装饰器 + 状态异常系统)——**已完成(2026-08-04)**。给武器叠加"燃烧/冰冻/击退"等附加效果,`Health` 上加 DoT/减速/易伤,击退改为独立状态 `EnemyKnockbackState`。
     2. 敌人 AI 深化(行为树/技能系统)——现有敌人是固定 4 态 FSM,换成行为树支持多敌人类型/远近战编队/Boss 多阶段技能。难度最高,放在①之后是为了复用状态异常系统。
     3. 程序化关卡生成——`LevelManager` 从固定房间数组换成图结构/规则驱动拓扑(分支、宝箱房、商店房)。放在①②之后,是因为地图生成的价值取决于房间里能放的敌人/武器池够不够丰富。
     4. 存档系统(Memento + 云存模式)——难度最低但最独立,放最后是因为越往后做,要序列化的状态(强化、图鉴、进度)越稳定,能少返工。
-  - **尚未开始**:V1.5 的四个方向目前都还没有具体设计/代码,下一次对话应从"武器/伤害深化"的详细方案(装饰器接口设计、状态异常怎么挂在 `Health` 上、是否需要新的 `GameEvents`)开始,遵循「协作背景与文档要求」一节的详细文档标准。
+  - **当前状态**:方向①已完成并写入 `Assets/`、通过 Play 验收。下一步进入方向②(敌人 AI 深化)。
 
 **更新规则**:每完成一项里程碑(一周任务,或用户认可的阶段性成果)后:
 1. 更新本节的"已有内容 / 尚未创建 / 下一步";
@@ -45,7 +46,7 @@
 
 > "代码实际长什么样"的速查表,方便新对话快速定位。真实进度以 `Assets/` 为准;下面每条都对应已经落地的文件。
 
-**脚本清单(`Assets/Scripts/`,共 50 个 `.cs`)**
+**脚本清单(`Assets/Scripts/`,共 58 个 `.cs`)**
 
 - `Core/`
   - `GameManager.cs`——单例(`Instance`),`[SerializeField] player` 只读暴露为 `Player`。目前很轻,只做单例 + Player 引用。

@@ -15,11 +15,11 @@ namespace Game.Weapons
         public ObjectPool BulletPool => bulletPool;
         public Transform FirePoint => firePoint;
         public int WeaponCount => weapons.Length;
+        public float CurrentWeaponRange => weapons[currentIdx].range;
 
         private PlayerController playerController;
-        private readonly Dictionary<WeaponType, IWeaponStrategy> strategies = 
-            new Dictionary<WeaponType, IWeaponStrategy>();
         
+        private IWeaponStrategy[] weaponStrategies;
         private int currentIdx;
         private int[] currentAmmo;
         private float cooldownTimer;
@@ -29,41 +29,26 @@ namespace Game.Weapons
         private void Awake()
         {
             playerController = GetComponent<PlayerController>();
-            strategies[WeaponType.Ranged] = new RangedWeaponStrategy();
-            strategies[WeaponType.Melee]  = new MeleeWeaponStrategy();
-
+            weaponStrategies = new IWeaponStrategy[weapons.Length];
+            for (int i = 0; i < weapons.Length; i ++)
+                weaponStrategies[i] = weapons[i].type == WeaponType.Ranged
+                    ? new RangedWeaponStrategy()
+                    : new MeleeWeaponStrategy();
             currentAmmo = new int[weapons.Length];
             for (int i = 0; i < weapons.Length; i ++)
                 currentAmmo[i] = weapons[i].maxAmmo;
         }
-
         private void Start()
         {
             BroadcastWeapon();
             BroadcastAmmo();
         }
-
         private void Update()
         {
             if (cooldownTimer > 0f) cooldownTimer -= Time.deltaTime;
         }
 
-        private void FireCurrentWeapon()
-        {
-            WeaponData data = CurrentWeapon;
-            strategies[data.type].Fire(this, data);
-            cooldownTimer = data.cooldown;
-
-            if (data.maxAmmo >= 0)
-            {
-                currentAmmo[currentIdx] --;
-                BroadcastAmmo();
-            }
-
-            if (data.type == WeaponType.Melee && playerController != null)
-                playerController.TriggerAttack();
-        }
-
+        // === 公开接口 ---
         public bool CanFire()
         {
             bool canAct = playerController == null || playerController.CanAct;
@@ -72,7 +57,8 @@ namespace Game.Weapons
         public void Fire()
         {
             WeaponData data = CurrentWeapon;
-            strategies[data.type].Fire(this, data);
+            DamageInfo damageInfo = BuildDamageInfo(data);
+            weaponStrategies[currentIdx].Fire(this, damageInfo);
             cooldownTimer = data.cooldown;
             if (data.maxAmmo >= 0)
             {
@@ -80,9 +66,7 @@ namespace Game.Weapons
                 BroadcastAmmo();
             }
             if (data.type == WeaponType.Melee && playerController != null)
-            {
                 playerController.TriggerAttack();
-            }
         }
         public void SwitchTo(int index)
         {
@@ -99,12 +83,25 @@ namespace Game.Weapons
             currentAmmo[currentIdx] = Mathf.Min(currentAmmo[currentIdx] + amount, data.maxAmmo);
             BroadcastAmmo();
         }
-
+        // === 私有工具 ===
+        private DamageInfo BuildDamageInfo(WeaponData data)
+        {
+            DamageInfo info = new DamageInfo(data.damage, data.knockbackForce);
+            if (data.burnDamagePerTick > 0 && data.burnDuration > 0f)
+            {
+                info = info.WithAddedStatus(StatusEffectConfig.Burn(
+                    data.burnDuration, data.burnDamagePerTick, data.burnTickInterval));
+            }
+            if (data.freezePercent > 0f && data.freezeDuration > 0f)
+            {
+                info = info.WithAddedStatus(StatusEffectConfig.Freeze(
+                    data.freezeDuration, data.freezePercent));
+            }
+            return info;
+        }
         private bool HasAmmo() => CurrentWeapon.maxAmmo < 0 || currentAmmo[currentIdx] > 0;
-
         private void BroadcastAmmo() =>
             EventBus.Publish(new AmmoChangedEvent(currentAmmo[currentIdx], CurrentWeapon.maxAmmo));
-
         private void BroadcastWeapon() =>
             EventBus.Publish(new WeaponChangedEvent(CurrentWeapon.weaponName));
     }

@@ -217,6 +217,7 @@ Assets/
 - ✅ `v1-week4`: 命令模式、输入缓冲、手雷技能、技能冷却 UI（已完成，详见 [devlog/week4.md](devlog/week4.md)）
 - ✅ `v1-week5`: 房间系统、关卡流程、Cinemachine 过渡、Boss 房、小地图（已完成，详见 [devlog/week5.md](devlog/week5.md)）
 - ✅ `v1-week6`: 命中停顿、屏幕震动、粒子特效、GC 优化、对象池泄漏诊断、构建打包、通关收尾（已完成，详见 [devlog/week6.md](devlog/week6.md)）
+- ✅ `v1.5-1`: 武器/伤害深化——Decorator 装饰器 + 状态异常系统（灼烧 DoT / 冰冻减速 / 击退状态）；DamageInfo 伤害包替代裸传 int；WeaponData 元素字段 Inspector 配置；击退改为独立 EnemyKnockbackState（已完成，详见 [devlog/V1.5-1.md](devlog/V1.5-1.md)）
 
 ---
 

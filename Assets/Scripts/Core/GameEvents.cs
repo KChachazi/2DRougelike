@@ -77,4 +77,28 @@ namespace Game.Core
         public readonly float Duration;
         public ScreenShakeEvent(float intensity, float duration) { Intensity = intensity; Duration = duration; }
     }
+
+    /* ------------- 状态异常反馈 ------------- */
+    public readonly struct StatusAppliedEvent
+    {
+        public readonly GameObject Target;
+        public readonly StatusType Type;
+        public readonly float Duration;
+        public StatusAppliedEvent(GameObject target, StatusType type, float duration)
+        {
+            Target = target;
+            Type = type;
+            Duration = duration;
+        }
+    }
+    public readonly struct StatusExpiredEvent
+    {
+        public readonly GameObject Target;
+        public readonly StatusType Type;
+        public StatusExpiredEvent(GameObject target, StatusType type)
+        {
+            Target = target;
+            Type = type;
+        }
+    }
 }

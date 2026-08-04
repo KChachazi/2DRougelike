@@ -2,6 +2,7 @@ using UnityEngine;
 using Game.Core;
 using Game.StateMachines;
 using Game.StateMachines.Enemy;
+using System;
 
 namespace Game.Entities
 {
@@ -23,12 +24,20 @@ namespace Game.Entities
         [SerializeField] private int contactDamage = 10;
         [SerializeField] private float attackCooldown = 1f;        
 
+        [Header("击退")]
+        [SerializeField] private float knockbackDuration = 0.15f;
+        [SerializeField] private float knockbackSpeedMultiplier = 10f;
+        public Vector2 KnockbackDirection { get; private set; }
+        public float KnockbackSpeed { get; private set; }
+        public float KnockbackDuration => knockbackDuration;
+
         public Rigidbody2D Rb { get; private set; }
         public Health health { get; private set; }
         public SpriteRenderer SpriteRenderer { get; private set; }
         public Color OriginalColor { get; private set; }
         public Transform Player { get; private set; }
         public Vector2 SpawnPosition { get; private set; }
+        public StatusEffectManager StatusEffectManager { get; private set; }
 
         public float PatrolSpeed => patrolSpeed;
         public float PatrolRadius => patrolRadius;
@@ -43,6 +52,7 @@ namespace Game.Entities
         public EnemyChaseState ChaseState { get; private set; }
         public EnemyAttackState AttackState { get; private set; }
         public EnemyDeadState DeadState { get; private set; }
+        public EnemyKnockbackState KnockbackState { get; private set; }
 
         private readonly StateMachine stateMachine = new StateMachine();
 
@@ -51,6 +61,7 @@ namespace Game.Entities
             Rb = GetComponent<Rigidbody2D>();
             health = GetComponent<Health>();
             SpriteRenderer = GetComponent<SpriteRenderer>();
+            StatusEffectManager = GetComponent<StatusEffectManager>();
             OriginalColor = SpriteRenderer.color;
             SpawnPosition = Rb.position;
 
@@ -58,6 +69,7 @@ namespace Game.Entities
             ChaseState = new EnemyChaseState(this, stateMachine);
             AttackState = new EnemyAttackState(this, stateMachine);
             DeadState = new EnemyDeadState(this, stateMachine);
+            KnockbackState = new EnemyKnockbackState(this, stateMachine);
         }
         private void OnEnable()
         {
@@ -79,7 +91,6 @@ namespace Game.Entities
 
             stateMachine.ChangeState(PatrolState);
         }
-
         private void Update()
         {
             stateMachine.Tick();
@@ -95,9 +106,17 @@ namespace Game.Entities
         }
         public void MoveTowards(Vector2 targetPosition, float speed)
         {
+            float multiplier = StatusEffectManager != null ? StatusEffectManager.SpeedMultiplier : 1f;
             Vector2 direction = (targetPosition - Rb.position).normalized;
-            Rb.MovePosition(Rb.position + direction * speed * Time.fixedDeltaTime);
+            Rb.MovePosition(Rb.position + direction * speed * multiplier * Time.fixedDeltaTime);
         }
+        public void TriggerKnockback(Vector2 direction, float force)
+        {
+            KnockbackDirection = direction.normalized;
+            KnockbackSpeed = knockbackSpeedMultiplier * force;
+            stateMachine.ChangeState(KnockbackState);
+        }
+
         private void OnDamaged(int amount)
         {
             EventBus.Publish(new EnemyDamagedEvent(Rb.position, amount));

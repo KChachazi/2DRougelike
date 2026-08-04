@@ -29,6 +29,7 @@ namespace Game.Entities
         public Health health { get; private set; }
         public SpriteRenderer SpriteRenderer { get; private set; }
         public Vector2 MoveInput { get; private set; }
+        public StatusEffectManager StatusEffectManager { get; private set; }
 
         private readonly StateMachine stateMachine = new StateMachine();
         private Camera mainCamera;
@@ -55,6 +56,7 @@ namespace Game.Entities
             Rb = GetComponent<Rigidbody2D>();
             health = GetComponent<Health>();
             SpriteRenderer = GetComponent<SpriteRenderer>();
+            StatusEffectManager = GetComponent<StatusEffectManager>();
             mainCamera = Camera.main;
 
             IdleState = new PlayerIdleState(this, stateMachine);
@@ -97,10 +99,9 @@ namespace Game.Entities
         }
         public void Move(float speed)
         {
-            Rb.MovePosition(Rb.position + MoveInput * speed * Time.fixedDeltaTime);
+            float multiplier = StatusEffectManager != null ? StatusEffectManager.SpeedMultiplier : 1f;
+            Rb.MovePosition(Rb.position + MoveInput * speed * multiplier * Time.fixedDeltaTime);
         }
-
-
         // 供 WeaponController 在近战开火时调用
         // 可以切到 AttackState 播放"变黄 + 阻断"表现
         public void TriggerAttack()

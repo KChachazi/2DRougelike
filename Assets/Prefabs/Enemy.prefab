@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 7924292702578438647}
   - component: {fileID: 6635949759773687915}
   - component: {fileID: -6326122943897061908}
+  - component: {fileID: -2740397615993614471}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Enemy
@@ -184,9 +185,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 745044f8f168ffe4a85cc4805aa277e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Entities.EnemyController
-  moveSpeed: 2.5
+  patrolSpeed: 1.2
+  patrolRadius: 2
+  chaseSpeed: 2.5
+  detectionRange: 4
+  loseSightRange: 6
+  attackRange: 1
   contactDamage: 10
-  damageCooldown: 1
+  attackCooldown: 1
 --- !u!114 &-6326122943897061908
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -200,3 +206,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Entities.Health
   maxHealth: 100
+--- !u!114 &-2740397615993614471
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4382135075672594973}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ee91a2aa130f5c44870e6e987020117, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Entities.StatusEffectManager
+  knockbackSpeed: 8
