@@ -1,52 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &2276780173482961889
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1781825826857908400}
-  - component: {fileID: 680116460560703817}
-  m_Layer: 0
-  m_Name: ProjectilePool
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1781825826857908400
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2276780173482961889}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1168715560271628540}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &680116460560703817
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2276780173482961889}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 17ea600d018f87d49bea0dc30a410fc8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Game.Core.ObjectPool
-  prefab: {fileID: 8591178759127387321, guid: d7e3df3ff7307a54daef848fce4e0742, type: 3}
-  prewarmCount: 10
-  debugMode: 1
 --- !u!1 &4382135075672594973
 GameObject:
   m_ObjectHideFlags: 0
@@ -61,10 +14,10 @@ GameObject:
   - component: {fileID: 7924292702578438647}
   - component: {fileID: 6635949759773687915}
   - component: {fileID: -6326122943897061908}
-  - component: {fileID: -4418262448425492642}
-  - component: {fileID: 1942301265568650637}
+  - component: {fileID: -2740397615993614471}
+  - component: {fileID: 2293722232163941096}
   m_Layer: 0
-  m_Name: Boss
+  m_Name: EnemyMeleed
   m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -80,10 +33,9 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2, y: 2, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1781825826857908400}
+  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &1935476470142582444
@@ -136,7 +88,7 @@ SpriteRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 75f5f34dc1b5347e0b8351032682f224, type: 3}
-  m_Color: {r: 0.4, g: 0.2, b: 0.6, a: 1}
+  m_Color: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -234,7 +186,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 745044f8f168ffe4a85cc4805aa277e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Entities.EnemyController
-  behaviour: {fileID: 11400000, guid: ac86060167495084fad6cf75f3b02a1b, type: 2}
+  behaviour: {fileID: 11400000, guid: 952ee11107f3fab4bbe44e4bda1091d5, type: 2}
 --- !u!114 &-6326122943897061908
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -247,8 +199,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 520fd29f89341ff4a89aa57351ed5f01, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Entities.Health
-  maxHealth: 500
---- !u!114 &-4418262448425492642
+  maxHealth: 100
+--- !u!114 &-2740397615993614471
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -261,7 +213,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Entities.StatusEffectManager
   knockbackSpeed: 8
---- !u!114 &1942301265568650637
+--- !u!114 &2293722232163941096
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -273,4 +225,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 11e8b7a30900d7b439cd77a95118f388, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Entities.EnemyBrain
-  enemyProjectilePool: {fileID: 680116460560703817}
+  enemyProjectilePool: {fileID: 0}

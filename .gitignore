@@ -27,6 +27,13 @@
 # Claude Code local (personal) settings — not shared across machines
 .claude/settings.local.json
 
+# Codex local project preferences (not shared across machines)
+.codex/config.toml
+docs/
+
+# Unity UI Toolkit generated XML schemas
+/UIElementsSchema/
+
 # Claude 的每周参考代码/示例，不是工程本体，不进版本库
 /Reference/
 

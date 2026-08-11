@@ -1,5 +1,52 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2559595271255215620
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5775717448048878397}
+  - component: {fileID: 3790019750473212133}
+  m_Layer: 0
+  m_Name: ProjectilePool
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5775717448048878397
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2559595271255215620}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.21133, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1168715560271628540}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3790019750473212133
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2559595271255215620}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17ea600d018f87d49bea0dc30a410fc8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Core.ObjectPool
+  prefab: {fileID: 8591178759127387321, guid: d7e3df3ff7307a54daef848fce4e0742, type: 3}
+  prewarmCount: 10
+  debugMode: 1
 --- !u!1 &4382135075672594973
 GameObject:
   m_ObjectHideFlags: 0
@@ -15,8 +62,9 @@ GameObject:
   - component: {fileID: 6635949759773687915}
   - component: {fileID: -6326122943897061908}
   - component: {fileID: -2740397615993614471}
+  - component: {fileID: 2293722232163941096}
   m_Layer: 0
-  m_Name: Enemy
+  m_Name: EnemyRanged
   m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -34,7 +82,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 5775717448048878397}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &1935476470142582444
@@ -185,14 +234,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 745044f8f168ffe4a85cc4805aa277e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Entities.EnemyController
-  patrolSpeed: 1.2
-  patrolRadius: 2
-  chaseSpeed: 2.5
-  detectionRange: 4
-  loseSightRange: 6
-  attackRange: 1
-  contactDamage: 10
-  attackCooldown: 1
+  behaviour: {fileID: 11400000, guid: 5e5fde23f46d5a5448268f1feeb9b42a, type: 2}
 --- !u!114 &-6326122943897061908
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -219,3 +261,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Entities.StatusEffectManager
   knockbackSpeed: 8
+--- !u!114 &2293722232163941096
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4382135075672594973}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 11e8b7a30900d7b439cd77a95118f388, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Entities.EnemyBrain
+  enemyProjectilePool: {fileID: 3790019750473212133}

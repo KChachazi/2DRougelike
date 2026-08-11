@@ -28,7 +28,7 @@ namespace Game.StateMachines.Enemy
             timer += Time.fixedDeltaTime;
             if (timer >= enemy.KnockbackDuration)
             {
-                stateMachine.ChangeState(enemy.PatrolState);
+                stateMachine.ChangeState(enemy.FreeState);
                 return ;
             }
             float t = timer / enemy.KnockbackDuration;

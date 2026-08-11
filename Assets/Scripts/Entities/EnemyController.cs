@@ -2,7 +2,7 @@ using UnityEngine;
 using Game.Core;
 using Game.StateMachines;
 using Game.StateMachines.Enemy;
-using System;
+using Game.Weapons;
 
 namespace Game.Entities
 {
@@ -10,26 +10,8 @@ namespace Game.Entities
     [RequireComponent(typeof(Health))]
     public class EnemyController : MonoBehaviour
     {
-        [Header("巡逻")]
-        [SerializeField] private float patrolSpeed = 1.2f;
-        [SerializeField] private float patrolRadius = 2f;
-
-        [Header("追击")]
-        [SerializeField] private float chaseSpeed = 2.5f;
-        [SerializeField] private float detectionRange = 4f;
-        [SerializeField] private float loseSightRange = 6f;
-
-        [Header("攻击")]
-        [SerializeField] private float attackRange = 1f;
-        [SerializeField] private int contactDamage = 10;
-        [SerializeField] private float attackCooldown = 1f;        
-
-        [Header("击退")]
-        [SerializeField] private float knockbackDuration = 0.15f;
-        [SerializeField] private float knockbackSpeedMultiplier = 10f;
-        public Vector2 KnockbackDirection { get; private set; }
-        public float KnockbackSpeed { get; private set; }
-        public float KnockbackDuration => knockbackDuration;
+        [SerializeField] private EnemyBehaviour behaviour;
+        public EnemyBehaviour Behaviour => behaviour;
 
         public Rigidbody2D Rb { get; private set; }
         public Health health { get; private set; }
@@ -37,39 +19,42 @@ namespace Game.Entities
         public Color OriginalColor { get; private set; }
         public Transform Player { get; private set; }
         public Vector2 SpawnPosition { get; private set; }
-        public StatusEffectManager StatusEffectManager { get; private set; }
+        public StatusEffectManager StatusManager { get; private set; }
 
-        public float PatrolSpeed => patrolSpeed;
-        public float PatrolRadius => patrolRadius;
-        public float ChaseSpeed => chaseSpeed;
-        public float DetectionRange => detectionRange;
-        public float LoseSightRange => loseSightRange;
-        public float AttackRange => attackRange;
-        public int ContactDamage => contactDamage;
-        public float AttackCooldown => attackCooldown;
+        
+        public float PatrolSpeed => behaviour.patrolSpeed;
+        public float PatrolRadius => behaviour.patrolRadius;
+        public float ChaseSpeed => behaviour.chaseSpeed;
+        public float DetectionRange => behaviour.detectionRange;
+        public float LoseSightRange => behaviour.lostSightRange;
+        public float AttackRange => behaviour.attackRange;
+        public int ContactDamage => behaviour.contactDamage;
+        public float AttackCooldown => behaviour.attackCooldown;
+        public float KnockbackDuration => behaviour.knockbackDuration;
 
-        public EnemyPatrolState PatrolState { get; private set; }
-        public EnemyChaseState ChaseState { get; private set; }
-        public EnemyAttackState AttackState { get; private set; }
-        public EnemyDeadState DeadState { get; private set; }
+        public EnemyFreeState FreeState { get; private set; }
         public EnemyKnockbackState KnockbackState { get; private set; }
+        public EnemyDeadState DeadState { get; private set; }
+
+        public Vector2 KnockbackDirection { get; private set; }
+        public float KnockbackSpeed { get; private set; }
+
+        public bool IsActionLocked =>
+            stateMachine.CurrentState == KnockbackState || stateMachine.CurrentState == DeadState;
 
         private readonly StateMachine stateMachine = new StateMachine();
-
         private void Awake()
         {
             Rb = GetComponent<Rigidbody2D>();
             health = GetComponent<Health>();
             SpriteRenderer = GetComponent<SpriteRenderer>();
-            StatusEffectManager = GetComponent<StatusEffectManager>();
+            StatusManager = GetComponent<StatusEffectManager>();
             OriginalColor = SpriteRenderer.color;
             SpawnPosition = Rb.position;
-
-            PatrolState = new EnemyPatrolState(this, stateMachine);
-            ChaseState = new EnemyChaseState(this, stateMachine);
-            AttackState = new EnemyAttackState(this, stateMachine);
-            DeadState = new EnemyDeadState(this, stateMachine);
+            // StateMachine
+            FreeState = new EnemyFreeState(this, stateMachine);
             KnockbackState = new EnemyKnockbackState(this, stateMachine);
+            DeadState = new EnemyDeadState(this, stateMachine);
         }
         private void OnEnable()
         {
@@ -83,13 +68,10 @@ namespace Game.Entities
         }
         private void Start()
         {
-            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+            GameObject playerObj =GameObject.FindGameObjectWithTag("Player");
             if (playerObj != null)
-            {
                 Player = playerObj.transform;
-            }
-
-            stateMachine.ChangeState(PatrolState);
+            stateMachine.ChangeState(FreeState);
         }
         private void Update()
         {
@@ -99,24 +81,24 @@ namespace Game.Entities
         {
             stateMachine.FixedTick();
         }
-
+        // === 公开接口 ===
         public float DistanceToPlayer()
         {
             return Player == null ? float.MaxValue : Vector2.Distance(Rb.position, Player.position);
         }
         public void MoveTowards(Vector2 targetPosition, float speed)
         {
-            float multiplier = StatusEffectManager != null ? StatusEffectManager.SpeedMultiplier : 1f;
+            float multiplier = StatusManager != null ? StatusManager.SpeedMultiplier : 1f;
             Vector2 direction = (targetPosition - Rb.position).normalized;
             Rb.MovePosition(Rb.position + direction * speed * multiplier * Time.fixedDeltaTime);
         }
         public void TriggerKnockback(Vector2 direction, float force)
         {
             KnockbackDirection = direction.normalized;
-            KnockbackSpeed = knockbackSpeedMultiplier * force;
+            KnockbackSpeed = behaviour.knockbackSpeedMultiplier * force;
             stateMachine.ChangeState(KnockbackState);
         }
-
+        // === 私有工具 ===
         private void OnDamaged(int amount)
         {
             EventBus.Publish(new EnemyDamagedEvent(Rb.position, amount));

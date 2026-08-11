@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e38d097e1c235048a3cb5fb1b868f5c, type: 3}
+  m_Name: RangedBehavior
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Entities.EnemyBehaviour
+  type: 1
+  patrolSpeed: 1.2
+  patrolRadius: 2
+  chaseSpeed: 2.5
+  detectionRange: 6
+  lostSightRange: 8
+  attackRange: 1
+  contactDamage: 10
+  attackCooldown: 1
+  knockbackDuration: 0.15
+  knockbackSpeedMultiplier: 10
+  shootRange: 6
+  minShootRange: 2
+  projectileSpeed: 8
+  projectileDamage: 8
+  shootCooldown: 1.2
+  explodeRange: 1.5
+  explodeDamage: 30
+  phaseThresholds: []
+  skillCooldown: 3
+  skillDamage: 15
+  skillBurnDuration: 3
+  skillBurnDamage: 3

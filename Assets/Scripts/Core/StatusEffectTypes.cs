@@ -20,7 +20,7 @@ namespace Game.Core
         // For Vulnerable
         public float DamageMultiplier;
 
-        public static StatusEffectConfig Burn(float duration, int damagePerTick, float tickInterval)
+        public static StatusEffectConfig Burn(float duration, int damagePerTick, float tickInterval = 0.5f)
         {
             return new StatusEffectConfig
             {

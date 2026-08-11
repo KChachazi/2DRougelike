@@ -1,6 +1,6 @@
-﻿# CLAUDE.md
+﻿# AGENTS.md
 
-> 本文件面向在本仓库中协作的 Claude Code:每次新对话开始时应先读取本文件,用以恢复项目背景、当前进度与既定约定,避免在多次对话之间产生不一致的假设或重复造轮子。
+> 本文件面向在本仓库中协作的 Codex:每次新对话开始时应先读取本文件,用以恢复项目背景、当前进度与既定约定,避免在多次对话之间产生不一致的假设或重复造轮子。
 > 若本文件描述与代码库实际状态冲突,**以代码库当前状态为准**;发现冲突或完成里程碑后,请顺手更新本文件对应章节,让下一次对话能无缝衔接。
 
 ## 项目一句话简介
@@ -9,7 +9,7 @@
 
 ## 当前进度(务必保持最新)
 
-- 状态:**六周全部完成并通过验收;`v1-week1`~`v1-week6` 六个标签已全部补打(2026-07-25,本地),尚未 `push` 到远程。V1(2D 版本)收官,V1.5(深化)进行中——方向①(武器/伤害深化)已完成并通过 Play 验收(2026-08-04)。**
+- 状态:**六周全部完成并通过验收;`v1-week1`~`v1-week6` 六个标签已全部补打(2026-07-25,本地),尚未 `push` 到远程。V1(2D 版本)收官,V1.5(深化)进行中——方向①(武器/伤害深化)已完成并通过 Play 验收(2026-08-04);方向②(敌人 AI 深化)已完成静态 review、设计修正、回归检查与 Play 验收(2026-08-11)。下一步进入方向③(程序化关卡生成)。**
 - 已有内容:
   - Unity 6000.3.19f1 + URP 2D 模板默认工程,`.gitignore`/`.gitattributes` 已提交。
   - 第 1 周:`Assets/Scripts/Core|Entities|Weapons` 下的 8 个文件、场景搭建均已由用户完成并通过验收,详见 `devlog/week1.md`。
@@ -26,27 +26,31 @@
   - 第 6 周:分 4 步全部完成并通过验收(手感三件套 → 粒子特效 → Profiler/GC 优化 → 架构图 + 打包)。新增 4 个脚本(`Core/HitStop`+`ScreenShake`+`CombatFeedback`+`PooledParticle`)、修改 5 个;新增 `HitSpark`/`DeathSpark` 粒子预制体 + 池;README 加了 Mermaid 架构图;**成功构建出可运行的 Windows exe**。详见 `devlog/week6.md`。
   - 第 6 周的坑:① `ScreenShake.OnDisable` 漏复位 `localPosition` → 震动中切房间画面留歪;② **Unity 6 废弃了 `OverlapCircleNonAlloc`(→`OverlapCircle`+`ContactFilter2D`)和 `ContactFilter2D.NoFilter()`(→静态属性 `noFilter`)**——2D 物理 API 清理,碰到的代码都要跟着改(但只涉及 2 个文件,因为物理查询集中在 `MeleeWeaponStrategy`+`Grenade`);③ Boss `detectionRange 8 > loseSightRange 6` 破坏迟滞 → 状态频闪(退出阈值必须比进入阈值宽);④ `ObjectPool` 预热对象漏登记 `inPool` → 诊断误报。用户还自主把"命中震屏"改成"仅击杀震屏"(手感判断优于文档默认值)。
 - **通关收尾**(2026-07-25):新增 `UI/VictoryUI.cs`(订阅 `LevelCompletedEvent`,通关弹出恭喜面板 + 冻结时间);修复 `MinimapUI` 离开最终房间后 `currentIndex` 不重置导致 Boss 房图标卡在黄色的问题。**V1 至此才真正"从头到尾完整"。**
-- 目录已全部落地:`Core`/`Entities`/`Weapons`/`StateMachines`/`UI`/`Commands`/`Level` + `Data`/`Art`/`Prefabs`。
+- 目录已全部落地:`Core`/`Entities`/`Weapons`/`StateMachines`/`UI`/`Commands`/`Level`/**`AI`** + `Data`/`Art`/`Prefabs`。
 - **2026-07-25 换机说明**:项目从另一台电脑通过 GitHub 拉取到当前机器,`Reference/`(gitignore,不进版本库)在新机器上是空的,已根据本文件记录 + `Assets/Scripts/` 现状 1:1 复原(`Reference/Scripts/` 镜像 `Assets/Scripts/`,51 个文件)。同时发现旧机器上的 `v1-week*` 标签从未真正打过/未推送,已在本机补打并核对 README 状态描述。
 - **V1.5-1 武器/伤害深化**(2026-08-04):**已完成并写入 `Assets/`,Play 验收通过**。新增 8 个脚本、更新 10 个脚本。核心变更:① 新增 `Core/StatusEffectTypes`(枚举+配置 struct) + `Core/DamageInfo`(伤害包 readonly struct,替代裸传 int);② 新增 `Entities/StatusEffectManager`(状态异常管理器:DoT Tick、减速/易伤倍率);③ 新增 `Weapons/WeaponStrategyDecorator`(抽象基类)+ `BurningDecorator`/`FreezingDecorator`/`KnockbackDecorator` 三个具体装饰器(文件保留,暂不参与自动装配——留给运行时 Buff 系统);④ `IWeaponStrategy.Fire` 签名从 `(WeaponController, WeaponData)` 改为 `(WeaponController, DamageInfo)`,整条伤害链路统一走 DamageInfo;⑤ `WeaponData` 新增 7 个元素效果字段(Burn/Freeze/Knockback,全部默认 0 向后兼容);⑥ `WeaponController` 新增 `BuildDamageInfo()` 作为 SO→DamageInfo 唯一翻译点,`BuildStrategy` 已删除(Decorator 不自动包裹);⑦ `Health` 新增 `TakeDamage(DamageInfo)` 重载(自动读易伤倍率);⑧ `EnemyController.MoveTowards` 自动乘 `SpeedMultiplier`(冰冻减速);⑨ `GameEvents` 预埋 `StatusAppliedEvent`/`StatusExpiredEvent`。**验收后修正**:击退从 `StatusEffectManager.ApplyKnockback`(velocity 方式,被 MovePosition 覆盖)改为独立状态 `EnemyKnockbackState`(线性衰减位移,走 MovePosition 统一移动方式)。Decorator 文件保留但不自动包裹 SO 字段,留给未来 BuffManager 运行时调用。详细设计+完整代码见 `devlog/V1.5-1.md`。
+- **V1.5-2 敌人 AI 深化**(2026-08-11):**已完成并通过 Play 验收**。`Assets/Scripts/AI/` 当前 27 个脚本(通用行为树框架、近战/远程/自爆节点、Boss 阶段与技能节点、感知 Blackboard 数据、演示组件),另新增 `Entities/EnemyBehaviour.cs` + `EnemyBrain.cs`、`StateMachines/Enemy/EnemyFreeState.cs`、`Weapons/EnemyProjectile.cs`;`EnemyController` 已改成“行为树负责主动决策 + FSM 只负责 Free/Knockback/Dead 被动打断”,旧 `EnemyPatrolState`/`EnemyChaseState`/`EnemyAttackState` 已删除。已创建 `MeleeBehavior`/`RangedBehavior`/`BomberBehavior`/`BossBehavior` 四份 SO、`EnemyMeleed`/`EnemyRanged`/`EnemyBomber`/`EnemyProjectile` 预制体,并更新 `Boss.prefab` 与房间配置。最终行为包括近战、保持距离射击、自爆冲脸、Boss 半血切远程灼烧技能;视野采用每敌人 Blackboard 感知快照并恢复进入/退出双半径迟滞;Boss 阶段阈值来自 SO。真实代码继续使用英式拼法 `EnemyBehaviour`/`BehaviourTree`;选择节点类 `SelectorNode` 当前位于 `SelectorState.cs`,近战预制体当前名为 `EnemyMeleed`,不要擅自复制美式拼法平行类型。完整实际完成记录见 `devlog/V1.5-2.md` 第 10 节。
+- **V1.5-2 首轮静态 review**(2026-08-09):`dotnet build Assembly-CSharp.csproj --no-restore` 结果为 **0 error / 3 warning**(warning 均为既有未使用字段),且多敌人预制体/SO/房间配置的主要 GUID 引用已核对。但发现至少 7 项待处理:① `EnemyBehaviour.cs` 错误引用 `UnityEditor.EditorTools`,Editor 编译可过但 Player 构建有风险;② `EnemyBrain.Update` 驱动行为树,移动节点却调用 `Rigidbody2D.MovePosition` + `fixedDeltaTime`,造成物理时序/帧率问题;③ `EnemyBrain` 与 `EnemyController` 的 `Awake` 无执行顺序保障,`PatrolAction` 构造时可能在出生点初始化前选首个目标;④ `lostSightRange` 完全未参与行为树,迟滞失效;⑤ `ShootAction` 从池取出错误预制体后不归还,配置错时会逐帧泄漏;⑥ `BehaviourTreeTester` 多嵌套了一层 `Sequence`,演示语义变成“近时攻击后又巡逻、远时什么也不做”;⑦ `phaseThresholds` 未使用,Boss 阈值硬编码 0.5。另有英/美拼法、文件名/类名和无用 `using` 等低优先级整理项。**尚未向 `Assets/` 写入任何修复;若要提供修复代码,只能先写到 `Reference/` 供用户手动同步。**
+- **V1.5-2 第二轮复查**(2026-08-09):用户已手动修复首轮问题①②③⑤:移除 `UnityEditor` 引用;建树从 `Awake` 延后到 `Start`;行为树改在 `FixedUpdate` 驱动;`ShootAction` 组件错误分支会归还池对象。同时把投射物类统一为 `EnemyProjectile`,并同步两处调用。再次静态编译仍为 **0 error / 3 个既有 warning**。**仍待处理**:④ `lostSightRange`/迟滞;⑥ 错误的 `BehaviourTreeTester` 结构;⑦ 未使用的 `phaseThresholds`/硬编码 0.5;低优先级命名与无用 `using`;以及在 Unity 中打开 `EnemyProjectile.prefab` 确认脚本组件未丢失并保存——当前 YAML 的 `m_EditorClassIdentifier` 仍是旧的 `Game.Weapons.enemyProjectile`,因为预制体在类重命名后尚未重存。**2026-08-10 已为问题④与⑦完成正式设计修正并更新参考实现**:视野采用“感知更新 → 每敌人 Blackboard → 无状态条件节点”;Boss 阶段条件改为接收一基的阶段编号，并由节点从 `EnemyBehaviour.phaseThresholds` 换算出该阶段的完整血量区间，建树时一次性校验配置。两项都尚待用户手动同步进 `Assets/`。
+- **V1.5-2 最终复查与验收**(2026-08-11):问题④/⑥/⑦均已同步修复;`EnemyProjectile.prefab` 已重存且类型标识更新为 `Game.Weapons.EnemyProjectile`;Boss 阶段 1 遗留的错误 `Inverter` 与阶段配置失败后的空树路径已在回归 review 中修正。`dotnet build Assembly-CSharp.csproj --no-restore` 为 **0 error / 3 个既有 warning**。用户确认近战、远程、自爆、Boss 两阶段、击退打断、视野迟滞与投射物回池 Play 验收均无问题。方向②正式完成。
 - 下一步:**V1(2D 核心玩法)收官,进入 V1.5(深化阶段)**,而不是立刻做 V2(3D 化)——用户判断"核心玩法刚搭起来,3D 化为时过早",且学习目标是把游戏编程模式吃透,武器系统这类还有明显深挖空间。V2/V3 推迟为更后面的大版本,`EventBus`/`ICommand`/`IWeaponStrategy`/`RoomConfig` 这几层设计上不认识 2D Sprite/物理,理论上可原样迁移,不会因为推迟而过时。
   - **V1.5 四个方向,已确定优先级**(2026-07-25 讨论确定):
     1. **武器/伤害深化**(Decorator 装饰器 + 状态异常系统)——**已完成(2026-08-04)**。给武器叠加"燃烧/冰冻/击退"等附加效果,`Health` 上加 DoT/减速/易伤,击退改为独立状态 `EnemyKnockbackState`。
     2. 敌人 AI 深化(行为树/技能系统)——现有敌人是固定 4 态 FSM,换成行为树支持多敌人类型/远近战编队/Boss 多阶段技能。难度最高,放在①之后是为了复用状态异常系统。
     3. 程序化关卡生成——`LevelManager` 从固定房间数组换成图结构/规则驱动拓扑(分支、宝箱房、商店房)。放在①②之后,是因为地图生成的价值取决于房间里能放的敌人/武器池够不够丰富。
     4. 存档系统(Memento + 云存模式)——难度最低但最独立,放最后是因为越往后做,要序列化的状态(强化、图鉴、进度)越稳定,能少返工。
-  - **当前状态**:方向①已完成并写入 `Assets/`、通过 Play 验收。下一步进入方向②(敌人 AI 深化)。
+  - **当前状态**:方向①与方向②均已完成并通过 Play 验收。下一步进入**方向③程序化关卡生成**:先基于现有 `Room`/`RoomConfig`/`LevelManager` 设计图结构与生成规则,再按“每步可编译、可 Play 验收”的方式拆分实施。方向④存档系统继续排在其后。
 
 **更新规则**:每完成一项里程碑(一周任务,或用户认可的阶段性成果)后:
 1. 更新本节的"已有内容 / 尚未创建 / 下一步";
 2. 在 `devlog/week<N>.md` 写入该周的**实际完成记录**(不是计划,是发生了什么);
 3. 若达到 README 中周任务的验收标准,同步更新 README 底部"开发日志与标签"表,并询问用户是否要打 `v1-week<N>` 标签(打标签会写入共享历史,先确认再执行)。
 
-## 当前代码结构快照(V1 收官,写代码前速查)
+## 当前代码结构快照(V1.5-2 已完成并通过验收,2026-08-11)
 
 > "代码实际长什么样"的速查表,方便新对话快速定位。真实进度以 `Assets/` 为准;下面每条都对应已经落地的文件。
 
-**脚本清单(`Assets/Scripts/`,共 58 个 `.cs`)**
+**脚本清单(`Assets/Scripts/`,当前共 88 个 `.cs`)**
 
 - `Core/`
   - `GameManager.cs`——单例(`Instance`),`[SerializeField] player` 只读暴露为 `Player`。目前很轻,只做单例 + Player 引用。
@@ -58,17 +62,24 @@
   - **`ScreenShake.cs`**(第 6 周)——**挂每台 RoomCamera**,订阅 `ScreenShakeEvent`,抖 vcam 自己的 `localPosition`(不碰 Cinemachine API);**`unscaledDeltaTime`**(HitStop 时 timeScale=0)、`Mathf.Max` 不累加、`OnDisable` 复位。只有当前房间的 vcam active、会响应——inactive 的自动退订。
   - **`CombatFeedback.cs`**(第 6 周,挂 GameManager)——订阅语义事件 `EnemyDamagedEvent`/`EnemyDiedEvent`,翻译成表现(`HitStop.Do` + 发 `ScreenShakeEvent` + 从池取粒子)。**手感参数(停顿时长/震动强度)全集中在这一个 Inspector 面板**——伤害源不该知道"打中要震多少屏"。
   - **`PooledParticle.cs`**(第 6 周)——`IPoolable` 一次性粒子,`lifeTime` 从 `ParticleSystem` 自己算(不手填);预制体 `Stop Action` 必须 `None`(不能 `Destroy`)、取消 `Looping`。
+- **`AI/`**(V1.5-2 新建,命名空间 `Game.AI`,当前 27 个 `.cs`,**已 review 并通过 Play 验收**)
+  - 通用框架:`NodeState` + `Node`,组合节点 `SequenceNode`/`SelectorNode`,装饰节点 `InverterNode`/`CooldownNode`,叶节点基类 `ConditionNode`/`ActionNode`,以及 `Blackboard`/`BehaviourTree`。这些都是纯 C# 决策逻辑;`BehaviourTreeTester` 是步骤 1 演示组件,目前仍保留。
+  - `AI/Enemy/` 11 个通用敌人节点:视野/攻击/射击/自爆范围条件,追击/巡逻/近战/保持距离/射击/自爆动作。`BossPhaseCondition` 与 `BossSkillAction` 当前实际放在 `AI/` 根目录。
+  - 四棵树由 `EnemyBrain` 按 `EnemyBehaviour.type` 组装:近战=攻击→追击→巡逻;远程=过近后退→射击→追击→巡逻;自爆=引爆→追击→巡逻;Boss=半血后远程灼烧技能→半血前近战技能→追击→巡逻。
 - `Entities/`
   - `Health.cs`——通用血量组件。`Current`/`Max`/`isDead`/`isInvincible`,`SetInvincible(duration)` 无敌帧,`TakeDamage`(无敌或已死直接跳过);三个 C# 事件:`Damaged(int)`、`Died()`、**`HealthChanged(current,max)`**(第 3 周加)。**Health 保持通用、不认识"玩家"/"UI",只发本地事件**。
   - `PlayerController.cs`——玩家状态机"上下文":持有 `Rb`/`health`/`SpriteRenderer`/`MoveInput` + 5 个状态实例 + `stateMachine`;`Update` 只做**朝向鼠标 + 冷却 + `Tick`**(**第 4 周起不再读键盘**),`FixedUpdate` **先 `Rb.linearVelocity = Vector2.zero` 再跑 `FixedTick`**。供外部调用的入口:`SetMoveInput(v)`(由 `MoveCommand` 写入)、`TriggerDash()`(由 `DashCommand` 调)、`TriggerAttack()`(由 `WeaponController` 近战时调);只读暴露 `CanAct`(仅 Idle/Move 为真)、`CanDash`。**它还负责把 `health.HealthChanged` 桥接成全局 `PlayerHealthChangedEvent`**(`Start` 广播一次初始血量),并在 `StartDashCooldown()` 里广播 `SkillCooldownStartedEvent(SkillId.Dash, ...)`。
-  - `EnemyController.cs`——敌人状态机"上下文":持有 4 个状态 + `SpawnPosition` + `Player` 引用 + **`OriginalColor`(本色,PatrolState 恢复用,别硬编码 Color.white)**;`MoveTowards`/`DistanceToPlayer` 工具方法。**第 6 周桥接 `Health.Damaged`/`Died` → 全局 `EnemyDamagedEvent`/`EnemyDiedEvent`**(供 `CombatFeedback` 做手感)。**`detectionRange < loseSightRange` 是迟滞设计,别调反**(否则临界距离状态频闪)。
+  - **`EnemyBehaviour.cs`**(V1.5-2)——敌人行为档案 SO,实际类名使用英式拼法;`EnemyType { Melee, Ranged, Bomber, Boss }`,集中巡逻/追击/近战/击退/远程/自爆/Boss 技能参数。资产是 `MeleeBehavior`/`RangedBehavior`/`BomberBehavior`/`BossBehavior`。
+  - **`EnemyBrain.cs`**(V1.5-2)——敌人主动决策入口;`Awake` 创建每敌人 Blackboard/感知对象,`Start` 按 `EnemyController.Behaviour.type` 构建四类行为树,`FixedUpdate` 先更新感知迟滞再评估树;`IsActionLocked` 时暂停。Boss 建树前校验阶段阈值,失败则禁用 Brain。远程/Boss 投射物通过序列化的 `ObjectPool` 获取。
+  - `EnemyController.cs`——V1.5-2 后成为敌人的共享数据/能力上下文:从 `EnemyBehaviour` 暴露参数,持有 `Rb`/`health`/`StatusManager`/`Player`/出生点/本色,提供 `MoveTowards`/`DistanceToPlayer`/`TriggerKnockback`;FSM 只保留 `FreeState`/`KnockbackState`/`DeadState`,`IsActionLocked` 让击退/死亡抢占行为树。继续桥接 `Health.Damaged`/`Died` → 全局战斗反馈事件。**`detectionRange < lostSightRange` 仍是迟滞约束。**
 - `Weapons/`(第 3 周重构成"数据 + 策略")
   - `WeaponData.cs`——武器 SO(`[CreateAssetMenu]` → `Create > Game > Weapon Data`),字段 `weaponName`/`type`/`damage`/`cooldown`/`maxAmmo`/`range`,外加 `WeaponType { Ranged, Melee }` 枚举。资产在 `Assets/Data/`:`Pistol`/`Rifle`/`Sword`。
-  - `IWeaponStrategy.cs`——`void Fire(WeaponController controller, WeaponData data)`。**策略无状态**,冷却/弹药由 controller 管,数值从 data 读。
-  - `RangedWeaponStrategy.cs`——从 `controller.BulletPool` 取子弹、按 `FirePoint` 朝向发射,并 `bullet.SetDamage(data.damage)`。
+  - `IWeaponStrategy.cs`——V1.5-1 后签名为 `void Fire(WeaponController controller, DamageInfo damageInfo)`。**策略无状态**,冷却/弹药由 controller 管,SO→伤害包只由 controller 翻译。
+  - `RangedWeaponStrategy.cs`——从 `controller.BulletPool` 取子弹、按 `FirePoint` 朝向发射,并 `bullet.SetDamageInfo(damageInfo)`。
   - `MeleeWeaponStrategy.cs`——角色前方 `range` 处 `Physics2D.OverlapCircle(点,半径,filter,复用缓冲区)`(第 6 周从 `OverlapCircleAll` 改成零分配版),圈内 `Enemy` 扣血。**filter 用 `ContactFilter2D.noFilter`**(Unity 6:`NonAlloc`/`NoFilter()` 都已废弃,分别改成 `OverlapCircle` 重载 / 静态属性 `noFilter`)。缓冲区固定 16,超出被无视。
   - `WeaponController.cs`——**武器系统主体**(挂 Player,取代已移除的 `PlayerShooter` 组件)。持有 `WeaponData[] weapons` + `int[] currentAmmo`(每把武器各记一份,切枪不清零)+ `Dictionary<WeaponType, IWeaponStrategy>`。**第 4 周起不再读输入**:`Update` 里只剩冷却倒计时,对外暴露**能力**——`CanFire()`(= `CanAct && cooldown<=0 && HasAmmo()`)、`Fire()`、`SwitchTo(index)`、`AddAmmo(n)`、`WeaponCount`。近战开火后额外 `playerController.TriggerAttack()`。弹药/武器变化通过 `EventBus` 广播,**它不认识 UI**。
-  - `Bullet.cs`——`IPoolable` 子弹,`FixedUpdate` 用 `linearVelocity` 前进 + 计时回收,`OnTriggerEnter2D` 命中 `Enemy` 扣血后回池;**`SetDamage(int)` 让武器 SO 覆盖伤害**(所以不需要为每把枪做子弹预制体)。
+  - `Bullet.cs`——`IPoolable` 玩家子弹,`FixedUpdate` 用 `linearVelocity` 前进 + 计时回收,命中敌人后同时走 `Health.TakeDamage(DamageInfo)` + `StatusEffectManager.ApplyEffects`,再回池;主要注入入口是 `SetDamageInfo`,旧 `SetDamage(int)` 仍作兼容。
+  - **`EnemyProjectile.cs`**(V1.5-2)——池化敌人子弹,`Launch` 注入速度与 `DamageInfo`;命中 Player 后造成伤害并施加状态异常。类名与预制体序列化标识均已统一为 `EnemyProjectile`。
   - `AmmoPickup.cs`——`OnTriggerEnter2D` 碰到 `Player` → `WeaponController.AddAmmo(amount)` → `Destroy`。无限弹药武器(近战)会被 `AddAmmo` 直接跳过。
   - **`Grenade.cs`**(第 4 周)——`IPoolable` 手雷。`OnEnable` 给初速 + 阻尼,引信烧完 `Explode()`:`OverlapCircleAll` 范围伤害(**非指向性,不需要 Collider2D**),然后藏本体、放出爆炸圈、计时回池。**表现是两个子物体**(`Body` 方块 / `Explosion` 圆),爆炸圈大小由脚本按 `explosionRadius` 算(`localScale = 半径 × 2`),**保证视觉圆 == 判定圆**。
   - **`GrenadeThrower.cs`**(第 4 周,挂 Player)——只管冷却 + 从池里取一颗手雷丢出去;`Throw()` 里广播 `SkillCooldownStartedEvent(SkillId.Grenade, cooldown)`。
@@ -92,17 +103,18 @@
   - `LevelManager.cs`——**唯一知道房间顺序的人**。`Start` 广播 `LevelStartedEvent` + `EnterRoom(0)`;订阅 `DoorEnteredEvent` → `EnterRoom(currentIndex + 1)`;**把 `Room.RoomCleared` 局部事件桥接成带 index 的全局 `RoomClearedEvent`**(`Array.IndexOf` 查身份)。`currentIndex` 初始 **`-1`**(= 还没进过任何房间)。传送玩家用 `rb.position` + 清 `linearVelocity`。
 - `StateMachines/`
   - `IState.cs`(Enter/Tick/FixedTick/Exit)+ `StateMachine.cs`(`CurrentState`/`ChangeState`/`Tick`/`FixedTick`,**纯 C# 类,非 MonoBehaviour**,controller 内部 `new` 一个)。
-  - `Player/`:Idle / Move / Dash / Attack / Hurt 五态。**状态类已彻底不读输入**(第 3 周删了右键近战分支和 `PerformHit`,第 4 周删了读 Shift 的闪避分支),现在只根据当前数据决定状态转换。 `Enemy/`:Patrol / Chase / Attack / Dead 四态。
+  - `Player/`:Idle / Move / Dash / Attack / Hurt 五态。**状态类已彻底不读输入**(第 3 周删了右键近战分支和 `PerformHit`,第 4 周删了读 Shift 的闪避分支),现在只根据当前数据决定状态转换。
+  - `Enemy/`:V1.5-2 后只剩 Free / Knockback / Dead 三态;Patrol / Chase / Attack 已由行为树节点取代并从 `Assets/` 删除。`FreeState` 是行为树接管主动决策时的空闲占位,击退结束回 Free,死亡保持锁定。
 
 **几个已确立的实现事实/约定(改代码前注意)**
 
-1. **状态机 = 上下文模式**:`PlayerController`/`EnemyController` 只持有数据 + 每帧转发 `Tick`/`FixedTick`,具体行为在状态类里;状态类构造函数吃 `(controller, stateMachine)`。新增状态 = 新建一个类 + 在 controller 的 `Awake` 里 `new` 出来 + 暴露成属性。
+1. **玩家 FSM;敌人 = 行为树主动决策 + FSM 被动打断**:`PlayerController` 仍把 Idle/Move/Dash/Attack/Hurt 行为放在状态类里。V1.5-2 起 `EnemyBrain` 的行为树决定巡逻/追击/攻击/射击/自爆/Boss 技能,`EnemyController` 内的 FSM 只负责 Free/Knockback/Dead;`IsActionLocked` 是两套系统的协调点。不要重新创建敌人 Patrol/Chase/Attack 状态类。
 2. **玩家/敌人移动 = `MovePosition` + 每帧清零 velocity**:两者刚体都是 Dynamic;靠 `MovePosition` 位移。玩家在 `FixedUpdate` 开头 `Rb.linearVelocity = Vector2.zero` 消除碰撞残留速度(否则被撞会一直漂,见 week2 第 5.2 节)。之后若要"击退",需显式设计,不能靠残留速度。
 3. **两层事件,别混用**:**局部 C# 事件**(`Health.Damaged`/`Died`/`HealthChanged`)用于**同一实体内部**的反应——`Damaged` → 切 `HurtState`、`Died` → 切 `DeadState`,controller 在 `OnEnable/OnDisable` 订阅/退订;**全局 `EventBus`** 用于**跨模块**通知(UI/拾取/武器)。`Health` 这种通用组件只发局部事件,"我是玩家、我的血要给 UI 看"这层身份由 `PlayerController` 桥接后 `EventBus.Publish`。**新代码遵循这个分层,别让通用组件直接 Publish 全局事件。**
 4. **EventBus 时序铁律**:**订阅放 `OnEnable`、初始值广播放 `Start`**(Unity 保证所有 `OnEnable` 先于所有 `Start`),否则 UI 收不到初始值。**`Subscribe`/`Unsubscribe` 必须成对**——写反了编译器不报错,但会累积重复订阅、切场景时抱着已销毁对象崩溃(week3 踩过)。
 5. **武器 = SO 数据 + 无状态策略**:新增一把武器 = 建一个 `WeaponData` 资产;新增一种开火方式 = 加一个 `IWeaponStrategy` 实现 + 在 `WeaponController.Awake` 的字典里注册。**不要把冷却/弹药状态塞进策略,也不要把开火行为塞进 SO。** 从 SO 取显示名用 `weaponName` 字段,**不是 `.name`**(那是资产文件名,week3 踩过)。
-6. **伤害判定分三条路**:玩家近战 = `MeleeWeaponStrategy` 的 `OverlapCircleAll`;玩家远程 = `Bullet.OnTriggerEnter2D`(伤害由 `SetDamage` 从武器 SO 注入);敌人 = `EnemyAttackState` 距离判定 + `attackCooldown` 周期扣血(**不走物理碰撞回调**)。
-7. **调试用颜色反馈(临时)**:各状态 `Enter` 改 `SpriteRenderer.color`(玩家攻击黄、受击红闪;敌人追击橙/攻击红/死亡灰),`Exit` 或回到默认状态时**恢复本色**。**关键:不要硬编码"本色"**——`EnemyController.Awake` 里记 `OriginalColor = SpriteRenderer.color`,`EnemyPatrolState.Enter` 恢复到 `enemy.OriginalColor`(**不是 `Color.white`**)。第 5 周踩过:原本写死 `Color.white`,导致紫色 Boss 一进巡逻就被刷成白色。有动画后这套会替换掉,状态机逻辑不依赖颜色。
+6. **伤害判定现在是多入口、统一伤害包**:玩家近战=`MeleeWeaponStrategy` 物理范围查询;玩家远程=`Bullet.OnTriggerEnter2D`;普通敌人近战=`MeleeAttackAction` 距离判定;远程敌人/二阶段 Boss=`EnemyProjectile.OnTriggerEnter2D`;自爆=`ExplodeAction`;一阶段 Boss=`BossSkillAction` 直接命中。V1.5-1 后可携带元素效果的路径都应传 `DamageInfo`,由命中点分别调用 `Health.TakeDamage` 与 `StatusEffectManager.ApplyEffects`。
+7. **调试用颜色反馈(临时)**:玩家状态仍会改色;敌人的主动行为节点与 Knockback/Dead 也会改色,退出/恢复时必须回 `EnemyController.OriginalColor`,**绝不能硬编码 `Color.white`**。旧 `EnemyPatrolState` 已删除,当前恢复本色的责任分散在行为节点/被动状态中,review 时要检查所有抢占与退出路径。
 8. **输入全部收拢在 `PlayerInputHandler`**(第 4 周确立):`PlayerController`、状态类、`WeaponController` **一律不读键盘鼠标**,它们只对外暴露"能力"(`TryXxx`/`CanXxx`),由命令来调。新增一个玩家动作 = 加一个 `ICommand` 实现 + 在 `PlayerInputHandler` 里绑定按键。**别再在别的地方写 `Keyboard.current`。**
 9. **输入 API**:一次性动作(闪避/手雷/切枪)用 `wasPressedThisFrame`,持续动作(开火/移动)用 `isPressed`。全部走新版 Input System。**近战和远程都是左键开火**(由当前武器决定行为)。
 10. **命令入不入队,看它会不会被拒绝**:**离散动作**(闪避/手雷——有 `CanAct`/冷却前置条件,按下时常常做不了)进 `InputBuffer` 排队,条件一满足立刻执行(这就是"跟手"的来源);**持续动作**(移动/连发)和**无条件动作**(切枪)直接执行,缓冲对它们只会带来延迟。
@@ -115,9 +127,9 @@
 17. **`timeScale=0` 期间要继续走的东西必须用 unscaled 时间**:`HitStop` 用 `WaitForSecondsRealtime`(不是 `WaitForSeconds`),`ScreenShake` 用 `Time.unscaledDeltaTime`——否则命中停顿会让它们当场冻住(HitStop 甚至永久卡死)。
 18. **迟滞(hysteresis)**:任何"进入条件"和"退出条件"用不同阈值的地方,退出阈值要比进入阈值宽,留出缓冲区,否则临界点附近会抖动。敌人 AI 的 `detectionRange`(进入追击,小)< `loseSightRange`(退出追击,大)就是例子。
 
-**场景(`SampleScene.unity`)关键物体**:Player(Tag `Player`,挂 `PlayerController`/`Health`/`WeaponController`/`PlayerInputHandler`/`GrenadeThrower`/Rigidbody2D[Dynamic,Damping 0]/SpriteRenderer)、子弹池 + 手雷池 + **命中/死亡粒子池**(各挂 `ObjectPool`)、**GameManager(挂 `HitStop` + `CombatFeedback`)**、**`Main Camera`(挂 `CinemachineBrain`,`CameraFollow` 已禁用)**、**`LevelManager`**(rooms 数组按顺序拖 3 个房间)、**3 个 `Room.prefab` 实例**(x = 0/30/60,各 override `config`,每个 `RoomCamera` 上挂 `ScreenShake`)、**Canvas**(血条、TMP 弹药文本、技能图标 + 环形冷却遮罩、Debug 文本、`Minimap`)。**敌人不再手摆在场景里**——全部由 `RoomConfig` 生成。
+**场景(`SampleScene.unity`)关键物体**:Player(Tag `Player`,挂 `PlayerController`/`Health`/`StatusEffectManager`/`WeaponController`/`PlayerInputHandler`/`GrenadeThrower`/Rigidbody2D[Dynamic,Damping 0]/SpriteRenderer)、子弹池 + 手雷池 + **命中/死亡粒子池**(各挂 `ObjectPool`)、**GameManager(挂 `HitStop` + `CombatFeedback`)**、**`Main Camera`(挂 `CinemachineBrain`,`CameraFollow` 已禁用)**、**`LevelManager`**(rooms 数组按顺序拖 3 个房间)、**3 个 `Room.prefab` 实例**(x = 0/30/60,各 override `config`,每个 `RoomCamera` 上挂 `ScreenShake`)、**Canvas**(血条、TMP 弹药文本、技能图标 + 环形冷却遮罩、Debug 文本、`Minimap`)。**敌人不手摆在场景里**——由 `RoomConfig` 生成;V1.5-2 已把房间配置中的敌人引用换成多类型预制体,生成组合已通过 Play 验收。
 
-**预制体(`Assets/Prefabs/`)**:`Enemy`、`Boss`(Scale 2/紫/300 血)、`Bullet`、`Grenade`(root Scale 1 + Rigidbody2D[无 Collider2D] + 子物体 `Body`/`Explosion`)、`AmmoPickup`、`CooldownIcon`、`RoomIcon`、`Room`(围墙 + `EntryPoint` + `Contents` + `Door` + `RoomCamera`[inactive])、**`HitSpark`/`DeathSpark`**(粒子,`Stop Action=None`、取消 `Looping`)。**`Assets/Data/` 只放 ScriptableObject,预制体一律放 `Assets/Prefabs/`**。
+**预制体(`Assets/Prefabs/`)**:V1.5-2 的敌人族为 `EnemyMeleed`(当前拼法)/`EnemyRanged`/`EnemyBomber`/`Boss`,以及池化的 `EnemyProjectile`;旧 `Enemy.prefab` 已删除。其余包括 `Bullet`、`Grenade`(root Scale 1 + Rigidbody2D[无 Collider2D] + 子物体 `Body`/`Explosion`)、`AmmoPickup`、`CooldownIcon`、`RoomIcon`、`Room`(围墙 + `EntryPoint` + `Contents` + `Door` + `RoomCamera`[inactive])、**`HitSpark`/`DeathSpark`**(粒子,`Stop Action=None`、取消 `Looping`)。**`Assets/Data/` 只放 ScriptableObject,预制体一律放 `Assets/Prefabs/`**。
 
 **UI 素材注意**:血条填充用的是自建的 `Assets/Art/Square`(纯白无圆角)。**别用 Unity 内置的 `UISprite`**——那是带圆角的九宫格图,配 `Image Type = Filled` 时圆角会被裁切拉伸成脏边(week3 踩过)。环形冷却遮罩用 `Image Type = Filled` + `Fill Method = Radial 360`。
 
@@ -136,16 +148,16 @@
 
 ## Reference 参考代码约定(重要,长期有效)
 
-- **Claude 不直接把游戏代码写进 `Assets/` 里**。用户希望自己动手在 `Assets/Scripts/` 下创建文件、亲自敲代码来学习,而不是打开项目发现代码已经全部写好。
-- Claude 的示例/参考实现统一写在仓库根目录的 **`Reference/`** 文件夹——与 `Assets/` 同级(不在其内部),已加入 `.gitignore`,不会被 Unity 编译、也不会进版本库。目录结构镜像 `Assets/Scripts/`,例如 `Reference/Scripts/Core/ObjectPool.cs` 对应用户将来要在 `Assets/Scripts/Core/ObjectPool.cs` 创建的内容。
+- **Codex 不直接把游戏代码写进 `Assets/` 里**。用户希望自己动手在 `Assets/Scripts/` 下创建文件、亲自敲代码来学习,而不是打开项目发现代码已经全部写好。
+- Codex 的示例/参考实现统一写在仓库根目录的 **`Reference/`** 文件夹——与 `Assets/` 同级(不在其内部),已加入 `.gitignore`,不会被 Unity 编译、也不会进版本库。目录结构镜像 `Assets/Scripts/`,例如 `Reference/Scripts/Core/ObjectPool.cs` 对应用户将来要在 `Assets/Scripts/Core/ObjectPool.cs` 创建的内容。
 - 每周文档(`devlog/week<N>.md`)里的代码讲解章节,标题指向 `Assets/Scripts/...`(目标路径),正文提示参考实现在 `Reference/Scripts/...`,并说明这是需要用户自己创建的文件,不是已经落地的实现。
 - `Reference/` 里的内容会随周数推进被覆盖/更新,只代表"当前这一步应该长成什么样",不代表用户项目的真实进度——**真实进度以 `Assets/` 里用户实际创建的文件为准**。
-- 例外:场景文件(`.unity`)、预制体(`.prefab`)等 Unity 二进制/YAML 资产不适合放参考副本,继续沿用「Claude 不直接编辑场景文件,由用户在编辑器里操作」的既有约定。
+- 例外:场景文件(`.unity`)、预制体(`.prefab`)等 Unity 二进制/YAML 资产不适合放参考副本,继续沿用「Codex 不直接编辑场景文件,由用户在编辑器里操作」的既有约定。
 
 ## 开发节奏
 
-- 当前阶段:**六周全部完成,V1(2D)收官,V1.5(深化)启动**。六篇 `devlog/week1~6.md` 均已写完实际完成记录;`v1-week1`~`v1-week6` 六个标签已本地补打(未 push)。
-- **下一步**:先做 V1.5——武器/伤害深化(Decorator + 状态异常)→ 敌人 AI 深化(行为树)→ 程序化关卡生成 → 存档系统,四个方向的优先级理由见上方「当前进度」。README 规划的 V2(3D 化)、V3(联机)推迟到 V1.5 之后:迁移时 `EventBus`/`ICommand`/`IWeaponStrategy`/`RoomConfig`/`StateMachine` 这几层不认识 2D Sprite/物理,理论上可原样搬;要改的是 `Bullet`/`MoveTowards`/`OverlapCircle` 这些碰 2D 物理和渲染的地方。
+- 当前阶段:**六周全部完成,V1(2D)收官,V1.5 方向①与方向②均已验收完成,准备进入方向③程序化关卡生成**。六篇 `devlog/week1~6.md` 均已写完实际完成记录;`v1-week1`~`v1-week6` 六个标签已本地补打(未 push)。
+- **下一步**:V1.5 的武器/伤害深化与敌人 AI 深化均已完成,现在进入程序化关卡生成,之后再做存档系统。README 规划的 V2(3D 化)、V3(联机)推迟到 V1.5 之后:迁移时 `EventBus`/`ICommand`/`IWeaponStrategy`/`RoomConfig`/`StateMachine` 这几层不认识 2D Sprite/物理,理论上可原样搬;要改的是 `Bullet`/`MoveTowards`/`OverlapCircle` 这些碰 2D 物理和渲染的地方。
 - **发布前清理清单**(答疑用):`ObjectPool.debugMode` 关掉、`DebugText.display` 关掉、清临时 `Debug.Log`;打包时 `Build Settings > Scenes In Build` 必须勾上场景(否则黑屏),构建目录别选在项目内(会递归导入)。
 - **分步下发的做法已连续三周验证有效,继续沿用**:大周拆成若干"每步可编译、可 Play 验收"的小步(第 3、4、5 周都是 4 步),每步末尾给 ✅ 验收清单,用户做完一步回来验收再进下一步。**纯重构的步骤,验收标准就写"行为和上周完全一样"**(第 4 周步骤 1 这么做的,效果很好)。**"不写代码、只做对比实验"的步骤也很有价值**(第 4 周步骤 2 让用户把 `bufferDuration` 调成 0 体会差异)。
 - **课后练习值得继续出**:第 4 周出了三道,用户全做了,而且第一道让他真正撞上了"队列存引用不是快照"这个坑——**比直接讲有效得多**。第 5 周出了三道(清空奖励该放哪、Boss 血条要不要新事件、房间可重进要处理哪些状态)。
@@ -176,7 +188,7 @@
 
 ## 目录结构约定
 
-按 README 的规划创建目录(当前均不存在,首次用到时再创建):
+当前目录结构:
 
 ```
 Assets/Scripts/Core/          # GameManager, EventBus, GameEvents, ObjectPool...
@@ -186,6 +198,7 @@ Assets/Scripts/Commands/      # 命令模式相关类
 Assets/Scripts/StateMachines/ # 状态机实现
 Assets/Scripts/Level/         # 房间/关卡系统(第 5 周新增)
 Assets/Scripts/UI/            # UI 控制脚本
+Assets/Scripts/AI/            # 行为树框架 + 敌人决策节点(V1.5-2 新增)
 Assets/Prefabs/  Assets/Scenes/  Assets/Data/  Assets/Art/  Assets/Audio/  Assets/ThirdParty/
 ```
 
@@ -193,9 +206,9 @@ Assets/Prefabs/  Assets/Scenes/  Assets/Data/  Assets/Art/  Assets/Audio/  Asset
 
 **`Assets/Data/` 只放 ScriptableObject 资产,预制体一律放 `Assets/Prefabs/`**(第 4、5 周各放错过一次:`Grenade.prefab`、`Room.prefab`)。
 
-**命名空间约定**(第 1 周确立):子目录与命名空间一一对应——`Game.Core`、`Game.Entities`、`Game.Weapons`、`Game.Commands`、`Game.StateMachines`、`Game.Level`、`Game.UI`。看 `using` 就能判断这个类归哪个目录管,新文件按此规则加命名空间。
+**命名空间约定**(第 1 周确立):子目录与命名空间一一对应——`Game.Core`、`Game.Entities`、`Game.Weapons`、`Game.Commands`、`Game.StateMachines`、`Game.Level`、`Game.UI`、`Game.AI`。看 `using` 就能判断这个类归哪个目录管,新文件按此规则加命名空间。
 
-**属性命名约定**(第 2 周确立,用户明确要求):`PlayerController`/`EnemyController` 上暴露 `Health` 组件引用的公开属性用**小写开头**的 `health`(不是 C# 惯例的 `Health`)。这是用户主动选择的风格,不是笔误,新代码(包括 Claude 给的参考实现)一律跟随这个写法,不要擅自"改正"回 PascalCase。
+**属性命名约定**(第 2 周确立,用户明确要求):`PlayerController`/`EnemyController` 上暴露 `Health` 组件引用的公开属性用**小写开头**的 `health`(不是 C# 惯例的 `Health`)。这是用户主动选择的风格,不是笔误,新代码(包括 Codex 给的参考实现)一律跟随这个写法,不要擅自"改正"回 PascalCase。
 
 ## 工程与版本约定
 
@@ -211,9 +224,10 @@ Assets/Prefabs/  Assets/Scenes/  Assets/Data/  Assets/Art/  Assets/Audio/  Asset
 - 场景(`.unity`)与预制体(`.prefab`)冲突由 UnityYAMLMerge 处理;自动合并失败时在编辑器里手动解决后再提交,不要用命令行强行二选一。
 - 根目录已有 `.gitignore`(忽略 `Library/`、`Temp/`、`Logs/`、`UserSettings/`、IDE 生成文件等)与 `.gitattributes`(LFS 规则 + `merge=unityyamlmerge` 属性)。**这两个文件本身已提交**,但 UnityYAMLMerge 的合并驱动路径是本机配置,不会随仓库同步——每台开发机克隆后需按 README「冲突处理」一节各自执行一次 `git config merge.unityyamlmerge.driver ...`。
 - 首次在新机器上使用前仍需执行 `git lfs install`(注册全局 LFS 过滤器),这一步不属于仓库内容,不能靠 `.gitattributes` 自动完成。
-- **`git commit` 一律由用户自己执行**(第 2 周确立,长期有效):Claude 可以 `git add`、准备好提交信息、告诉用户要跑什么命令,但不要代替用户执行 `git commit`。打 tag(不涉及重写历史)、`git status`/`git log` 这类只读或低风险操作不受此限制。
+- **`git commit` 一律由用户自己执行**(第 2 周确立,长期有效):Codex 可以 `git add`、准备好提交信息、告诉用户要跑什么命令,但不要代替用户执行 `git commit`。打 tag(不涉及重写历史)、`git status`/`git log` 这类只读或低风险操作不受此限制。
 
 ## 给协作者的提示
 
-- README.md 面向人(项目目标、周计划、参考资料),CLAUDE.md 面向 Claude(当前进度、既定约定、踩过的坑)。改变项目目标/计划改 README;改变当前进度/约定/注意事项改本文件。
+- README.md 面向人(项目目标、周计划、参考资料),AGENTS.md 面向 Codex(当前进度、既定约定、踩过的坑)。改变项目目标/计划改 README;改变当前进度/约定/注意事项改本文件。
+- `docs/CODEX_WORKFLOW.md` 是本项目日常使用 Codex 的提示词模板和工作节奏参考；它不替代 AGENTS.md 的项目规则。
 - 项目仍处于起步阶段:任何"架构约定"一旦被用户在对话中修改或否决,应立即更新本文件对应表格/条目,避免下次对话重复同样的分歧。

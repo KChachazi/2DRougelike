@@ -23,4 +23,4 @@ MonoBehaviour:
   burnTickInterval: 0.5
   freezePercent: 0
   freezeDuration: 0
-  knockbackForce: 3
+  knockbackForce: 0.3

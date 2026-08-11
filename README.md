@@ -11,7 +11,7 @@
 - **引擎**：Unity 6.3 LTS (6000.3.19f1)，2D + URP 模板
 - **目标**：在 6 周内实现完整的房间战斗、敌人 AI、数据驱动武器系统，并沉淀一套与引擎低耦合的核心逻辑（可复用于后续 3D 和联机版本）。
 - **参考游戏**：《Soul Knight》（元气骑士）
-- **当前状态**：六周计划全部完成，V1（2D 版）收官，`v1-week1`~`v1-week6` 标签已打，详见 [CLAUDE.md](CLAUDE.md) 中的“当前进度”
+- **当前状态**：六周计划全部完成，V1（2D 版）收官，V1.5 深化阶段进行中；方向①武器/伤害深化与方向②敌人 AI 深化均已完成并通过 Play 验收，下一步进入程序化关卡生成。`v1-week1`~`v1-week6` 标签已打，最新进度与既定约定见 [AGENTS.md](AGENTS.md)
 
 ---
 
@@ -218,6 +218,7 @@ Assets/
 - ✅ `v1-week5`: 房间系统、关卡流程、Cinemachine 过渡、Boss 房、小地图（已完成，详见 [devlog/week5.md](devlog/week5.md)）
 - ✅ `v1-week6`: 命中停顿、屏幕震动、粒子特效、GC 优化、对象池泄漏诊断、构建打包、通关收尾（已完成，详见 [devlog/week6.md](devlog/week6.md)）
 - ✅ `v1.5-1`: 武器/伤害深化——Decorator 装饰器 + 状态异常系统（灼烧 DoT / 冰冻减速 / 击退状态）；DamageInfo 伤害包替代裸传 int；WeaponData 元素字段 Inspector 配置；击退改为独立 EnemyKnockbackState（已完成，详见 [devlog/V1.5-1.md](devlog/V1.5-1.md)）
+- ✅ `v1.5-2`: 敌人 AI 深化——行为树 + 每敌人 Blackboard 感知迟滞；近战/远程/自爆敌人；Boss 数据驱动阶段技能；FSM 保留击退/死亡被动打断（已完成，详见 [devlog/V1.5-2.md](devlog/V1.5-2.md)）
 
 ---
 
