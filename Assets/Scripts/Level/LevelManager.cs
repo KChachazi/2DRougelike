@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace Game.Level
 {
+    /// <summary>关卡管理器，负责维护房间切换、玩家传送等。</summary>
     public class LevelManager : MonoBehaviour
     {
         [SerializeField] private Room[] rooms;

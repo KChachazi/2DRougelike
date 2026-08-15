@@ -5,6 +5,13 @@ using UnityEngine;
 
 namespace Game.AI
 {
+    /// <summary>
+    /// 动作：远程射击玩家。
+    /// </summary>
+    //
+    // 从池取一颗 EnemyProjectile，朝玩家方向发射。
+    // 冷却由节点自己管理（behavior.shootCooldown）。
+    // 冷却中返回 Running；发射成功返回 Success。
     public class ShootAction : ActionNode
     {
         private readonly EnemyController enemy;

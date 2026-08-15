@@ -2,6 +2,7 @@ using Game.Weapons;
 
 namespace Game.Commands
 {
+    /// <summary>切换到指定武器槽位；索引在执行前校验。</summary>
     public class SwitchWeaponCommand : ICommand
     {
         private readonly WeaponController weapon;

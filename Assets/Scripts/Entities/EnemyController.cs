@@ -2,10 +2,13 @@ using UnityEngine;
 using Game.Core;
 using Game.StateMachines;
 using Game.StateMachines.Enemy;
-using Game.Weapons;
 
 namespace Game.Entities
 {
+    /// <summary>
+    /// 敌人实体上下文，向行为树提供数据和移动能力，同时运行只负责
+    /// Free、Knockback、Dead 被动打断的有限状态机。
+    /// </summary>
     [RequireComponent(typeof(Rigidbody2D))]
     [RequireComponent(typeof(Health))]
     public class EnemyController : MonoBehaviour
@@ -39,6 +42,7 @@ namespace Game.Entities
         public Vector2 KnockbackDirection { get; private set; }
         public float KnockbackSpeed { get; private set; }
 
+        /// <summary>击退或死亡时暂停主动行为树。</summary>
         public bool IsActionLocked =>
             stateMachine.CurrentState == KnockbackState || stateMachine.CurrentState == DeadState;
 
@@ -81,24 +85,29 @@ namespace Game.Entities
         {
             stateMachine.FixedTick();
         }
-        // === 公开接口 ===
+        // ======================== 公开接口 ========================
+        /// <summary>
+        /// 返回该敌人距离玩家的距离，若玩家为空则返回 float.MaxValue。
+        /// </summary>
         public float DistanceToPlayer()
         {
             return Player == null ? float.MaxValue : Vector2.Distance(Rb.position, Player.position);
         }
+        /// <summary>使用 MovePosition 移动，并自动应用当前减速倍率。</summary>
         public void MoveTowards(Vector2 targetPosition, float speed)
         {
             float multiplier = StatusManager != null ? StatusManager.SpeedMultiplier : 1f;
             Vector2 direction = (targetPosition - Rb.position).normalized;
             Rb.MovePosition(Rb.position + direction * speed * multiplier * Time.fixedDeltaTime);
         }
+        /// <summary>记录击退参数并切入被动击退状态。</summary>
         public void TriggerKnockback(Vector2 direction, float force)
         {
             KnockbackDirection = direction.normalized;
             KnockbackSpeed = behaviour.knockbackSpeedMultiplier * force;
             stateMachine.ChangeState(KnockbackState);
         }
-        // === 私有工具 ===
+        // ======================== 私有工具 ========================
         private void OnDamaged(int amount)
         {
             EventBus.Publish(new EnemyDamagedEvent(Rb.position, amount));

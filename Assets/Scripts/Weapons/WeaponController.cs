@@ -5,6 +5,10 @@ using UnityEngine;
 
 namespace Game.Weapons
 {
+    /// <summary>
+    /// 玩家武器系统的运行时协调器：维护当前武器、弹药与冷却，
+    /// 从 WeaponData 构建 DamageInfo，并将开火委派给对应的无状态策略。
+    /// </summary>
     public class WeaponController : MonoBehaviour
     {
         [SerializeField] private ObjectPool bulletPool;
@@ -48,12 +52,19 @@ namespace Game.Weapons
             if (cooldownTimer > 0f) cooldownTimer -= Time.deltaTime;
         }
 
-        // === 公开接口 ---
+        // ======================== 公开接口 ========================
+        /// <summary>
+        /// 判断当前是否满足开火条件。
+        /// </summary>
         public bool CanFire()
         {
             bool canAct = playerController == null || playerController.CanAct;
             return canAct && cooldownTimer <= 0f && HasAmmo();
         }
+        /// <summary>
+        /// 玩家开火。
+        /// 调用方应先通过 CanFire() 检查执行条件。
+        /// </summary>
         public void Fire()
         {
             WeaponData data = CurrentWeapon;
@@ -68,6 +79,9 @@ namespace Game.Weapons
             if (data.type == WeaponType.Melee && playerController != null)
                 playerController.TriggerAttack();
         }
+        /// <summary>
+        /// 切换到有效武器槽位。
+        /// </summary>
         public void SwitchTo(int index)
         {
             if (index < 0 || index >= weapons.Length || index == currentIdx) return ;
@@ -76,6 +90,9 @@ namespace Game.Weapons
             BroadcastWeapon();
             BroadcastAmmo();
         }
+        /// <summary>
+        /// 补充弹药，不会超过最大弹药量。
+        /// </summary>
         public void AddAmmo(int amount)
         {
             WeaponData data = CurrentWeapon;
@@ -83,7 +100,7 @@ namespace Game.Weapons
             currentAmmo[currentIdx] = Mathf.Min(currentAmmo[currentIdx] + amount, data.maxAmmo);
             BroadcastAmmo();
         }
-        // === 私有工具 ===
+        // ======================== 私有工具 ========================
         private DamageInfo BuildDamageInfo(WeaponData data)
         {
             DamageInfo info = new DamageInfo(data.damage, data.knockbackForce);

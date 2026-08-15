@@ -2,6 +2,7 @@ using Game.Entities;
 
 namespace Game.Commands
 {
+    /// <summary>检查玩家行动状态和闪避冷却，并触发闪避状态。</summary>
     public class DashCommand : ICommand
     {
         private readonly PlayerController player;

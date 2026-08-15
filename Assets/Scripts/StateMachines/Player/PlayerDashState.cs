@@ -1,9 +1,9 @@
 using Game.Entities;
-using Game.StateMachines.Player;
 using UnityEngine;
 
 namespace Game.StateMachines.Player
 {
+    /// <summary>玩家冲刺闪避状态，根据当前移动方向执行冲刺，同时短暂免疫伤害并启动冷却。</summary>
     public class PlayerDashState : IState
     {
         private readonly PlayerController player;

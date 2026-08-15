@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace Game.Commands
 {
+    /// <summary>把输入层计算出的移动方向写入玩家上下文。</summary>
     public class MoveCommand : ICommand
     {
         private readonly PlayerController player;

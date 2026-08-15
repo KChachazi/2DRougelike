@@ -6,6 +6,7 @@ using UnityEngine;
 
 namespace Game.Level
 {
+    /// <summary>依据 RoomConfig 生成房间、统计存活敌人并管理门与房间相机。</summary>
     public class Room : MonoBehaviour
     {
         [SerializeField] private RoomConfig config;
@@ -28,6 +29,9 @@ namespace Game.Level
         private int aliveCount;
         private bool spawned;
 
+        /// <summary>
+        /// 进入当前房间。
+        /// </summary>
         public void Enter()
         {
             if (roomCamera != null) roomCamera.SetActive(true);
@@ -39,6 +43,9 @@ namespace Game.Level
             if (aliveCount <= 0) MarkCleared();
         }
 
+        /// <summary>
+        /// 退出当前房间。
+        /// </summary>
         public void Exit()
         {
             if (roomCamera != null) roomCamera.SetActive(false);

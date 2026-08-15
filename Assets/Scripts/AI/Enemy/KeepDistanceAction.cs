@@ -1,9 +1,11 @@
-using System.Threading.Tasks;
 using Game.Entities;
 using UnityEngine;
 
 namespace Game.AI
 {
+    /// <summary>
+    /// 动作：远离玩家（后退），用于远程敌人被贴脸时。
+    /// </summary>
     public class KeepDistanceAction : ActionNode
     {
         private readonly EnemyController enemy;

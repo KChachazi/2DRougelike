@@ -2,8 +2,10 @@ using UnityEngine;
 
 namespace Game.Weapons
 {
+    /// <summary>武器采用的基础开火策略类型。</summary>
     public enum WeaponType { Ranged, Melee }
 
+    /// <summary>武器的伤害、冷却、弹药、范围和状态效果配置。</summary>
     [CreateAssetMenu(fileName = "NewWeapon", menuName = "Game/Weapon Data")]
     public class WeaponData : ScriptableObject
     {
@@ -12,11 +14,12 @@ namespace Game.Weapons
         public WeaponType type = WeaponType.Ranged;
         public int damage = 10;
         public float cooldown = 0.25f;
-        [Tooltip("弹夹容量；-1表示近战")]
+        [Tooltip("弹夹容量；-1表示无限弹药")]
         public int maxAmmo = 30;
         [Tooltip("近战判定半径，远程忽略")]
         public float range = 1f;
 
+        // ======================== V1.5 新增 ========================
         [Header("=== 特殊效果 ===")]
 
         [Header("灼烧 DoT")]

@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace Game.Level
 {
+    /// <summary>锁定时阻止通行；解锁后把玩家进入转换为全局门事件。</summary>
     [RequireComponent(typeof(Collider2D))]
     public class Door : MonoBehaviour
     {

@@ -2,27 +2,30 @@ using Game.Core;
 using Game.StateMachines;
 using Game.StateMachines.Player;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace Game.Entities
 {
+    /// <summary>
+    /// 玩家实体上下文，持有组件、运行玩家 FSM，并向命令和状态暴露移动、
+    /// 瞄准、攻击与闪避能力；不直接读取键盘或鼠标。
+    /// </summary>
     [RequireComponent(typeof(Rigidbody2D))]
     [RequireComponent(typeof(Health))]
     public class PlayerController : MonoBehaviour
     {
-        [Header("移动")]
+        [Header("=== 移动 ===")]
         [SerializeField] private float moveSpeed = 5f;
         
-        [Header("闪避")]
+        [Header("=== 闪避 ===")]
         [SerializeField] private float dashSpeed = 14f;
         [SerializeField] private float dashDuration = 0.15f;
         [SerializeField] private float dashCooldown = 0.6f;
 
-        [Header("受击")]
+        [Header("=== 受击 ===")]
         [SerializeField] private float hurtDuration = 0.3f;
         [SerializeField] private float hurtInvincibleDuration = 0.6f;
 
-        [Header("近战表现")]
+        [Header("=== 近战表现 ===")]
         [SerializeField] private float attackDuration = 0.25f;
 
         public Rigidbody2D Rb { get; private set; }
@@ -32,7 +35,6 @@ namespace Game.Entities
         public StatusEffectManager StatusEffectManager { get; private set; }
 
         private readonly StateMachine stateMachine = new StateMachine();
-        private Camera mainCamera;
         private float dashCooldownTimer;
 
         public float MoveSpeed => moveSpeed;
@@ -49,6 +51,7 @@ namespace Game.Entities
         public PlayerAttackState AttackState { get; private set; }
         public PlayerHurtState HurtState { get; private set; }
 
+        /// <summary>只有 Idle 与 Move 状态允许响应普通行动命令。</summary>
         public bool CanAct => stateMachine.CurrentState == IdleState || stateMachine.CurrentState == MoveState;
 
         private void Awake()
@@ -57,7 +60,6 @@ namespace Game.Entities
             health = GetComponent<Health>();
             SpriteRenderer = GetComponent<SpriteRenderer>();
             StatusEffectManager = GetComponent<StatusEffectManager>();
-            mainCamera = Camera.main;
 
             IdleState = new PlayerIdleState(this, stateMachine);
             MoveState = new PlayerMoveState(this, stateMachine);
@@ -79,11 +81,11 @@ namespace Game.Entities
         private void Start()
         {
             stateMachine.ChangeState(IdleState);
+            // Start 广播，确保 UI 已经完成 OnEnable 订阅。
             EventBus.Publish(new PlayerHealthChangedEvent(health.Current, health.Max)); // 广播初始满血
         }
         private void Update()
         {
-            RotateTowardsMouse();
             if (dashCooldownTimer > 0f) dashCooldownTimer -= Time.deltaTime;
             stateMachine.Tick();
         }
@@ -93,43 +95,45 @@ namespace Game.Entities
             stateMachine.FixedTick();
         }
 
+        /// <summary>接收输入层计算好的归一化移动方向。</summary>
         public void SetMoveInput(Vector2 input)
         {
             MoveInput = input;
         }
+        /// <summary>由移动状态在物理帧调用，并自动应用减速倍率。</summary>
         public void Move(float speed)
         {
             float multiplier = StatusEffectManager != null ? StatusEffectManager.SpeedMultiplier : 1f;
             Rb.MovePosition(Rb.position + MoveInput * speed * multiplier * Time.fixedDeltaTime);
         }
-        // 供 WeaponController 在近战开火时调用
-        // 可以切到 AttackState 播放"变黄 + 阻断"表现
+        /// <summary>接收输入层计算好的世界空间瞄准方向并旋转刚体。</summary>
+        public void SetAimDirection(Vector2 direction)
+        {
+            if (direction.sqrMagnitude < 0.0001f) return ;
+            Rb.rotation = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        }
+        /// <summary>
+        /// 玩家进入攻击状态，供 WeaponController 在近战开火时调用。
+        /// </summary>
+        // 切到 AttackState 播放“变黄 + 阻断”表现。
         public void TriggerAttack()
         {
             stateMachine.ChangeState(AttackState);
         }
-        // 供 DashCommand 调用
+        /// <summary>
+        /// 玩家进入冲刺状态，供 DashCommand 调用。
+        /// </summary>
         public void TriggerDash()
         {
             stateMachine.ChangeState(DashState);
         }
+        /// <summary>
+        /// 开始计时冲刺冷却，玩家进入冲刺状态后自动调用。
+        /// </summary>
         public void StartDashCooldown()
         {
             dashCooldownTimer = dashCooldown;
             EventBus.Publish(new SkillCooldownStartedEvent(SkillId.Dash, dashCooldown));
-        }
-
-        private void RotateTowardsMouse()
-        {
-            if (Mouse.current == null || mainCamera == null) return ;
-            Vector2 screenPos = Mouse.current.position.ReadValue();
-            Vector3 worldPos = mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, -mainCamera.transform.position.z));
-            
-            Vector2 direction = (Vector2)worldPos - Rb.position;
-            if (direction.sqrMagnitude < 0.0001f) return ;
-
-            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-            Rb.rotation = angle;
         }
 
         private void OnDamaged(int amount)

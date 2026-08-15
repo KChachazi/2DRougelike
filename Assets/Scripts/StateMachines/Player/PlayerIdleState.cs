@@ -2,6 +2,7 @@ using Game.Entities;
 
 namespace Game.StateMachines.Player
 {
+    /// <summary>玩家待机状态，对应无移动输入。</summary>
     public class PlayerIdleState : IState
     {
         private readonly PlayerController player;

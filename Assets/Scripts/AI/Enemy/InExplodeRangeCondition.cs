@@ -2,6 +2,9 @@ using Game.Entities;
 
 namespace Game.AI
 {
+    /// <summary>
+    /// 条件：玩家进入了引爆范围。
+    /// </summary>
     public class InExplodeRangeCondition : ConditionNode
     {
         private readonly EnemyController enemy;

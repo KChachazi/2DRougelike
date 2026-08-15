@@ -4,6 +4,7 @@ using UnityEngine.UI;
 
 namespace Game.UI
 {
+    /// <summary>玩家血条 UI，订阅玩家血量变化相关事件。</summary>
     public class HealthBarUI : MonoBehaviour
     {
         [SerializeField] private Image fillImage;

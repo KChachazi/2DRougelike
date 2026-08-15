@@ -4,6 +4,15 @@ using Game.Core;
 
 namespace Game.Entities
 {
+    /// <summary>
+    /// 敌人的主动决策入口。击退、死亡等仍由 FSM 负责。
+    /// </summary>
+    //
+    // 被动状态生效时，EnemyController.IsActionLocked 会暂停行为树。
+    // FixedUpdate 的顺序固定为：
+    // 1. 更新感知快照；
+    // 2. 把快照保存在该敌人自己的 Blackboard 中；
+    // 3. 评估只读取快照的行为树。
     [RequireComponent(typeof(EnemyController))]
     public class EnemyBrain : MonoBehaviour
     {
@@ -18,12 +27,13 @@ namespace Game.Entities
         {
             enemy = GetComponent<EnemyController>();
             blackboard = new Blackboard();
-            blackboard.Set("enemy", enemy);
             perception = new EnemyPerceptionData();
             blackboard.Set(EnemyBlackboardKeys.Perception, perception);
         }
         private void Start()
         {
+            // EnemyController 已在 Awake 中记录 SpawnPosition，
+            // 在 Start 建树可避免 PatrolAction 过早读取未初始化的出生点。
             tree = BuildTree(enemy.Behaviour);
             if (tree == null)
                 enabled = false;
@@ -34,7 +44,10 @@ namespace Game.Entities
             UpdatePerception();
             tree.Evaluate();
         }
-        // === 私有工具 ===
+        // ======================== 私有工具 ========================
+        /// <summary>
+        /// 每个物理帧只在此处计算一次视野状态。
+        /// </summary>
         private void UpdatePerception()
         {
             perception.Target = enemy.Player;
@@ -51,6 +64,10 @@ namespace Game.Entities
             else if (perception.IsAlerted && distance >= enemy.Behaviour.lostSightRange)
                 perception.IsAlerted = false;
         }
+        /// <summary>
+        /// 阶段阈值必须按从高到低排列，例如 [0.7, 0.3]。
+        /// 只在建树时检查一次，避免行为树每个物理帧重复打印错误。
+        /// </summary>
         private bool ValidateBossPhaseThresholds(EnemyBehaviour behaviour, int expectedPhaseCount)
         {
             float[] thresholds = behaviour.phaseThresholds;
@@ -72,7 +89,7 @@ namespace Game.Entities
             }
             return true;
         }
-        // === 行为树构建 ===
+        // ======================== 行为树构建 ========================
         private BehaviourTree BuildTree(EnemyBehaviour behaviour)
         {
             switch (behaviour.type)

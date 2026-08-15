@@ -2,6 +2,7 @@ using Game.Entities;
 
 namespace Game.StateMachines.Player
 {
+    /// <summary>玩家移动状态，对应有移动输入。</summary>
     public class PlayerMoveState : IState
     {
         private readonly PlayerController player;

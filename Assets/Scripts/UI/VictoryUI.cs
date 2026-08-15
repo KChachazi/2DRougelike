@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace Game.UI
 {
+    /// <summary>胜利 UI，订阅通关事件，并可选冻结游戏时间。</summary>
     public class VictoryUI : MonoBehaviour
     {
         [SerializeField] private GameObject victoryPanel;

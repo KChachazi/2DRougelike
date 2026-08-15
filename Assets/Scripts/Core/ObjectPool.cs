@@ -3,11 +3,13 @@ using UnityEngine;
 
 namespace Game.Core
 {
+    /// <summary>允许池化对象接收所属对象池引用。</summary>
     public interface IPoolable
     {
         ObjectPool Pool { get; set; }
     }
 
+    /// <summary>按需扩容、支持预热与重复归还诊断的 GameObject 对象池。</summary>
     public class ObjectPool : MonoBehaviour
     {
         [SerializeField] private GameObject prefab;
@@ -22,7 +24,6 @@ namespace Game.Core
         public int TotalCreated => totalCreated;
         public int InPoolCount => pool.Count;
         public int ActiveCount => totalCreated - pool.Count;
-
         private void Awake()
         {
             totalCreated = 0;
@@ -34,7 +35,7 @@ namespace Game.Core
                 if (debugMode) inPool.Add(instance);
             }
         }
-
+        // ======================== 内部工具 ========================
         private GameObject CreateInstance()
         {
             GameObject instance = Instantiate(prefab, transform);
@@ -45,8 +46,10 @@ namespace Game.Core
             totalCreated ++;
             return instance;
         }
-
-        /* ---------------- 对外接口 ---------------- */
+        // ======================== 对外接口 ========================
+        /// <summary>
+        /// 从对象池中获取并初始化一个对象。
+        /// </summary>
         public GameObject Get(Vector3 position, Quaternion rotation)
         {
             GameObject instance = pool.Count > 0 ? pool.Dequeue() : CreateInstance();
@@ -55,7 +58,9 @@ namespace Game.Core
             if (debugMode) inPool.Remove(instance);
             return instance;
         }
-
+        /// <summary>
+        /// 往对象池中释放并返还一个对象。
+        /// </summary>
         public void Release(GameObject instance)
         {
             if (instance == null) return ;

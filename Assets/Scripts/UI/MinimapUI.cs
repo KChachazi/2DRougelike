@@ -4,6 +4,7 @@ using Game.Core;
 
 namespace Game.UI
 {
+    /// <summary>小地图 UI，订阅关卡和房间相关事件。</summary>
     public class MinimapUI : MonoBehaviour
     {
         [SerializeField] private Transform iconContainer;

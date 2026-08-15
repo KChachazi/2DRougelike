@@ -1,5 +1,5 @@
 
-# Project V1 - 2D Roguelike Shooter (《元气骑士》风格)
+# 2D Roguelike Shooter（《元气骑士》风格）
 
 基于 Unity 的俯视角 2D Roguelike 射击游戏，聚焦**游戏编程模式**与**可迁移架构**，构建一套 V1（2D）→ V2（3D）→ V3（联机）的渐进式工程。
 
@@ -9,9 +9,9 @@
 
 - **类型**：俯视角 Roguelike 射击
 - **引擎**：Unity 6.3 LTS (6000.3.19f1)，2D + URP 模板
-- **目标**：在 6 周内实现完整的房间战斗、敌人 AI、数据驱动武器系统，并沉淀一套与引擎低耦合的核心逻辑（可复用于后续 3D 和联机版本）。
+- **目标**：以 V1 六周主线跑通完整 2D 游戏循环，再通过 V1.5 深化武器、敌人 AI、关卡与存档系统，并沉淀一套可迁移到后续 3D 和联机版本的低耦合架构。
 - **参考游戏**：《Soul Knight》（元气骑士）
-- **当前状态**：六周计划全部完成，V1（2D 版）收官，V1.5 深化阶段进行中；方向①武器/伤害深化与方向②敌人 AI 深化均已完成并通过 Play 验收，下一步进入程序化关卡生成。`v1-week1`~`v1-week6` 标签已打，最新进度与既定约定见 [AGENTS.md](AGENTS.md)
+- **当前状态**：V1（2D 版）六周主线已经收官；V1.5 的武器/伤害深化与敌人 AI 深化已通过 Play 验收，工程结构与注释整理已收口，下一步是统一调试系统，随后进入程序化关卡生成。`v1-week1`~`v1-week6` 标签已打；V1.5 尚未创建标签。最新进度与既定约定见 [AGENTS.md](AGENTS.md)。
 
 ---
 
@@ -20,13 +20,65 @@
 | 模块               | 实现方式                         | 设计意图                                      |
 | ------------------ | -------------------------------- | --------------------------------------------- |
 | Game Loop          | Update / FixedUpdate 明确分离    | 逻辑与渲染隔离，便于帧率无关逻辑复用          |
-| 状态机 (FSM)       | 玩家/敌人状态由枚举+Switch 或状态类驱动 | 行为可扩展，调试清晰                        |
+| 状态机 + 行为树    | 玩家使用 FSM；敌人使用行为树主动决策 + FSM 被动打断 | 区分主动决策与受击/死亡等强制状态 |
 | 事件总线 (EventBus) | 轻量级观察者模式，解耦 UI、血量、拾取等 | 模块间零硬引用，利于单元测试和模块替换    |
 | 命令模式           | 将玩家输入封装为命令，支持缓冲队列 | 实现输入缓冲、技能队列，可轻松录制回放 |
-| 对象池             | 子弹、特效、敌人的通用对象池     | 减少 GC，稳定帧率                             |
+| 对象池             | 子弹、手雷和高频特效池化；低频生成的敌人不池化 | 按生成频率控制复杂度并减少 GC |
 | 武器策略           | IWeaponStrategy 接口 + ScriptableObject 数据 | 武器即数据 + 策略，新增武器无需改主体逻辑 |
-| 房间生成           | RoomConfig (ScriptableObject) + 简单工厂 | 关卡数据驱动，房间布局和敌群可迅速调整   |
-| 资源管理           | Addressables (可选) 或 Resources 目录 | 渐进式引入，V1 可暂用 Resources，V2 切 Addressables |
+| 伤害与状态异常     | DamageInfo + StatusEffectManager | 统一传递伤害、灼烧、冰冻、易伤与击退信息 |
+| 房间流程           | RoomConfig + Room + LevelManager | 当前为数据驱动固定顺序，V1.5-3 再升级为图结构生成 |
+| 资源管理           | V1/V1.5 保持现有直接引用，V2 再评估 Addressables | 不提前为低频资源引入额外复杂度 |
+
+### 架构总览（V1.5 当前）
+
+```mermaid
+graph TD
+    subgraph Input[输入与命令]
+        PIH[PlayerInputHandler<br/>唯一读取键鼠]
+        CMD[ICommand + InputBuffer]
+    end
+
+    subgraph Player[玩家]
+        PC[PlayerController]
+        PFSM[Player FSM<br/>Idle/Move/Dash/Attack/Hurt]
+    end
+
+    subgraph Enemy[敌人]
+        BRAIN[EnemyBrain]
+        BT[BehaviourTree<br/>主动决策]
+        ECTX[EnemyController]
+        EFSM[Enemy FSM<br/>Free/Knockback/Dead]
+        BB[Per-enemy Blackboard<br/>感知迟滞快照]
+    end
+
+    subgraph Combat[武器与伤害]
+        WC[WeaponController]
+        WD[(WeaponData SO)]
+        STR[IWeaponStrategy]
+        DI[DamageInfo]
+        HP[Health]
+        SEM[StatusEffectManager]
+    end
+
+    subgraph Level[当前关卡流程]
+        LM[LevelManager<br/>固定房间顺序]
+        RM[Room + Door]
+        RC[(RoomConfig SO)]
+    end
+
+    PIH --> CMD --> PC
+    PC --> PFSM
+    BRAIN --> BB
+    BRAIN --> BT
+    BB --> BT --> ECTX
+    ECTX --> EFSM
+    WD --> WC --> STR --> DI
+    DI --> HP & SEM
+    DI -.击退参数.-> EFSM
+    LM --> RM --> RC
+```
+
+V1.5 的关键变化是两条：伤害链路统一通过 `DamageInfo` 传递，敌人则采用“行为树主动决策 + FSM 被动打断”的双层结构。程序化关卡生成尚未接入，上图中的 `LevelManager` 仍代表当前固定房间顺序实现。
 
 ### 架构总览（V1 完成时）
 
@@ -169,23 +221,61 @@ git config merge.unityyamlmerge.driver "'/Applications/Unity/Hub/Editor/6000.3.1
 
 ## 📂 项目结构说明
 
+### V1.5 当前结构（85 个脚本）
+
 ```
 Assets/
 ├── Scripts/
-│   ├── Core/          # 核心系统（GameManager, EventBus, ObjectPool...）
-│   ├── Entities/      # 玩家、敌人、NPC 等实体脚本
-│   ├── Weapons/       # 武器接口、策略、ScriptableObject 定义
-│   ├── Commands/      # 命令模式相关类
-│   ├── StateMachines/ # 状态机实现
-│   ├── Level/         # 房间生成、门、关卡流程
-│   └── UI/            # UI 控制脚本
-├── Prefabs/          # 预制体
-├── Scenes/           # 场景文件
-├── Data/             # ScriptableObject 配置文件（武器、房间等）
-├── Art/              # 美术资源（精灵、动画、材质）
-├── Audio/            # 音效与音乐
-└── ThirdParty/       # 第三方插件或工具
+│   ├── AI/                         # 敌人行为树（命名空间 Game.AI）
+│   │   ├── Framework/              # Node、组合/装饰节点、Blackboard、BehaviourTree
+│   │   ├── Boss/                   # BossPhaseCondition、BossSkillAction
+│   │   └── Enemy/                  # 感知条件与巡逻/追击/攻击等通用节点
+│   ├── Commands/                   # ICommand、输入缓冲与玩家命令
+│   ├── Core/                       # EventBus、事件、对象池与战斗反馈
+│   ├── Debug/                      # DebugText；统一日志设施为下一步
+│   ├── Entities/                   # 玩家/敌人上下文、Health、状态异常、EnemyBrain
+│   ├── Level/                      # RoomConfig、Room、Door、LevelManager、工厂
+│   ├── StateMachines/              # IState、StateMachine
+│   │   ├── Player/                 # Idle、Move、Dash、Attack、Hurt
+│   │   └── Enemy/                  # Free、Knockback、Dead（被动打断）
+│   ├── UI/                         # 血量、弹药、冷却、小地图、胜利 UI
+│   └── Weapons/                    # WeaponData、WeaponController、AmmoPickup
+│       ├── Projectiles/            # Bullet、EnemyProjectile
+│       ├── Skills/                 # Grenade、GrenadeThrower
+│       └── Strategies/             # IWeaponStrategy、远/近战策略与 Decorator
+├── Prefabs/                        # 玩家武器、敌人、房间、粒子等预制体
+├── Scenes/                         # 场景文件
+├── Data/                           # 武器、敌人行为、房间等 ScriptableObject
+├── Art/                            # 精灵、动画、材质
+├── Audio/                          # 音效与音乐
+└── ThirdParty/                     # 第三方插件或工具
 ```
+
+V1.5 新增了独立的 `AI` 与 `Debug` 模块，并把原本平铺在 `Weapons`、`AI` 根目录的代码按职责拆入子目录。目录移动保留 `.meta` GUID 与原命名空间，因此不会改变 Unity 序列化类型引用。
+
+### V1 完成时结构（51 个脚本）
+
+```text
+Assets/
+├── Scripts/
+│   ├── Commands/                   # 命令与输入缓冲
+│   ├── Core/                       # EventBus、对象池、战斗反馈、CameraFollow
+│   ├── Entities/                   # 玩家、敌人和 Health
+│   ├── Level/                      # 固定顺序房间流程
+│   ├── StateMachines/
+│   │   ├── Player/                 # 玩家五态
+│   │   └── Enemy/                  # Patrol、Chase、Attack、Dead
+│   ├── UI/                         # UI 与 DebugText
+│   └── Weapons/                    # 武器、策略、子弹和手雷全部平铺
+├── Prefabs/
+├── Scenes/
+├── Data/
+├── Art/
+├── Audio/
+└── ThirdParty/
+```
+
+V1 完成时尚未引入行为树、Blackboard、`DamageInfo` 与状态异常系统；`CameraFollow`、`PlayerShooter` 和教学用脚本也还没有在后续工程整理中删除。因此这棵目录树只用于说明 V1 收官时的历史形态，不代表当前磁盘结构。
 
 ---
 
@@ -208,17 +298,44 @@ Assets/
 
 ---
 
-## ✍️ 开发日志与标签
+## 🔧 V1.5 深化阶段
 
-每完成一周的任务，建议打一个 Git 标签 `v1-week<周数>`，并在下方简要记录关键成果：
+V1.5 继续保留 2D 表现，重点从“跑通玩法”转向“深化系统与工程边界”。四个编号只用于玩法深化方向；代码整理、统一调试等工程化插曲使用名称记录，不占用 `V1.5-1`～`V1.5-4` 的编号。
+
+### V1.5 开发路线
+
+| 阶段 | 内容 | 状态 |
+|---|---|---|
+| V1.5-1 | 武器/伤害深化：Decorator、DamageInfo、状态异常与击退状态 | ✅ 已完成并通过 Play 验收 |
+| V1.5-2 | 敌人 AI 深化：行为树、Blackboard 感知迟滞、多敌人类型与 Boss 阶段 | ✅ 已完成并通过 Play 验收 |
+| 工程整理 | 目录重组、输入边界收口、warning 清理、状态合并修正与注释补全 | ✅ 已完成并通过 Play 回归 |
+| 统一调试 | 分类日志、统一开关、日志转发与屏幕调试显示 | ⏳ 下一步 |
+| V1.5-3 | 程序化关卡生成：图结构、分支、特殊房间与生成规则 | ⏳ 待开始 |
+| V1.5-4 | 存档系统：Memento、版本兼容与持久化边界 | ⏳ 待开始 |
+
+### V1.5 开发日志与标签
+
+V1.5 的完成记录已经独立于 V1 六周日志。下列标签名称是建议命名，**当前尚未创建任何 V1.5 Git 标签**：
+
+- ✅ 建议标签 `v1.5-1`：武器/伤害深化——状态异常、统一伤害包与击退状态（详见 [devlog/V1.5-1.md](devlog/V1.5-1.md)）。
+- ✅ 建议标签 `v1.5-2`：敌人 AI 深化——行为树、感知 Blackboard、多敌人类型与 Boss 阶段（详见 [devlog/V1.5-2.md](devlog/V1.5-2.md)）。
+- ✅ 建议标签 `v1.5-cleanup`：工程整理——85 个脚本的新目录结构、输入收口、0 warning、注释 review 与 Play 回归（详见 [devlog/V1.5-cleanup.md](devlog/V1.5-cleanup.md)）。
+- ⏳ 建议标签 `v1.5-debug`：统一调试系统，完成后补充独立开发日志。
+- ⏳ `v1.5-3`：程序化关卡生成。
+- ⏳ `v1.5-4`：存档系统。
+
+---
+
+## ✍️ V1 开发日志与标签
+
+V1 以六周为主线，每周对应一个已经创建的 Git 标签 `v1-week<周数>`：
+
 - ✅ `v1-week1`: 基础移动射击、敌人追击、对象池（已完成，详见 [devlog/week1.md](devlog/week1.md)）
 - ✅ `v1-week2`: 状态机、闪避、近战武器（已完成，详见 [devlog/week2.md](devlog/week2.md)）
 - ✅ `v1-week3`: EventBus、ScriptableObject 武器、策略切换、弹药与拾取（已完成，详见 [devlog/week3.md](devlog/week3.md)）
 - ✅ `v1-week4`: 命令模式、输入缓冲、手雷技能、技能冷却 UI（已完成，详见 [devlog/week4.md](devlog/week4.md)）
 - ✅ `v1-week5`: 房间系统、关卡流程、Cinemachine 过渡、Boss 房、小地图（已完成，详见 [devlog/week5.md](devlog/week5.md)）
 - ✅ `v1-week6`: 命中停顿、屏幕震动、粒子特效、GC 优化、对象池泄漏诊断、构建打包、通关收尾（已完成，详见 [devlog/week6.md](devlog/week6.md)）
-- ✅ `v1.5-1`: 武器/伤害深化——Decorator 装饰器 + 状态异常系统（灼烧 DoT / 冰冻减速 / 击退状态）；DamageInfo 伤害包替代裸传 int；WeaponData 元素字段 Inspector 配置；击退改为独立 EnemyKnockbackState（已完成，详见 [devlog/V1.5-1.md](devlog/V1.5-1.md)）
-- ✅ `v1.5-2`: 敌人 AI 深化——行为树 + 每敌人 Blackboard 感知迟滞；近战/远程/自爆敌人；Boss 数据驱动阶段技能；FSM 保留击退/死亡被动打断（已完成，详见 [devlog/V1.5-2.md](devlog/V1.5-2.md)）
 
 ---
 

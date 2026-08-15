@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace Game.StateMachines.Player
 {
+    /// <summary>玩家近战攻击状态，短暂阻断其他普通行动。</summary>
     public class PlayerAttackState : IState
     {
         private readonly PlayerController player;

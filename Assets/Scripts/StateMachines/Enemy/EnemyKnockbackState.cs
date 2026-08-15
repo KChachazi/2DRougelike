@@ -3,6 +3,9 @@ using UnityEngine;
 
 namespace Game.StateMachines.Enemy
 {
+    /// <summary>
+    /// 击退状态，敌人被命中后短暂推开，不能做任何主动行为。
+    /// </summary>
     public class EnemyKnockbackState : IState
     {
         private readonly EnemyController enemy;

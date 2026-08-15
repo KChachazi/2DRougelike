@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace Game.UI
 {
+    /// <summary>弹药文本 UI，订阅武器与弹药相关事件。</summary>
     public class AmmoUI : MonoBehaviour
     {
         [SerializeField] private TMP_Text label;

@@ -2,6 +2,7 @@ using UnityEngine;
 
 namespace Game.Core
 {
+    /// <summary>播放一次粒子后按粒子系统时长自动归还对象池。</summary>
     [RequireComponent(typeof(ParticleSystem))]
     public class PooledParticle : MonoBehaviour, IPoolable
     {

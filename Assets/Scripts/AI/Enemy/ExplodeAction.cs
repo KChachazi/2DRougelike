@@ -4,11 +4,13 @@ using UnityEngine;
 
 namespace Game.AI
 {
+    /// <summary>
+    /// 动作：自爆，同时对爆炸范围内玩家造成伤害。
+    /// </summary>
     public class ExplodeAction : ActionNode
     {
         private readonly EnemyController enemy;
         private readonly EnemyBehaviour behaviour;
-        // for temp
         private const int MaxHits = 16;
         private readonly Collider2D[] hitBuffer = new Collider2D[MaxHits];
         private readonly ContactFilter2D filter = ContactFilter2D.noFilter;
@@ -26,7 +28,7 @@ namespace Game.AI
             {
                 if (!hitBuffer[i].CompareTag("Player")) continue;
                 if (hitBuffer[i].TryGetComponent(out Health health))
-                    health.TakeDamage(behaviour.explodeDamage);
+                    health.TakeDamage(new DamageInfo(behaviour.explodeDamage));
             }
             enemy.health.TakeDamage(int.MaxValue);
             return NodeState.Success;

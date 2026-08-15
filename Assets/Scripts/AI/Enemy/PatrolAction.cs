@@ -3,6 +3,12 @@ using Game.Entities;
 
 namespace Game.AI
 {
+    /// <summary>
+    /// 动作：在出生点附近随机巡逻。
+    /// </summary>
+    //
+    // 走到目标点 → 等待 1 秒 → 选新目标 → 继续走。
+    // 对应原 FSM 的 PatrolState。
     public class PatrolAction : ActionNode
     {
         private const float WaitDuration = 1f;

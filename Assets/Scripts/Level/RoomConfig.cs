@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace Game.Level
 {
+    /// <summary>描述房间类型，以及敌人和拾取物关于房间中心的相对位置。</summary>
     [CreateAssetMenu(fileName = "NewRoom", menuName = "Game/Room Config")]
     public class RoomConfig : ScriptableObject
     {
@@ -14,6 +15,7 @@ namespace Game.Level
         public PickupSpawn[] pickupSpawns;
     }
 
+    /// <summary>一项敌人预制体及其关于房间中心的相对位置。</summary>
     [System.Serializable]
     public struct EnemySpawn
     {
@@ -22,6 +24,7 @@ namespace Game.Level
         public Vector2 localPosition;
     }
 
+    /// <summary>一项拾取物预制体及其关于房间中心的相对位置。</summary>
     [System.Serializable]
     public struct PickupSpawn
     {

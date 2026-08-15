@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace Game.StateMachines.Enemy
 {
+    /// <summary>敌人死亡后的终止状态：停止移动并保留死亡锁定。</summary>
     public class EnemyDeadState : IState
     {
         private readonly EnemyController enemy;

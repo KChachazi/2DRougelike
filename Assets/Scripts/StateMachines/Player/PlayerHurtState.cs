@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace Game.StateMachines.Player
 {
+    /// <summary>玩家受伤无敌状态，同时伴随短暂硬直。</summary>
     public class PlayerHurtState : IState
     {
         private const float FlashInterval = 0.08f;

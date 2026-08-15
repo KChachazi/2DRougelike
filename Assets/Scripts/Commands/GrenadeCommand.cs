@@ -3,6 +3,7 @@ using Game.Weapons;
 
 namespace Game.Commands
 {
+    /// <summary>检查玩家行动状态和手雷冷却，并调用投掷能力。</summary>
     public class GrenadeCommand : ICommand
     {
         private readonly PlayerController player;

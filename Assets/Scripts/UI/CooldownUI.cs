@@ -4,6 +4,7 @@ using UnityEngine.UI;
 
 namespace Game.UI
 {
+    /// <summary>技能冷却 UI，订阅技能冷却开始相关事件。</summary>
     public class CooldownUI : MonoBehaviour
     {
         [Tooltip("UI SkillId")]

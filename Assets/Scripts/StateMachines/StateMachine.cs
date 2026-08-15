@@ -1,5 +1,6 @@
 namespace Game.StateMachines
 {
+    /// <summary>持有当前状态，并保证状态切换时按顺序执行 Exit 与 Enter。</summary>
     public class StateMachine
     {
         public IState CurrentState { get; private set; }

@@ -1,6 +1,7 @@
 using UnityEngine;
 namespace Game.Entities
 {
+    /// <summary>决定 <see cref="EnemyBrain"/> 构建哪类行为树的敌人类型。</summary>
     public enum EnemyType
     {
         Melee,
@@ -9,6 +10,10 @@ namespace Game.Entities
         Boss,
     }
 
+    /// <summary>
+    /// 数据驱动的敌人行为档案。它只保存巡逻、战斗、感知和 Boss 技能参数，
+    /// 具体决策由 EnemyBrain 与行为树节点负责。
+    /// </summary>
     [CreateAssetMenu(fileName = "NewEnemyBehaviour", menuName = "Game/Enemy Behavior")]
     public class EnemyBehaviour : ScriptableObject
     {
@@ -23,7 +28,7 @@ namespace Game.Entities
         public float chaseSpeed = 2.5f;
         [Tooltip("探测范围")]
         public float detectionRange = 4f;
-        [Tooltip("逃脱范围")]
+        [Tooltip("逃脱范围，必须大于探测范围")]
         public float lostSightRange = 6f;
 
         [Header("=== 近战攻击 ===")]
@@ -51,7 +56,7 @@ namespace Game.Entities
         public int explodeDamage = 30;
 
         [Header("=== Boss专属 ===")]
-        [Tooltip("血量比例阈值")]
+        [Tooltip("血量比例阈值，要求从高到低排列")]
         public float[] phaseThresholds;
         [Tooltip("Boss 冷却间隔")]
         public float skillCooldown = 3f;

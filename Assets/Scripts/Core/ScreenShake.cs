@@ -2,6 +2,7 @@ using UnityEngine;
 
 namespace Game.Core
 {
+    /// <summary>响应震屏事件并抖动当前启用的房间相机，禁用时恢复原位。</summary>
     public class ScreenShake : MonoBehaviour
     {
         private Vector3 originalLocalPos;
