@@ -9,7 +9,7 @@
 
 ## 当前进度(务必保持最新)
 
-- 状态:**六周全部完成并通过验收;`v1-week1`~`v1-week6` 六个标签已全部补打(2026-07-25,本地),尚未 `push` 到远程。V1(2D 版本)收官,V1.5(深化)进行中——方向①(武器/伤害深化)与方向②(敌人 AI 深化)均已完成并通过 Play 验收。2026-08-15 已完成脚本结构整理、输入边界收口、遗留 warning 清理和注释 review 的主体工作；当前先设计统一调试输出，再进入方向③(程序化关卡生成)。**
+- 状态:**六周全部完成并通过验收;`v1-week1`~`v1-week6` 六个标签已全部补打(2026-07-25,本地),尚未 `push` 到远程。V1(2D 版本)收官,V1.5(深化)进行中——方向①(武器/伤害深化)、方向②(敌人 AI 深化)、`V1.5-cleanup` 与 `V1.5-debug` 均已完成。下一步进入方向③程序化关卡生成。**
 - 已有内容:
   - Unity 6000.3.19f1 + URP 2D 模板默认工程,`.gitignore`/`.gitattributes` 已提交。
   - 第 1 周:`Assets/Scripts/Core|Entities|Weapons` 下的 8 个文件、场景搭建均已由用户完成并通过验收,详见 `devlog/week1.md`。
@@ -34,13 +34,14 @@
 - **V1.5-2 第二轮复查**(2026-08-09):用户已手动修复首轮问题①②③⑤:移除 `UnityEditor` 引用;建树从 `Awake` 延后到 `Start`;行为树改在 `FixedUpdate` 驱动;`ShootAction` 组件错误分支会归还池对象。同时把投射物类统一为 `EnemyProjectile`,并同步两处调用。再次静态编译仍为 **0 error / 3 个既有 warning**。**仍待处理**:④ `lostSightRange`/迟滞;⑥ 错误的 `BehaviourTreeTester` 结构;⑦ 未使用的 `phaseThresholds`/硬编码 0.5;低优先级命名与无用 `using`;以及在 Unity 中打开 `EnemyProjectile.prefab` 确认脚本组件未丢失并保存——当前 YAML 的 `m_EditorClassIdentifier` 仍是旧的 `Game.Weapons.enemyProjectile`,因为预制体在类重命名后尚未重存。**2026-08-10 已为问题④与⑦完成正式设计修正并更新参考实现**:视野采用“感知更新 → 每敌人 Blackboard → 无状态条件节点”;Boss 阶段条件改为接收一基的阶段编号，并由节点从 `EnemyBehaviour.phaseThresholds` 换算出该阶段的完整血量区间，建树时一次性校验配置。两项都尚待用户手动同步进 `Assets/`。
 - **V1.5-2 最终复查与验收**(2026-08-11):问题④/⑥/⑦均已同步修复;`EnemyProjectile.prefab` 已重存且类型标识更新为 `Game.Weapons.EnemyProjectile`;Boss 阶段 1 遗留的错误 `Inverter` 与阶段配置失败后的空树路径已在回归 review 中修正。`dotnet build Assembly-CSharp.csproj --no-restore` 为 **0 error / 3 个既有 warning**。用户确认近战、远程、自爆、Boss 两阶段、击退打断、视野迟滞与投射物回池 Play 验收均无问题。方向②正式完成。
 - **结构与注释整理**(2026-08-15):AI 拆分为 `Framework/Boss/Enemy`,Weapons 拆分为 `Strategies/Projectiles/Skills`,`DebugText` 移至 `Debug/`;删除已废弃的 `CameraFollow`/`PlayerShooter`/`BehaviourTreeTester`,脚本总数从 88 收敛为 **85**。输入读取已全部收口到 `PlayerInputHandler`;遗留字段与 warning 已清理;全项目按“`summary` 面向调用方、普通注释解释实现”完成分模块 review。`Assets/Scripts` 与 `Reference/Scripts` 的 85 个脚本路径及内容均已同步,静态编译为 **0 error / 0 warning**;用户确认移动、瞄准、战斗、状态异常、四类敌人与场景引用的 Play 回归均无问题。工程整理正式完成,完整记录见 `devlog/V1.5-cleanup.md`。
+- **V1.5-debug 统一调试输出**(2026-08-19):**已完成并通过静态检查与 Play 验收**。新增 `DebugCategory`、`DebugSettings`、`GameDebug`、`DebugBootstrap`、`DebugOverlay` 五个脚本与 `DebugSettings.asset`;迁移 `ObjectPool`、`EnemyBrain`、`StatusEffectManager`、`LevelManager` 的旧日志;新 Overlay 同时显示分类日志和输入缓冲,旧 `DebugText` 已删除。TMP 中文字体改为 Dynamic + Multi Atlas。验收后 review 修复了 `ObjectPool.diagnosticsEnabled` 漏初始化、`DebugOverlay` 订阅未退订和每帧强制刷新三个沉默问题。`dotnet build Assembly-CSharp.csproj --no-restore --no-incremental` 为 **0 error / 0 项目代码 warning**(40 条 warning 均来自 Unity Package)。完整记录见 `devlog/V1.5-debug.md`。
 - 下一步:**V1(2D 核心玩法)收官,进入 V1.5(深化阶段)**,而不是立刻做 V2(3D 化)——用户判断"核心玩法刚搭起来,3D 化为时过早",且学习目标是把游戏编程模式吃透,武器系统这类还有明显深挖空间。V2/V3 推迟为更后面的大版本,`EventBus`/`ICommand`/`IWeaponStrategy`/`RoomConfig` 这几层设计上不认识 2D Sprite/物理,理论上可原样迁移,不会因为推迟而过时。
   - **V1.5 四个方向,已确定优先级**(2026-07-25 讨论确定):
     1. **武器/伤害深化**(Decorator 装饰器 + 状态异常系统)——**已完成(2026-08-04)**。给武器叠加"燃烧/冰冻/击退"等附加效果,`Health` 上加 DoT/减速/易伤,击退改为独立状态 `EnemyKnockbackState`。
     2. 敌人 AI 深化(行为树/技能系统)——现有敌人是固定 4 态 FSM,换成行为树支持多敌人类型/远近战编队/Boss 多阶段技能。难度最高,放在①之后是为了复用状态异常系统。
     3. 程序化关卡生成——`LevelManager` 从固定房间数组换成图结构/规则驱动拓扑(分支、宝箱房、商店房)。放在①②之后,是因为地图生成的价值取决于房间里能放的敌人/武器池够不够丰富。
     4. 存档系统(Memento + 云存模式)——难度最低但最独立,放最后是因为越往后做,要序列化的状态(强化、图鉴、进度)越稳定,能少返工。
-  - **当前状态**:方向①与方向②均已完成并通过 Play 验收。进入方向③前先完成统一调试输出设计；随后基于现有 `Room`/`RoomConfig`/`LevelManager` 设计程序化关卡图结构与生成规则。方向④存档系统继续排在其后。
+  - **当前状态**:方向①、方向②与 `V1.5-debug` 均已完成并通过验收。下一步基于现有 `Room`/`RoomConfig`/`LevelManager` 设计程序化关卡图结构与生成规则。方向④存档系统继续排在其后。
 
 **更新规则**:每完成一项里程碑(一周任务,或用户认可的阶段性成果)后:
 1. 更新本节的"已有内容 / 尚未创建 / 下一步";
@@ -49,15 +50,15 @@
 
 **V1.5 命名约定**:`V1.5-1`~`V1.5-4` 只表示四个玩法深化方向;代码整理、统一调试等工程化插曲使用 `V1.5-cleanup`、`V1.5-debug` 这类名称,避免出现含义不清的 `V1.5-2.5-*`。当前只存在 `v1-week1`~`v1-week6` 六个 Git 标签,V1.5 标签均尚未创建。
 
-## 当前代码结构快照(V1.5-2 后结构整理,2026-08-15)
+## 当前代码结构快照(V1.5-debug 完成,2026-08-19)
 
 > "代码实际长什么样"的速查表,方便新对话快速定位。真实进度以 `Assets/` 为准;下面每条都对应已经落地的文件。
 
-**脚本清单(`Assets/Scripts/`,当前共 85 个 `.cs`)**
+**脚本清单(`Assets/Scripts/`,当前共 89 个 `.cs`;可正常编译)**
 
 - `Core/`
   - `GameManager.cs`——单例(`Instance`),`[SerializeField] player` 只读暴露为 `Player`。目前很轻,只做单例 + Player 引用。
-  - `ObjectPool.cs`——通用对象池(`Queue<GameObject>` + `prewarmCount` 预热),`Get(pos,rot)`/`Release`;同文件定义 `IPoolable` 接口。**第 6 周加了泄漏诊断**:`debugMode` + `inPool` HashSet 检测重复 Release(**预热时也要 `inPool.Add`,否则误报**)、`ActiveCount` 统计(只涨不落=泄漏)。发布前把 `debugMode` 关掉。
+  - `ObjectPool.cs`——通用对象池(`Queue<GameObject>` + `prewarmCount` 预热),`Get(pos,rot)`/`Release`;同文件定义 `IPoolable` 接口。重复 Release 诊断由 `DebugSettings.ExpensiveChecksEnabled` 与 `Pool` 分类统一控制;`inPool` HashSet 在预热时也会登记,并提供 `ActiveCount` 观察泄漏。
   - **`EventBus.cs`**(第 3 周)——`static` 泛型事件总线,`Dictionary<Type, Delegate>` 按事件类型分发;`Subscribe<T>`/`Unsubscribe<T>`/`Publish<T>`/`Clear`,外加 `[RuntimeInitializeOnLoadMethod]` 在进 Play 时清空(防 domain reload 关闭时 static 残留)。
   - **`GameEvents.cs`**(第 3 周起,逐周扩充)——`readonly struct` 事件集中定义:血量/弹药/武器/技能冷却(3~4 周)、关卡 5 个事件(5 周)、**战斗反馈 3 个(6 周):`EnemyDamagedEvent(Position,Damage)`/`EnemyDiedEvent(Position)`(语义事件)、`ScreenShakeEvent(Intensity,Duration)`(表现指令)**。同文件有 `SkillId`(`Dash`/`Grenade`)和 `RoomType`(`Normal`/`Boss`)枚举——**标识用枚举不用字符串**;**枚举/`RoomType` 放 `Core` 因为 `GameEvents` 要用它,底层不能依赖上层**。新增跨模块通知就在这里加 struct。
   - **`HitStop.cs`**(第 6 周)——静态单例,`Do(duration)` 把 `timeScale`→0、**`WaitForSecondsRealtime`**(绝不能用 `WaitForSeconds`,否则永久卡死)后恢复;重入 `StopCoroutine` 打断上一次。
@@ -107,7 +108,7 @@
   - `Player/`:Idle / Move / Dash / Attack / Hurt 五态。**状态类已彻底不读输入**(第 3 周删了右键近战分支和 `PerformHit`,第 4 周删了读 Shift 的闪避分支),现在只根据当前数据决定状态转换。
   - `Enemy/`:V1.5-2 后只剩 Free / Knockback / Dead 三态;Patrol / Chase / Attack 已由行为树节点取代并从 `Assets/` 删除。`FreeState` 是行为树接管主动决策时的空闲占位,击退结束回 Free,死亡保持锁定。
 - `Debug/`
-  - `DebugText.cs`——输入缓冲可视化文本;目录移动后仍保留原命名空间,不影响 Unity 序列化引用。
+  - `DebugCategory.cs`/`DebugSettings.cs`/`GameDebug.cs`/`DebugBootstrap.cs`/`DebugOverlay.cs`——统一分类、设置、入口、初始化与屏幕面板;Overlay 已接管旧输入缓冲显示,旧 `DebugText` 已删除。
 
 **几个已确立的实现事实/约定(改代码前注意)**
 
@@ -144,7 +145,7 @@
 - 因此每一周的任务产出,不能只给代码或简单的任务清单,必须尽可能详细,具体包括:
   1. **这一周做什么、为什么这么做**——不只是步骤,也要讲设计意图,帮助用户建立理解而不是照抄。
   2. **Unity 编辑器内的具体操作步骤**——菜单路径、Inspector 里要设置哪些字段、GameObject/组件层级怎么搭、预制体怎么建,都要写清楚,不能一句"在编辑器里配置好"带过。
-  3. **完整、可直接使用的代码**——给完整脚本而不是片段或伪代码,并对关键部分做讲解(为什么这么写、对应到架构约定里的哪个模式)。
+  3. **代码下发粒度按改动规模决定**——尚未创建的新脚本、整文件重写或大规模重构必须给出完整、可直接使用的文件;已有脚本的小改动只给需要修改的最小明确单元,优先给完整方法/属性/类型。若只改方法内部几行,必须写清目标方法、插入/替换位置、旧内容与新内容,不能只丢一段无定位的代码。无论采用哪种粒度,都要讲清为什么这么改以及它对应的架构约定。
   4. 这些详细说明写入 `devlog/week<N>.md` 或对话中皆可,以用户方便查阅为准;`devlog` 里同时要保留"实际完成了什么"的记录(见上一节更新规则)。
 - 用户在过程中会提出较多问题(概念不懂、报错、操作不确定等),应耐心详细解答,必要时补充背景概念,不要用一两句话打发。
 - 这条约定不是第 1 周专属,**后续每一周都按此标准执行**,除非用户明确说不需要这么详细了。
@@ -155,14 +156,15 @@
 - Codex 的示例/参考实现统一写在仓库根目录的 **`Reference/`** 文件夹——与 `Assets/` 同级(不在其内部),已加入 `.gitignore`,不会被 Unity 编译、也不会进版本库。目录结构镜像 `Assets/Scripts/`,例如 `Reference/Scripts/Core/ObjectPool.cs` 对应用户将来要在 `Assets/Scripts/Core/ObjectPool.cs` 创建的内容。
 - 每周文档(`devlog/week<N>.md`)里的代码讲解章节,标题指向 `Assets/Scripts/...`(目标路径),正文提示参考实现在 `Reference/Scripts/...`,并说明这是需要用户自己创建的文件,不是已经落地的实现。
 - `Reference/` 里的内容会随周数推进被覆盖/更新,只代表"当前这一步应该长成什么样",不代表用户项目的真实进度——**真实进度以 `Assets/` 里用户实际创建的文件为准**。
+- `Reference/Scripts/**/*.cs` 是可直接对照的**完整当前文件**,不能为了配合文档里的局部修改说明而写成无法编译的函数片段。文档/对话可按上一节规则只展示最小修改单元,但只要本轮更新了对应 Reference 文件,Reference 中仍保留完整实现。
 - 例外:场景文件(`.unity`)、预制体(`.prefab`)等 Unity 二进制/YAML 资产不适合放参考副本,继续沿用「Codex 不直接编辑场景文件,由用户在编辑器里操作」的既有约定。
 
 ## 开发节奏
 
-- 当前阶段:**六周全部完成,V1(2D)收官,V1.5 方向①、方向②与 `V1.5-cleanup` 均已验收完成,正在设计统一调试输出**。六篇 `devlog/week1~6.md` 均已写完实际完成记录;`v1-week1`~`v1-week6` 六个标签已本地补打(未 push)。
-- **下一步**:先统一项目内调试开关与日志入口,再进入程序化关卡生成,之后做存档系统。README 规划的 V2(3D 化)、V3(联机)推迟到 V1.5 之后。
-- **发布前清理清单**(答疑用):`ObjectPool.debugMode` 关掉、`DebugText.display` 关掉、清临时 `Debug.Log`;打包时 `Build Settings > Scenes In Build` 必须勾上场景(否则黑屏),构建目录别选在项目内(会递归导入)。
-- **分步下发的做法已连续三周验证有效,继续沿用**:大周拆成若干"每步可编译、可 Play 验收"的小步(第 3、4、5 周都是 4 步),每步末尾给 ✅ 验收清单,用户做完一步回来验收再进下一步。**纯重构的步骤,验收标准就写"行为和上周完全一样"**(第 4 周步骤 1 这么做的,效果很好)。**"不写代码、只做对比实验"的步骤也很有价值**(第 4 周步骤 2 让用户把 `bufferDuration` 调成 0 体会差异)。
+- 当前阶段:**六周全部完成,V1(2D)收官,V1.5 方向①、方向②、`V1.5-cleanup` 与 `V1.5-debug` 均已验收完成**。六篇 `devlog/week1~6.md` 均已写完实际完成记录;`v1-week1`~`v1-week6` 六个标签已本地补打(未 push)。
+- **下一步**:进入 V1.5-3 程序化关卡生成,随后做存档系统。README 规划的 V2(3D 化)、V3(联机)推迟到 V1.5 之后。
+- **发布前清理清单**(答疑用):统一调试完成后关闭 `DebugSettings.Debug Enabled`,确认不存在临时直接 `Debug.Log*`;打包时 `Build Settings > Scenes In Build` 必须勾上场景(否则黑屏),构建目录别选在项目内(会递归导入)。
+- **分步下发的做法已连续三周验证有效,继续沿用**:大周原则上拆成若干"每步可编译、可 Play 验收"的小步(第 3、4、5 周都是 4 步),每步末尾给 ✅ 验收清单。若命名空间迁移等改动无法避免短暂编译失败,必须在文档中明确错误范围与恢复点,并把相邻步骤合并成一个可编译单元;`V1.5-debug` 的步骤 1+2 即为此例。**纯重构的步骤,验收标准就写"行为和上周完全一样"**(第 4 周步骤 1 这么做的,效果很好)。**"不写代码、只做对比实验"的步骤也很有价值**(第 4 周步骤 2 让用户把 `bufferDuration` 调成 0 体会差异)。
 - **课后练习值得继续出**:第 4 周出了三道,用户全做了,而且第一道让他真正撞上了"队列存引用不是快照"这个坑——**比直接讲有效得多**。第 5 周出了三道(清空奖励该放哪、Boss 血条要不要新事件、房间可重进要处理哪些状态)。
 - **每步验收通过后必须 review 代码**:目前已经抓到 **8 个**"程序照常跑、验收照常过"的沉默 bug(`.name` vs `weaponName`、`Unsubscribe` 写成 `Subscribe` **两次**、`Empty()` 语义反了、`index <= Count` off-by-one、`currentIndex` 初始值写成 1、`OnDestory` 拼写等)。**这类问题测不出来,只能读代码。**
 - **验收/答疑时的高频诊断顺序**:① Console 的 `Log` 过滤按钮是不是被关了(第 5 周虚惊过);② Inspector 改了没 `Ctrl+S`(第 5 周踩过两次——场景和 SO 资产都要存);③ Unity 魔法方法拼写(`OnDestory`);④ 才是代码逻辑。

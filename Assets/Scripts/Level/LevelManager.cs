@@ -1,4 +1,5 @@
 using Game.Core;
+using Game.Debug;
 using UnityEngine;
 
 namespace Game.Level
@@ -37,7 +38,7 @@ namespace Game.Level
             if (index < 0 || index >= rooms.Length)
             {
                 EventBus.Publish(new LevelCompletedEvent());
-                Debug.Log("[LevelManager] 通关！");
+                GameDebug.Log(DebugCategory.Level, "恭喜通关！", this);
                 return ;
             }
             if (currentIndex >= 0) rooms[currentIndex].Exit();

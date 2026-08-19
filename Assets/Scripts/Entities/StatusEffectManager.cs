@@ -1,4 +1,5 @@
 using Game.Core;
+using Game.Debug;
 using UnityEngine;
 using System.Collections.Generic;
 
@@ -137,7 +138,7 @@ namespace Game.Entities
                         maxDamage = maxDamage < config.DamageMultiplier ? config.DamageMultiplier : maxDamage;
                         break;
                     default:
-                        Debug.Log($"[StatusEffectManager]Unexpected StatusType{config.Type}");
+                        GameDebug.Warning(DebugCategory.Combat, $"无法计算未知状态类型：{config.Type}", this);
                         break;
                 }
             }

@@ -1,6 +1,7 @@
 using UnityEngine;
 using Game.AI;
 using Game.Core;
+using Game.Debug;
 
 namespace Game.Entities
 {
@@ -73,7 +74,7 @@ namespace Game.Entities
             float[] thresholds = behaviour.phaseThresholds;
             if (thresholds == null || thresholds.Length != expectedPhaseCount - 1)
             {
-                Debug.Log($"[EnemyBrain] 当前 Boss 树需要 {expectedPhaseCount - 1} 个阶段阈值。");
+                GameDebug.Error(DebugCategory.AI,$"当前 Boss 树需要 {expectedPhaseCount - 1} 个阶段阈值。", this);
                 return false;
             }
             float previous = 1f;
@@ -82,7 +83,7 @@ namespace Game.Entities
                 float current = thresholds[i];
                 if (current <= 0f || current >= previous)
                 {
-                    Debug.Log($"[EnemyBrain] 阶段阈值必须在 0~1 之间，且从高到低排列。");
+                    GameDebug.Error(DebugCategory.AI, $"阶段阈值必须在 0~1 之间，且从高到低排列。", this);
                     return false;
                 }
                 previous = current;
@@ -99,7 +100,7 @@ namespace Game.Entities
                 case EnemyType.Bomber: return BuildBomberTree(behaviour);
                 case EnemyType.Boss:   return BuildBossTree(behaviour);
                 default:
-                    Debug.Log("[EnemyBrain]未指定的怪物类型，无法创建行为树。");
+                    GameDebug.Error(DebugCategory.AI, "未指定的怪物类型，无法创建行为树。", this);
                     return null;
             }
         }

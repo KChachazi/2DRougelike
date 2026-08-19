@@ -11,7 +11,7 @@
 - **引擎**：Unity 6.3 LTS (6000.3.19f1)，2D + URP 模板
 - **目标**：以 V1 六周主线跑通完整 2D 游戏循环，再通过 V1.5 深化武器、敌人 AI、关卡与存档系统，并沉淀一套可迁移到后续 3D 和联机版本的低耦合架构。
 - **参考游戏**：《Soul Knight》（元气骑士）
-- **当前状态**：V1（2D 版）六周主线已经收官；V1.5 的武器/伤害深化与敌人 AI 深化已通过 Play 验收，工程结构与注释整理已收口，下一步是统一调试系统，随后进入程序化关卡生成。`v1-week1`~`v1-week6` 标签已打；V1.5 尚未创建标签。最新进度与既定约定见 [AGENTS.md](AGENTS.md)。
+- **当前状态**：V1（2D 版）六周主线已经收官；V1.5 的武器/伤害深化、敌人 AI 深化、工程整理与统一调试系统均已完成，下一步进入程序化关卡生成。`v1-week1`~`v1-week6` 标签已打；V1.5 尚未创建标签。最新进度与既定约定见 [AGENTS.md](AGENTS.md)。
 
 ---
 
@@ -221,7 +221,7 @@ git config merge.unityyamlmerge.driver "'/Applications/Unity/Hub/Editor/6000.3.1
 
 ## 📂 项目结构说明
 
-### V1.5 当前结构（85 个脚本）
+### V1.5 当前结构（89 个脚本）
 
 ```
 Assets/
@@ -232,7 +232,7 @@ Assets/
 │   │   └── Enemy/                  # 感知条件与巡逻/追击/攻击等通用节点
 │   ├── Commands/                   # ICommand、输入缓冲与玩家命令
 │   ├── Core/                       # EventBus、事件、对象池与战斗反馈
-│   ├── Debug/                      # DebugText；统一日志设施为下一步
+│   ├── Debug/                      # 分类日志、统一设置、初始化与屏幕调试面板
 │   ├── Entities/                   # 玩家/敌人上下文、Health、状态异常、EnemyBrain
 │   ├── Level/                      # RoomConfig、Room、Door、LevelManager、工厂
 │   ├── StateMachines/              # IState、StateMachine
@@ -309,7 +309,7 @@ V1.5 继续保留 2D 表现，重点从“跑通玩法”转向“深化系统�
 | V1.5-1 | 武器/伤害深化：Decorator、DamageInfo、状态异常与击退状态 | ✅ 已完成并通过 Play 验收 |
 | V1.5-2 | 敌人 AI 深化：行为树、Blackboard 感知迟滞、多敌人类型与 Boss 阶段 | ✅ 已完成并通过 Play 验收 |
 | 工程整理 | 目录重组、输入边界收口、warning 清理、状态合并修正与注释补全 | ✅ 已完成并通过 Play 回归 |
-| 统一调试 | 分类日志、统一开关、日志转发与屏幕调试显示 | ⏳ 下一步 |
+| 统一调试 | 分类日志、统一开关、日志转发与屏幕调试显示 | ✅ 已完成并通过静态与 Play 验收 |
 | V1.5-3 | 程序化关卡生成：图结构、分支、特殊房间与生成规则 | ⏳ 待开始 |
 | V1.5-4 | 存档系统：Memento、版本兼容与持久化边界 | ⏳ 待开始 |
 
@@ -320,7 +320,7 @@ V1.5 的完成记录已经独立于 V1 六周日志。下列标签名称是建�
 - ✅ 建议标签 `v1.5-1`：武器/伤害深化——状态异常、统一伤害包与击退状态（详见 [devlog/V1.5-1.md](devlog/V1.5-1.md)）。
 - ✅ 建议标签 `v1.5-2`：敌人 AI 深化——行为树、感知 Blackboard、多敌人类型与 Boss 阶段（详见 [devlog/V1.5-2.md](devlog/V1.5-2.md)）。
 - ✅ 建议标签 `v1.5-cleanup`：工程整理——85 个脚本的新目录结构、输入收口、0 warning、注释 review 与 Play 回归（详见 [devlog/V1.5-cleanup.md](devlog/V1.5-cleanup.md)）。
-- ⏳ 建议标签 `v1.5-debug`：统一调试系统，完成后补充独立开发日志。
+- ✅ 建议标签 `v1.5-debug`：统一调试系统——分类过滤、统一设置、Console/Overlay 转发与输入缓冲显示（详见 [devlog/V1.5-debug.md](devlog/V1.5-debug.md)）。
 - ⏳ `v1.5-3`：程序化关卡生成。
 - ⏳ `v1.5-4`：存档系统。
 
