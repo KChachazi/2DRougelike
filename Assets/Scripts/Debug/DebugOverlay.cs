@@ -6,6 +6,9 @@ using TMPro;
 
 namespace Game.Debug
 {
+    /// <summary>
+    /// 屏幕调试面板，负责表现，不参与日志过滤规则或输入执行。
+    /// </summary>
     public sealed class DebugOverlay : MonoBehaviour
     {
         [Header("日志")]
@@ -89,6 +92,7 @@ namespace Game.Debug
             InputBuffer buffer = playerInputHandler.Buffer;
             int count = buffer.Count;
             string commandName = buffer.Empty() ? "-" : buffer.Peek().GetType().Name;
+            // force 用于面板刚启用或可见性变化；常规帧只在数据变化时更新。
             if (!force && count == lastBufferCount && commandName == lastCommandName)
                 return ;
             lastBufferCount = count;

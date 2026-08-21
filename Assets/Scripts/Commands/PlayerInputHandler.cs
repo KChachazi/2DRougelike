@@ -32,6 +32,10 @@ namespace Game.Commands
         private GrenadeCommand grenadeCommand;
         private SwitchWeaponCommand switchWeaponCommand;
 
+        /// <summary>
+        /// 当前输入缓冲的只读入口，供 DebugOverlay 观察队列状态；
+        /// 外部系统不应通过它入队或执行命令。
+        /// </summary>
         public InputBuffer Buffer => buffer;
 
         private void Awake()

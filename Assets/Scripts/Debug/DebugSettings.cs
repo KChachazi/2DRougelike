@@ -2,6 +2,9 @@ using UnityEngine;
 
 namespace Game.Debug
 {
+    /// <summary>
+    /// 统一调试系统的只读运行配置。
+    /// </summary>
     [CreateAssetMenu(fileName = "DebugSettings", menuName = "Game/Debug Settings")]
     public sealed class DebugSettings : ScriptableObject
     {
@@ -26,12 +29,19 @@ namespace Game.Debug
 
         [SerializeField] private bool includeTimestamp = true;
 
+        /// <summary>统一调试输出的总开关。</summary>
         public bool DebugEnabled => debugEnabled;
+        /// <summary>是否允许对象池重复归还等带额外运行成本的诊断。</summary>
         public bool ExpensiveChecksEnabled => expensiveChecksEnabled;
+        /// <summary>是否转发到 Unity Console。</summary>
         public bool ConsoleEnabled => consoleEnabled;
+        /// <summary>是否保存并转发到屏幕调试面板。</summary>
         public bool OverlayEnabled => overlayEnabled;
+        /// <summary>当前允许通过过滤器的功能分类组合。</summary>
         public DebugCategory EnabledCategories => enableCategories;
+        /// <summary>面板历史的有效容量。</summary>
         public int OverlayMessageLimit => Mathf.Max(1, overlayMessageLimit);
+        /// <summary>格式化消息时是否显示非缩放时间戳。</summary>
         public bool IncludeTimestamp => includeTimestamp;
     }
 }
