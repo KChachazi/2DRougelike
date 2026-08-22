@@ -11,7 +11,7 @@
 - **引擎**：Unity 6.3 LTS (6000.3.19f1)，2D + URP 模板
 - **目标**：以 V1 六周主线跑通完整 2D 游戏循环，再通过 V1.5 深化武器、敌人 AI、关卡与存档系统，并沉淀一套可迁移到后续 3D 和联机版本的低耦合架构。
 - **参考游戏**：《Soul Knight》（元气骑士）
-- **当前状态**：V1（2D 版）六周主线已经收官；V1.5 的武器/伤害深化、敌人 AI 深化、工程整理与统一调试系统均已完成，下一步进入程序化关卡生成。`v1-week1`~`v1-week6` 标签已打；V1.5 尚未创建标签。最新进度与既定约定见 [AGENTS.md](AGENTS.md)。
+- **当前状态**：V1（2D 版）六周主线已经收官；V1.5 的武器/伤害深化、敌人 AI 深化、工程整理与统一调试系统均已完成。V1.5-3 的完整教程和 `Reference/` 未来实现已经准备好，步骤 1 的单局胜负/Seed/重开闭环已完成，下一步实现纯数据地图生成。`v1-week1`~`v1-week6` 标签已打；V1.5 尚未创建标签。最新进度与既定约定见 [AGENTS.md](AGENTS.md)。
 
 ---
 
@@ -221,7 +221,7 @@ git config merge.unityyamlmerge.driver "'/Applications/Unity/Hub/Editor/6000.3.1
 
 ## 📂 项目结构说明
 
-### V1.5 当前结构（89 个脚本）
+### V1.5 当前结构（90 个脚本）
 
 ```
 Assets/
@@ -238,7 +238,7 @@ Assets/
 │   ├── StateMachines/              # IState、StateMachine
 │   │   ├── Player/                 # Idle、Move、Dash、Attack、Hurt
 │   │   └── Enemy/                  # Free、Knockback、Dead（被动打断）
-│   ├── UI/                         # 血量、弹药、冷却、小地图、胜利 UI
+│   ├── UI/                         # 血量、弹药、冷却、小地图、统一结算 UI
 │   └── Weapons/                    # WeaponData、WeaponController、AmmoPickup
 │       ├── Projectiles/            # Bullet、EnemyProjectile
 │       ├── Skills/                 # Grenade、GrenadeThrower
@@ -310,7 +310,7 @@ V1.5 继续保留 2D 表现，重点从“跑通玩法”转向“深化系统�
 | V1.5-2 | 敌人 AI 深化：行为树、Blackboard 感知迟滞、多敌人类型与 Boss 阶段 | ✅ 已完成并通过 Play 验收 |
 | 工程整理 | 目录重组、输入边界收口、warning 清理、状态合并修正与注释补全 | ✅ 已完成并通过 Play 回归 |
 | 统一调试 | 分类日志、统一开关、日志转发与屏幕调试显示 | ✅ 已完成并通过静态与 Play 验收 |
-| V1.5-3 | 程序化关卡生成：图结构、分支、特殊房间与生成规则 | ⏳ 待开始 |
+| V1.5-3 | 程序化关卡生成：实体连通地图、图结构、特殊房、局内强化与完整单局 | 🚧 步骤 1/8 已完成，下一步生成纯数据地图 |
 | V1.5-4 | 存档系统：Memento、版本兼容与持久化边界 | ⏳ 待开始 |
 
 ### V1.5 开发日志与标签
@@ -321,7 +321,7 @@ V1.5 的完成记录已经独立于 V1 六周日志。下列标签名称是建�
 - ✅ 建议标签 `v1.5-2`：敌人 AI 深化——行为树、感知 Blackboard、多敌人类型与 Boss 阶段（详见 [devlog/V1.5-2.md](devlog/V1.5-2.md)）。
 - ✅ 建议标签 `v1.5-cleanup`：工程整理——85 个脚本的新目录结构、输入收口、0 warning、注释 review 与 Play 回归（详见 [devlog/V1.5-cleanup.md](devlog/V1.5-cleanup.md)）。
 - ✅ 建议标签 `v1.5-debug`：统一调试系统——分类过滤、统一设置、Console/Overlay 转发与输入缓冲显示（详见 [devlog/V1.5-debug.md](devlog/V1.5-debug.md)）。
-- ⏳ `v1.5-3`：程序化关卡生成。
+- 🚧 `v1.5-3`：程序化关卡生成——实体房间与通道、Seed 图结构、特殊房、局内强化与完整单局；步骤 1 的 Run 闭环已完成，尚未达到打标签条件（详见 [devlog/V1.5-3.md](devlog/V1.5-3.md)）。
 - ⏳ `v1.5-4`：存档系统。
 
 ---

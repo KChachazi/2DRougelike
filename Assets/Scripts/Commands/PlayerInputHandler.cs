@@ -52,7 +52,6 @@ namespace Game.Commands
             grenadeCommand = new GrenadeCommand(player, grenadeThrower);
             switchWeaponCommand = new SwitchWeaponCommand(weapon);
         }
-
         private void Update()
         {
             ReadMove();
@@ -61,6 +60,12 @@ namespace Game.Commands
             ReadDiscreteActions();
             ReadWeaponSwitch();
             buffer.Tick();
+        }
+        private void OnDisable()
+        {
+            if (player != null)
+                player.SetMoveInput(Vector2.zero);
+            buffer?.Clear();
         }
 
         /* --------------- 持续动作 --------------- */

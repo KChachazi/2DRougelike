@@ -17,7 +17,7 @@ namespace Game.UI
         [SerializeField] private Color unvisitedColor   = new Color(0.35f, 0.35f, 0.4f);
 
         private Image[] icons;
-        private RoomType[] roomTypes;
+        private RoomMapData[] roomDatas;
         private bool[] clearedFlags;
         private int currentIndex = -1;
 
@@ -40,15 +40,15 @@ namespace Game.UI
         {
             for (int i = iconContainer.childCount - 1; i >= 0; i --)
                 Destroy(iconContainer.GetChild(i).gameObject);
-            roomTypes = e.RoomTypes;
-            clearedFlags = new bool[roomTypes.Length];
-            icons = new Image[roomTypes.Length];
-            for (int i = 0; i < roomTypes.Length; i ++)
+            roomDatas = e.Rooms;
+            clearedFlags = new bool[roomDatas.Length];
+            icons = new Image[roomDatas.Length];
+            for (int i = 0; i < roomDatas.Length; i ++)
                 icons[i] = Instantiate(iconPrefab, iconContainer);
             Refresh();
         }
-        private void OnRoomEntered(RoomEnteredEvent e) { currentIndex = e.Index; Refresh(); }
-        private void OnRoomCleared(RoomClearedEvent e) { clearedFlags[e.Index] = true; Refresh(); }
+        private void OnRoomEntered(RoomEnteredEvent e) { currentIndex = e.RoomId; Refresh(); }
+        private void OnRoomCleared(RoomClearedEvent e) { clearedFlags[e.RoomId] = true; Refresh(); }
         private void OnLevelCompleted(LevelCompletedEvent e) { currentIndex = -1; Refresh(); }
         private void Refresh()
         {
@@ -60,7 +60,7 @@ namespace Game.UI
         {
             if (index == currentIndex) return currentColor;
             if (clearedFlags[index]) return clearedColor;
-            if (roomTypes[index] == RoomType.Boss) return bossColor;
+            if (roomDatas[index].Type == RoomType.Boss) return bossColor;
             return unvisitedColor;
         }
     }

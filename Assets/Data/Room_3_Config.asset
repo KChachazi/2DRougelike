@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Room_3_Config
   m_EditorClassIdentifier: Assembly-CSharp::Game.Level.RoomConfig
   roomName: Room 3
-  type: 0
+  type: 1
   enemySpawns:
   - prefab: {fileID: 4382135075672594973, guid: 30b8266cf5ce5e243b5357365482c648, type: 3}
     localPosition: {x: 3, y: 2}

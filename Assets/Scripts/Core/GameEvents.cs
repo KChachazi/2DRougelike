@@ -39,37 +39,123 @@ namespace Game.Core
         public readonly float Cooldown;
         public SkillCooldownStartedEvent(SkillId skill, float cooldown) { Skill = skill; Cooldown = cooldown; }
     }
+    // ======================== 单局游戏 ========================
+    public enum RunResult
+    {
+        Victory,
+        Defeat,
+    }
+    /// <summary>
+    /// 本局游戏开始，同时确定本局游戏种子。
+    /// </summary>
+    public readonly struct RunStartedEvent
+    {
+        public readonly int Seed;
+        public RunStartedEvent(int seed) { Seed = seed; }
+    }
+    /// <summary>
+    /// 本局游戏结束，并携带最小结算统计。
+    /// </summary>
+    public readonly struct RunEndedEvent
+    {
+        public readonly RunResult Result;
+        public readonly int Seed;
+        public readonly int RoomsVisited;
+        public readonly int EnemiesDefeated;
+        public readonly int UpgradesCollected;
+        public RunEndedEvent(RunResult result, int seed, int roomsVisited, int enemiesDefeated, int upgradesCollected)
+        {
+            Result = result;
+            Seed = seed;
+            RoomsVisited = roomsVisited;
+            EnemiesDefeated = enemiesDefeated;
+            UpgradesCollected = upgradesCollected;
+        }
+    }
+    /// <summary>玩家选择了一个强化。</summary>
+    public readonly struct RunUpgradeSelectedEvent
+    {
+        public readonly string UpgradeName;
+        public RunUpgradeSelectedEvent(string upgradeName) { UpgradeName = upgradeName; }
+    }
     // ======================== 关卡 ========================
     /// <summary>房间的玩法类型，用于配置、关卡流程和小地图显示。</summary>
     public enum RoomType
     {
+        Start,
         Normal,
+        Elite,
+        Treasure,
+        Recovery,
         Boss,
+    }
+    /// <summary>网格地图中的四个稳定方向，枚举值同时作为邻居数组索引。</summary>
+    public enum RoomDirection
+    {
+        North = 0,
+        East = 1,
+        South = 2,
+        West = 3,
+    }
+    /// <summary>
+    /// 供 UI 使用的只读房间快照。
+    /// </summary>
+    public readonly struct RoomMapData
+    {
+        public readonly int Id;
+        public readonly Vector2Int GridPosition;
+        public readonly RoomType Type;
+        public readonly int NorthId;
+        public readonly int EastId;
+        public readonly int SouthId;
+        public readonly int WestId;
+        public RoomMapData(int id, Vector2Int gridPosition, RoomType type,
+            int northId, int eastId, int southId, int westId)
+        {
+            Id = id;
+            GridPosition = gridPosition;
+            Type = type;
+            NorthId = northId;
+            EastId = eastId;
+            SouthId = southId;
+            WestId = westId;
+        }
+        public int GetNeighborId(RoomDirection direction)
+        {
+            switch (direction)
+            {
+                case RoomDirection.North: return NorthId;
+                case RoomDirection.East: return EastId;
+                case RoomDirection.South: return SouthId;
+                case RoomDirection.West: return WestId;
+                default: return -1;
+            }
+        }
     }
     /// <summary>关卡开始，并提供按流程顺序排列的房间类型快照。</summary>
     public readonly struct LevelStartedEvent
     {
-        public readonly RoomType[] RoomTypes;
-        public LevelStartedEvent(RoomType[] roomTypes) { RoomTypes = roomTypes; }
+        public readonly RoomMapData[] Rooms;
+        public LevelStartedEvent(RoomMapData[] rooms) { Rooms = rooms; }
     }
-    /// <summary>玩家进入指定序号的房间。</summary>
+    /// <summary>玩家进入指定 Id 的房间。</summary>
     public readonly struct RoomEnteredEvent
     {
-        /// <summary>房间在当前关卡顺序中的零基索引。</summary>
-        public readonly int Index;
-        public RoomEnteredEvent(int index) { Index = index; }
+        public readonly int RoomId;
+        public RoomEnteredEvent(int roomId) { RoomId = roomId; }
     }
-    /// <summary>指定序号的房间已清空全部敌人。</summary>
+    /// <summary>指定 Id 的房间已完成战斗或特殊房间效果。</summary>
     public readonly struct RoomClearedEvent
     {
-        /// <summary>房间在当前关卡顺序中的零基索引。</summary>
-        public readonly int Index;
-        public RoomClearedEvent(int index) { Index = index; }
+        public readonly int RoomId;
+        public RoomClearedEvent(int roomId) { RoomId = roomId; }
     }
-    /// <summary>玩家进入已解锁的门；具体前往哪里由关卡流程决定。</summary>
-    public readonly struct DoorEnteredEvent { }
     /// <summary>当前关卡的全部房间流程已经完成。</summary>
     public readonly struct LevelCompletedEvent { }
+
+
+    /// <summary>玩家进入已解锁的门；具体前往哪里由关卡流程决定。目前还在使用的旧接口，等待被清除依赖。</summary>
+    public readonly struct DoorEnteredEvent { }
     // ======================== 表现 ========================
     /// <summary>敌人受到一次伤害，供命中停顿和命中特效等表现系统使用。</summary>
     public readonly struct EnemyDamagedEvent
