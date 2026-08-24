@@ -67,13 +67,38 @@ namespace Game.Debug
                 logText.text = string.Empty;
                 return ;
             }
-            builder.Clear();
-            for (int i = 0; i < messages.Count; i ++)
+            int firstVisibleIndex = FindFirstVisibleMessageIndex(settings);
+            BuildLogText(settings, firstVisibleIndex);
+            logText.text = builder.ToString();
+        }
+        private int FindFirstVisibleMessageIndex(DebugSettings settings)
+        {
+            if (messages.Count <= 1) return 0;
+
+            Rect rect = logText.rectTransform.rect;
+            Vector4 margin = logText.margin;
+            float availableWidth = Mathf.Max(0f, rect.width - margin.x - margin.z);
+            float availableHeight = Mathf.Max(0f, rect.height - margin.y - margin.w);
+            if (availableWidth <= 0f || availableHeight <= 0f)
+                return messages.Count - 1;
+
+            for (int firstIndex = 0; firstIndex < messages.Count; firstIndex++)
             {
-                if (i > 0) builder.AppendLine();
+                BuildLogText(settings, firstIndex);
+                float preferredHeight = logText.GetPreferredValues(builder.ToString(), availableWidth, Mathf.Infinity).y;
+                if (preferredHeight <= availableHeight + 0.01f)
+                    return firstIndex;
+            }
+            return messages.Count - 1;
+        }
+        private void BuildLogText(DebugSettings settings, int firstIndex)
+        {
+            builder.Clear();
+            for (int i = firstIndex; i < messages.Count; i ++)
+            {
+                if (i > firstIndex) builder.AppendLine();
                 builder.Append(messages[i].Format(settings.IncludeTimestamp));
             }
-            logText.text = builder.ToString();
         }
         private void RefreshInputBuffer(bool force)
         {
@@ -88,7 +113,6 @@ namespace Game.Debug
                 lastCommandName = null;
                 return ;
             }
-
             InputBuffer buffer = playerInputHandler.Buffer;
             int count = buffer.Count;
             string commandName = buffer.Empty() ? "-" : buffer.Peek().GetType().Name;
