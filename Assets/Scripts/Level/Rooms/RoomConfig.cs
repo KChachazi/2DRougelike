@@ -13,6 +13,14 @@ namespace Game.Level
         public EnemySpawn[] enemySpawns;
         [Tooltip("道具生成点(相对房间中心)")]
         public PickupSpawn[] pickupSpawns;
+        [Tooltip("恢复房间恢复值")]
+        [Min(0)] public int healAmount = 50;
+        [Tooltip("完成奖励")]
+        public bool grantsUpgradeReward;
+
+        // 最小可行暂用
+        public int selectionWeight = 1;
+        public bool SupportsDepth(int depth) => true;
     }
 
     /// <summary>一项敌人预制体及其关于房间中心的相对位置。</summary>

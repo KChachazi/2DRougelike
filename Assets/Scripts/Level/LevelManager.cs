@@ -1,82 +1,112 @@
+using System.Collections.Generic;
 using Game.Core;
 using Game.Debug;
+using Game.Entities;
 using UnityEngine;
 
 namespace Game.Level
 {
-    /// <summary>关卡管理器，负责维护房间切换、玩家传送等。</summary>
+    /// <summary>
+    /// 生成并建造本局地图，协调房间事件、相机、恢复与最终通关。
+    /// </summary>
     public class LevelManager : MonoBehaviour
     {
-        [SerializeField] private Room[] rooms;
-        private int currentIndex = -1;
+        [SerializeField] private LevelGenerationSettings generationSettings;
+        [SerializeField] private DungeonBuilder dungeonBuilder;
+        [SerializeField] private GameObject explorationCamera;
+        // [SerializeField] private RunUpgradeManager upgradeManager;
 
-        private void OnEnable()
+        private readonly List<Room> runtimeRooms = new List<Room>();
+        private LevelGraph graph;
+        private Room currentRoom;
+        private void Start()
         {
-            EventBus.Subscribe<DoorEnteredEvent>(OnDoorEntered);
-            foreach (Room room in rooms)
-                if (room != null) room.RoomCleared += OnRoomCleared;
+            int seed = RunManager.Instance != null ? RunManager.Instance.CurrentSeed : 0x0d000721;
+            if (!LevelGraphGenerator.TryGenerate(generationSettings, seed, out graph, out string error))
+            {
+                GameDebug.Error(DebugCategory.Level, error, this);
+                enabled = false;
+                return ;
+            }
+            DungeonBuildResult buildResult = dungeonBuilder != null ? dungeonBuilder.Build(graph, seed) : null;
+            if (buildResult == null || buildResult.StartRoom == null)
+            {
+                GameDebug.Error(DebugCategory.Level, "实体地图建造失败", this);
+                enabled = false;
+                return ;
+            }
+
+            foreach (Room room in buildResult.Rooms.Values)
+            {
+                runtimeRooms.Add(room);
+                room.Entered += OnRoomEntered;
+                room.Exited += OnRoomExited;
+                room.RoomCleared += OnRoomCleared;
+                room.RewardRequested += OnRewardRequested;
+            }
+            if (explorationCamera != null) explorationCamera.SetActive(true);
+            EventBus.Publish(new LevelStartedEvent(graph.CreateMapSnapshot()));
+            PositionPlayer(buildResult.StartRoom.PlayerSpawnPoint);
+            buildResult.StartRoom.HandlePlayerEntered();
+            GameDebug.Log(DebugCategory.Level, $"地图生成完成：Seed={seed}，Rooms={graph.Count}，Signature={graph.BuildSignature()}。", this);
         }
         private void OnDisable()
         {
-            EventBus.Unsubscribe<DoorEnteredEvent>(OnDoorEntered);
-            foreach (Room room in rooms)
-                if (room != null) room.RoomCleared -= OnRoomCleared;
-        }
-
-        private void Start()
-        {
-            RoomType[] types = new RoomType[rooms.Length];
-            RoomMapData[] roomsData = new RoomMapData[rooms.Length];
-            for (int i = 0; i < rooms.Length; i ++)
+            for (int i = 0; i < runtimeRooms.Count; i ++)
             {
-                types[i] = rooms[i].Config != null ? rooms[i].Config.type : RoomType.Normal;
-                roomsData[i] = new RoomMapData(i, new Vector2Int(i, 0),
-                    types[i], -1, i + 1 < rooms.Length ? i + 1 : -1, -1, i - 1 >= 0 ? i - 1 : -1);
+                Room room = runtimeRooms[i];
+                if (room == null) continue;
+                room.Entered -= OnRoomEntered;
+                room.Exited -= OnRoomExited;
+                room.RoomCleared -= OnRoomCleared;
+                room.RewardRequested -= OnRewardRequested;
             }
-            EventBus.Publish(new LevelStartedEvent(roomsData));
-            EnterRoom(0);
+            runtimeRooms.Clear();
         }
-
-        private void OnDoorEntered(DoorEnteredEvent e) => EnterRoom(currentIndex + 1);
-        private void EnterRoom(int index)
+        private void OnRoomEntered(Room room)
         {
-            if (index < 0 || index >= rooms.Length)
+            if (currentRoom != null && currentRoom != room) currentRoom.SetCameraActive(false);
+            currentRoom = room;
+            if (explorationCamera != null) explorationCamera.SetActive(false);
+            room.SetCameraActive(true);
+            EventBus.Publish(new RoomEnteredEvent(room.Node.Id));
+            if (room.TryConsumeRecovery(out int healAmount))
             {
-                if (RunManager.Instance != null)
-                    RunManager.Instance.CompleteRun();
-                else
-                    GameDebug.Error(DebugCategory.Level, "未找到 RunManager！", this);
-                GameDebug.Log(DebugCategory.Level, "恭喜通关！", this);
-                return ;
+                GameObject player = GameManager.Instance != null ? GameManager.Instance.Player : null;
+                if (player != null && player.TryGetComponent(out Health health))
+                    health.Heal(healAmount);
             }
-            if (currentIndex >= 0) rooms[currentIndex].Exit();
-
-            currentIndex = index;
-            Room room = rooms[index];
-            TeleportPlayer(room.EntryPoint);
-            room.Enter();
-
-            EventBus.Publish(new RoomEnteredEvent(index));
+        }
+        private void OnRoomExited(Room room)
+        {
+            if (currentRoom != room) return ;
+            room.SetCameraActive(false);
+            currentRoom = null;
+            if (explorationCamera != null) explorationCamera.SetActive(true);
         }
         private void OnRoomCleared(Room room)
         {
-            int index = System.Array.IndexOf(rooms, room);
-            if (index < 0) return ;
-            EventBus.Publish(new RoomClearedEvent(index));
+            EventBus.Publish(new RoomClearedEvent(room.Node.Id));
+            if (room.Type != RoomType.Boss) return ;
+            if (RunManager.Instance != null) RunManager.Instance.CompleteRun();
+            else EventBus.Publish(new LevelCompletedEvent());
         }
-
-        private void TeleportPlayer(Transform entry)
+        private void OnRewardRequested(Room room)
         {
-            GameObject player = GameManager.Instance != null
-                              ? GameManager.Instance.Player
-                              : GameObject.FindGameObjectWithTag("Player");
-            if (player == null || entry == null) return ;
-            
+            GameDebug.Error(DebugCategory.Level, "当前还不存在 upgradeManager", this);
+            // if (upgradeManager)
+        }
+        private static void PositionPlayer(Transform spawnPoint)
+        {
+            GameObject player = GameManager.Instance != null ? GameManager.Instance.Player : GameObject.FindGameObjectWithTag("Player");
+            if (player == null || spawnPoint == null) return ;
             if (player.TryGetComponent(out Rigidbody2D rb))
             {
-                rb.position = entry.position;
+                rb.position = spawnPoint.position;
                 rb.linearVelocity = Vector2.zero;
             }
+            else
+                player.transform.position = spawnPoint.position;
         }
     }
-}
+ }

@@ -152,10 +152,6 @@ namespace Game.Core
     }
     /// <summary>当前关卡的全部房间流程已经完成。</summary>
     public readonly struct LevelCompletedEvent { }
-
-
-    /// <summary>玩家进入已解锁的门；具体前往哪里由关卡流程决定。目前还在使用的旧接口，等待被清除依赖。</summary>
-    public readonly struct DoorEnteredEvent { }
     // ======================== 表现 ========================
     /// <summary>敌人受到一次伤害，供命中停顿和命中特效等表现系统使用。</summary>
     public readonly struct EnemyDamagedEvent

@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a26d8fa514f8e204d893855fdaac9f44, type: 3}
+  m_Name: RoomCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Level.RoomCatalog
+  startRooms:
+  - {fileID: 11400000, guid: 1bf13f023ef13e24c9d6ac0bdfefc1db, type: 2}
+  normalRooms:
+  - {fileID: 11400000, guid: aeef40a803caf3f4a9e3c64343d1009a, type: 2}
+  - {fileID: 11400000, guid: 8ecb8be633b62024d860c36907729e9e, type: 2}
+  - {fileID: 11400000, guid: 17760c4f32b352d42aa664e125c2cd96, type: 2}
+  eliteRooms:
+  - {fileID: 11400000, guid: 90cc60bb0e93d0f418f131ad85ff8487, type: 2}
+  treasureRooms:
+  - {fileID: 11400000, guid: 6f19076f998906248af351fdb7b06e3e, type: 2}
+  recoveryRooms:
+  - {fileID: 11400000, guid: 247e34b864cf4e048bc9a317e59b69b2, type: 2}
+  bossRooms:
+  - {fileID: 11400000, guid: 56b85b51c41eb3f48b1c36956d2c0595, type: 2}

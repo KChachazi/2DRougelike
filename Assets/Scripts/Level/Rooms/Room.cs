@@ -6,90 +6,153 @@ using UnityEngine;
 
 namespace Game.Level
 {
-    /// <summary>依据 RoomConfig 生成房间、统计存活敌人并管理门与房间相机。</summary>
+    /// <summary>
+    /// 一个实体房间：延迟生成内容、管理战斗门、奖励等待和固定相机。
+    /// </summary>
     public class Room : MonoBehaviour
     {
         [SerializeField] private RoomConfig config;
-        [Tooltip("玩家位置")]
-        [SerializeField] private Transform entryPoint;
-        [Tooltip("通往下个房间的门，可留空")]
-        [SerializeField] private Door door;
-        [Tooltip("本房间的 CinemachineCamera")]
+        [SerializeField] private Transform playerSpawnPoint;
+        [SerializeField] private RoomConnection[] connections;
         [SerializeField] private GameObject roomCamera;
-        [Tooltip("生成对象挂载位置，留空默认房间自己")]
         [SerializeField] private Transform contentParent;
 
+        public event Action<Room> Entered;
+        public event Action<Room> Exited;
         public event Action<Room> RoomCleared;
-
-        public RoomConfig Config => config;
-        public Transform EntryPoint => entryPoint;
-        public bool IsCleared { get; private set; }
+        public event Action<Room> RewardRequested;
 
         private readonly List<Health> trackedEnemies = new List<Health>();
         private int aliveCount;
+        private bool initialized;
         private bool spawned;
+        private bool playerInside;
+        private bool rewardPending;
+        private bool recoveryConsumed;
 
-        /// <summary>
-        /// 进入当前房间。
-        /// </summary>
-        public void Enter()
-        {
-            if (roomCamera != null) roomCamera.SetActive(true);
-            if (!spawned)
-            {
-                SpawnContents();
-                spawned = true;
-            }
-            if (aliveCount <= 0) MarkCleared();
-        }
+        public RoomNode Node { get; private set; }
+        public RoomConfig Config => config;
+        public RoomType Type => Node != null ? Node.Type : config != null ? config.type : RoomType.Normal;
+        public Transform PlayerSpawnPoint => playerSpawnPoint != null ? playerSpawnPoint : transform;
+        public bool IsCleared { get; private set; }
 
-        /// <summary>
-        /// 退出当前房间。
-        /// </summary>
-        public void Exit()
+        public void Initialize(RoomNode node, RoomConfig roomConfig)
         {
+            Node = node;
+            config = roomConfig;
+            initialized = node != null;
             if (roomCamera != null) roomCamera.SetActive(false);
         }
-
+        public void ConfigureConnection(RoomDirection direction, bool connected)
+        {
+            RoomConnection connection = GetConnection(direction);
+            if (connection != null) connection.Configure(connected);
+        }
+        public RoomConnection GetConnection(RoomDirection direction)
+        {
+            if (connections == null) return null;
+            for (int i = 0; i < connections.Length; i ++)
+                if (connections[i] != null && connections[i].Direction == direction) return connections[i];
+            return null;
+        }
+        public void HandlePlayerEntered()
+        {
+            if (!initialized || playerInside) return ;
+            playerInside = true;
+            Entered?.Invoke(this);
+            if (spawned) return ;
+            spawned = true;
+            SpawnContents();
+            if (aliveCount > 0) LockConnectedGates();
+            else CompleteEncounter();
+        }
+        public void HandlePlayerExited()
+        {
+            if (!playerInside) return ;
+            playerInside = false;
+            Exited?.Invoke(this);
+        }
+        public void CompleteReward()
+        {
+            if (!rewardPending) return ;
+            rewardPending = false;
+            UnlockConnectedGates();
+        }
+        public bool TryConsumeRecovery(out int amount)
+        {
+            amount = 0;
+            if (recoveryConsumed || Type != RoomType.Recovery || config == null || config.healAmount <= 0)
+                return false;
+            recoveryConsumed = true;
+            amount = config.healAmount;
+            return true;
+        }
+        public void SetCameraActive(bool active)
+        {
+            if (roomCamera != null) roomCamera.SetActive(active);
+        }
         private void SpawnContents()
         {
+            if (config == null) return ;
             Transform parent = contentParent != null ? contentParent : transform;
-            foreach (EnemySpawn spawn in config.enemySpawns)
+            if (config.enemySpawns != null)
             {
-                Vector3 worldPos = transform.position + (Vector3)spawn.localPosition;
-                GameObject enemy = EnemyFactory.Create(spawn.prefab, worldPos, parent);
-                if (enemy == null) continue;
-                if (enemy.TryGetComponent(out Health health))
+                foreach (EnemySpawn spawn in config.enemySpawns)
                 {
+                    Vector3 worldPosition = transform.position + (Vector3)spawn.localPosition;
+                    GameObject enemy = EnemyFactory.Create(spawn.prefab, worldPosition, parent);
+                    if (enemy == null || !enemy.TryGetComponent(out Health health)) continue;
                     health.Died += OnEnemyDied;
                     trackedEnemies.Add(health);
                     aliveCount ++;
                 }
             }
-            foreach (PickupSpawn spawn in config.pickupSpawns)
+            if (config.pickupSpawns != null)
             {
-                Vector3 worldPos = transform.position + (Vector3)spawn.localPosition;
-                EnemyFactory.Create(spawn.prefab, worldPos, parent);
+                foreach (PickupSpawn spawn in config.pickupSpawns)
+                {
+                    Vector3 worldPosition = transform.position + (Vector3)spawn.localPosition;
+                    EnemyFactory.Create(spawn.prefab, worldPosition, parent);
+                }
             }
         }
-
         private void OnEnemyDied()
         {
             aliveCount --;
-            if (aliveCount <= 0 && !IsCleared) MarkCleared();
+            if (aliveCount <= 0) CompleteEncounter();
         }
-        private void MarkCleared()
+        private void CompleteEncounter()
         {
+            if (IsCleared) return ;
             IsCleared = true;
-            if (door != null) door.Unlock();
             RoomCleared?.Invoke(this);
+            if (config != null && config.grantsUpgradeReward)
+            {
+                rewardPending = true;
+                LockConnectedGates();
+                RewardRequested?.Invoke(this);
+            }
+            else
+                UnlockConnectedGates();
+        }
+        private void LockConnectedGates()
+        {
+            if (connections == null) return ;
+            for (int i = 0; i < connections.Length; i ++)
+                if (connections[i] != null && connections[i].IsConnected && connections[i].Gate != null)
+                    connections[i].Gate.Lock();
+        }
+        private void UnlockConnectedGates()
+        {
+            if (connections == null) return;
+            for (int i = 0; i < connections.Length; i++)
+                if (connections[i] != null && connections[i].IsConnected && connections[i].Gate != null)
+                    connections[i].Gate.Unlock();
         }
         private void OnDestroy()
         {
-            foreach (Health health in trackedEnemies)
-            {
-                if (health != null) health.Died -= OnEnemyDied;
-            }
+            for (int i = 0; i < trackedEnemies.Count; i++)
+                if (trackedEnemies[i] != null) trackedEnemies[i].Died -= OnEnemyDied;
             trackedEnemies.Clear();
         }
     }

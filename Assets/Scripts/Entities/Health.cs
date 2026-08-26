@@ -78,6 +78,12 @@ namespace Game.Entities
             if (isDead || isInvincible) return ;
             ApplyDamage(amount);
         }
+        public void Heal(int amount)
+        {
+            if (isDead) return ;
+            Current = Mathf.Min(Max, Current + amount);
+            HealthChanged?.Invoke(Current, maxHealth);
+        }
         // ======================== 私有工具 ========================
         private void ApplyDamage(int amount)
         {
