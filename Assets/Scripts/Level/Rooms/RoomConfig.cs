@@ -9,14 +9,16 @@ namespace Game.Level
     {
         public string roomName = "Room";
         public RoomType type = RoomType.Normal;
+        [Header("房间内容")]
         [Tooltip("敌人出生点(相对房间中心)")]
         public EnemySpawn[] enemySpawns;
-        [Tooltip("道具生成点(相对房间中心)")]
+        [Tooltip("拾取物生成点(相对房间中心)")]
         public PickupSpawn[] pickupSpawns;
+        [Tooltip("战斗后生成的一次性奖励")]
+        public PickupSpawn[] clearRewardSpawns;
+
         [Tooltip("恢复房间恢复值")]
         [Min(0)] public int healAmount = 50;
-        [Tooltip("完成奖励")]
-        public bool grantsUpgradeReward;
 
         // 最小可行暂用
         public int selectionWeight = 1;

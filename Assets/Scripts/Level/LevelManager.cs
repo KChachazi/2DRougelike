@@ -42,7 +42,6 @@ namespace Game.Level
                 room.Entered += OnRoomEntered;
                 room.Exited += OnRoomExited;
                 room.RoomCleared += OnRoomCleared;
-                room.RewardRequested += OnRewardRequested;
             }
             if (explorationCamera != null) explorationCamera.SetActive(true);
             EventBus.Publish(new LevelStartedEvent(graph.CreateMapSnapshot()));
@@ -59,7 +58,6 @@ namespace Game.Level
                 room.Entered -= OnRoomEntered;
                 room.Exited -= OnRoomExited;
                 room.RoomCleared -= OnRoomCleared;
-                room.RewardRequested -= OnRewardRequested;
             }
             runtimeRooms.Clear();
         }
@@ -70,12 +68,6 @@ namespace Game.Level
             if (explorationCamera != null) explorationCamera.SetActive(false);
             room.SetCameraActive(true);
             EventBus.Publish(new RoomEnteredEvent(room.Node.Id));
-            if (room.TryConsumeRecovery(out int healAmount))
-            {
-                GameObject player = GameManager.Instance != null ? GameManager.Instance.Player : null;
-                if (player != null && player.TryGetComponent(out Health health))
-                    health.Heal(healAmount);
-            }
         }
         private void OnRoomExited(Room room)
         {

@@ -93,12 +93,14 @@ namespace Game.Weapons
         /// <summary>
         /// 补充弹药，不会超过最大弹药量。
         /// </summary>
-        public void AddAmmo(int amount)
+        public bool AddAmmo(int amount)
         {
             WeaponData data = CurrentWeapon;
-            if (data.maxAmmo < 0) return;
+            if (amount <= 0 || data.maxAmmo < 0 || currentAmmo[currentIdx] >= data.maxAmmo)
+                return false;
             currentAmmo[currentIdx] = Mathf.Min(currentAmmo[currentIdx] + amount, data.maxAmmo);
             BroadcastAmmo();
+            return true;
         }
         // ======================== 私有工具 ========================
         private DamageInfo BuildDamageInfo(WeaponData data)

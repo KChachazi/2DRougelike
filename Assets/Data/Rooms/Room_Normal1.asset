@@ -21,9 +21,9 @@ MonoBehaviour:
     localPosition: {x: 5, y: -1}
   - prefab: {fileID: 4382135075672594973, guid: 1fb97e6a1cff012479222be146907c72, type: 3}
     localPosition: {x: 2, y: -3}
-  pickupSpawns:
-  - prefab: {fileID: 9122407227248320276, guid: 01535473bcfdf2444b0b2c03497f4371, type: 3}
+  pickupSpawns: []
+  clearRewardSpawns:
+  - prefab: {fileID: 9122407227248320276, guid: aa2bf646ffd1a1243a44d39ea91380e6, type: 3}
     localPosition: {x: 0, y: 3}
   healAmount: 0
-  grantsUpgradeReward: 0
   selectionWeight: 1

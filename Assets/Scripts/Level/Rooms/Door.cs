@@ -11,20 +11,22 @@ namespace Game.Level
         [SerializeField] private SpriteRenderer spriteRenderer;
         [SerializeField] private Color lockedColor = new Color(0.8f, 0.2f, 0.2f);
         [SerializeField] private Color unlockedColor = new Color(0.2f, 0.8f, 0.3f);
-
-        private void Awake() => Lock();
+        private Collider2D gateCollider;
+        private void Awake()
+        {
+            gateCollider = GetComponent<Collider2D>();
+            Unlock();
+        }
 
         public void Lock()
         {
+            if (gateCollider != null) gateCollider.enabled = true;
             if (spriteRenderer != null) spriteRenderer.color = lockedColor;
-            if (this.TryGetComponent(out Collider2D collider))
-                collider.enabled = true;
         }
         public void Unlock()
         {
+            if (gateCollider != null) gateCollider.enabled = false;
             if (spriteRenderer != null) spriteRenderer.color = unlockedColor;
-            if (this.TryGetComponent(out Collider2D collider))
-                collider.enabled = false;
         }
     }
 }

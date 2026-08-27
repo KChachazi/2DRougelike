@@ -46,7 +46,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Game.Core.ObjectPool
   prefab: {fileID: 8591178759127387321, guid: d7e3df3ff7307a54daef848fce4e0742, type: 3}
   prewarmCount: 10
-  debugMode: 1
 --- !u!1 &4382135075672594973
 GameObject:
   m_ObjectHideFlags: 0
@@ -131,8 +130,8 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: 1801526037
+  m_SortingLayer: 7
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 75f5f34dc1b5347e0b8351032682f224, type: 3}
@@ -260,7 +259,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ee91a2aa130f5c44870e6e987020117, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Entities.StatusEffectManager
-  knockbackSpeed: 8
 --- !u!114 &1942301265568650637
 MonoBehaviour:
   m_ObjectHideFlags: 0

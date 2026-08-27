@@ -42,8 +42,35 @@ TagManager:
   - name: Floor
     uniqueID: 3601745029
     locked: 0
+  - name: Wall&Gate
+    uniqueID: 2110678643
+    locked: 0
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Explosion
+    uniqueID: 4124455675
+    locked: 0
+  - name: Pickup
+    uniqueID: 1140418983
+    locked: 0
+  - name: Projectiles
+    uniqueID: 2577831863
+    locked: 0
+  - name: New Layer 7
+    uniqueID: 2162145793
+    locked: 0
+  - name: New Layer 8
+    uniqueID: 3962193739
+    locked: 0
+  - name: New Layer 9
+    uniqueID: 3602260819
+    locked: 0
+  - name: Enemy
+    uniqueID: 1801526037
+    locked: 0
+  - name: Player
+    uniqueID: 3769952167
     locked: 0
   m_RenderingLayers:
   - Default

@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 8461373403270187201}
   - component: {fileID: 2502494518640891840}
   - component: {fileID: 6935459643285725351}
-  - component: {fileID: 4574322998981156720}
+  - component: {fileID: 1097849666634786322}
   m_Layer: 0
   m_Name: AmmoPickup
   m_TagString: Untagged
@@ -167,7 +167,7 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
---- !u!114 &4574322998981156720
+--- !u!114 &1097849666634786322
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -178,5 +178,5 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd914c7ed968a9a40be736edcf6ac8fe, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Game.Weapons.AmmoPickup
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Pickups.AmmoPickup
   amount: 15

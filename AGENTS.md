@@ -9,7 +9,7 @@
 
 ## 当前进度(务必保持最新)
 
-- 状态:**六周全部完成并通过验收;`v1-week1`~`v1-week6` 六个标签已全部补打(2026-07-25,本地),尚未 `push` 到远程。V1(2D 版本)收官,V1.5(深化)进行中——方向①(武器/伤害深化)、方向②(敌人 AI 深化)、`V1.5-cleanup` 与 `V1.5-debug` 均已完成。V1.5-3 的完整教程与未来版 `Reference/` 已准备,步骤 1 的单局闭环与步骤 2 的纯数据 Seed 地图均已落地并通过 Play、批量验证与代码 review;下一步实施步骤 3 的实体房间/通道建造。**
+- 状态:**六周全部完成并通过验收;`v1-week1`~`v1-week6` 六个标签已全部补打(2026-07-25,本地),尚未 `push` 到远程。V1(2D 版本)收官,V1.5(深化)进行中——方向①(武器/伤害深化)、方向②(敌人 AI 深化)、`V1.5-cleanup` 与 `V1.5-debug` 均已完成。V1.5-3 的完整教程与未来版 `Reference/` 已准备,步骤 1～5 已落地并通过相应的 Play、批量验证与代码 review;当前已具备 Seed 地图、实体房间/通道、房间战斗闭环和混合相机,下一步实施步骤 6 的六类房间内容。**
 - 已有内容:
   - Unity 6000.3.19f1 + URP 2D 模板默认工程,`.gitignore`/`.gitattributes` 已提交。
   - 第 1 周:`Assets/Scripts/Core|Entities|Weapons` 下的 8 个文件、场景搭建均已由用户完成并通过验收,详见 `devlog/week1.md`。
@@ -39,13 +39,15 @@
 - **V1.5-3 程序化关卡生成·准备阶段**(2026-08-19):已完成完整架构设计与 8 步教程(`devlog/V1.5-3.md`),目标是“二维 Seed 房间树 → 实体房间/通道 → 战斗门与重访 → 混合相机 → 六类房间 → 三选一局内强化 → 二维小地图 → 胜负结算”。未来完成态已写入 `Reference/Scripts/`(105 个脚本;新增 17、删除旧 `VictoryUI` 1);准备阶段 review 还补上 `PlayerInputHandler.OnDisable` 清零持续移动并清空缓冲,避免奖励/结算禁用输入后继续移动。全部 Reference 脚本作为编译输入静态验证为 **0 warning / 0 error**。**这只是教程与参考实现准备完成:`Assets/Scripts` 仍为 89 个脚本,场景仍是固定三房传送版,尚未进行任何 V1.5-3 Play 验收。**
 - **V1.5-3 步骤 1：单局闭环**(2026-08-22):**已落地 `Assets/` 并通过 Play 与代码 review**。新增 `Core/RunManager`、`UI/RunResultUI`,删除旧 `VictoryUI`;补齐 Run 开始/结束/强化统计事件,固定三房 `LevelManager` 已桥接胜利结算,玩家死亡可触发失败结算,结算面板支持同 Seed/新 Seed 重载。为提前同步最终房间事件协议,`MinimapUI` 与旧 `LevelManager` 已使用 `RoomMapData/RoomId`,并暂时保留 `DoorEnteredEvent` 兼容旧传送流程。review 修复 `RunUpgradeSelectedEvent.UpgradeName` 拼写、禁用输入后残留移动/缓冲、缺失 `RunManager` 时的静默降级,并在 Inspector 重新保存四份旧 `RoomConfig` 的枚举值,避免 `RoomType` 扩展造成资产类型静默变义。`Assets/Scripts` 当前 90 个脚本;静态编译为 **0 error / 0 项目代码 warning**。完整记录见 `devlog/V1.5-3.md`。
 - **V1.5-3 步骤 2：纯数据 Seed 地图**(2026-08-24):**已落地 `Assets/` 并通过 Play、连续 100 Seed 验证与代码 review**。新增 `Level/Generation/` 下 6 个脚本和 `Debug/Debugging/LevelGraphDebugView`,实现二维无环房间树、稳定房间 Id/坐标/深度/四向邻接、特殊房分配、集中验证器、同 Seed 签名复现和 Scene Gizmo 预览。review 修复 `Random.Next` 上界不包含 `MaxRoomCount` 的沉默范围错误,并为 `DebugOverlay` 增加按实际 TMP 高度裁去最旧可视消息的逻辑,避免长地图签名把最新结果挤出面板;`chinese_chars.txt` 也已同步当前 Run、地图生成与验证文本。关卡脚本按 `Generation/Building/Rooms` 整理,资源移动保留原 `.meta` GUID;场景改名为 `Main_V1_5_2` 并同步 Build Settings。`Assets/Scripts` 当前 97 个脚本;静态编译为 **0 error / 0 项目代码 warning**(40 条 warning 均来自 Unity Package)。完整记录见 `devlog/V1.5-3.md`。
+- **V1.5-3 步骤 3：实体房间与通道**(2026-08-26):**已落地 `Assets/` 并通过 Play 与代码 review**。新增 `Level/Building/` 下的 `DungeonBuilder`、`RoomCatalog`、`RoomConnection`,把纯数据图建造成六类实体房间及东/北唯一生成的通道;Door 已从传送器改为可开关的实体 Gate,玩家出生在 Start 房。完成灰盒房间和横/纵通道 Prefab,同 Seed 的世界布局与内容选择一致。静态编译为 **0 error / 0 项目代码 warning**;已由用户提交为 `0951590`。完整记录见 `devlog/V1.5-3.md`。
+- **V1.5-3 步骤 4～5：房间流程与混合相机**(2026-08-27):**已落地 `Assets/` 并通过 Play 与代码 review**。新增 `RoomEncounterTrigger`、`Pickups/HealthPickup`,并把 `AmmoPickup` 连同 `.meta` 移至 `Pickups/`;`Room` 首次进入后按配置生成内容,战斗房封门并按敌人死亡事件计数,清空后生成一次性奖励并开门,重访不再重复生成。`WeaponController.AddAmmo` 改为返回是否实际补弹,满弹或无限弹药时 Pickup 不会误消耗。房内启用固定 RoomCamera,离房进入通道时切换跟随玩家的 ExplorationCamera。review 修正普通/精英房提前生成清场奖励和 AmmoPickup 预制体旧命名空间标识,并移除通道 Prefab 上多余的 `Room` 组件。`Assets/Scripts` 当前 102 个脚本;静态编译为 **0 error / 0 项目代码 warning**(40 条 warning 均来自 Unity Package)。完整记录见 `devlog/V1.5-3.md`。
 - 下一步:**V1(2D 核心玩法)收官,进入 V1.5(深化阶段)**,而不是立刻做 V2(3D 化)——用户判断"核心玩法刚搭起来,3D 化为时过早",且学习目标是把游戏编程模式吃透,武器系统这类还有明显深挖空间。V2/V3 推迟为更后面的大版本,`EventBus`/`ICommand`/`IWeaponStrategy`/`RoomConfig` 这几层设计上不认识 2D Sprite/物理,理论上可原样迁移,不会因为推迟而过时。
   - **V1.5 四个方向,已确定优先级**(2026-07-25 讨论确定):
     1. **武器/伤害深化**(Decorator 装饰器 + 状态异常系统)——**已完成(2026-08-04)**。给武器叠加"燃烧/冰冻/击退"等附加效果,`Health` 上加 DoT/减速/易伤,击退改为独立状态 `EnemyKnockbackState`。
     2. 敌人 AI 深化(行为树/技能系统)——现有敌人是固定 4 态 FSM,换成行为树支持多敌人类型/远近战编队/Boss 多阶段技能。难度最高,放在①之后是为了复用状态异常系统。
     3. 程序化关卡生成——`LevelManager` 从固定房间数组换成 Seed 图结构与实体房间/通道(分支、宝箱、精英、恢复、Boss),并补齐局内强化与胜负重开。暂不做没有货币系统支撑的假商店。完整设计与参考代码已准备,待逐步同步 `Assets/`。
     4. 存档系统(Memento + 云存模式)——难度最低但最独立,放最后是因为越往后做,要序列化的状态(强化、图鉴、进度)越稳定,能少返工。
-  - **当前状态**:方向①、方向②与 `V1.5-debug` 均已完成并通过验收。方向③的教程/Reference、步骤 1 单局闭环与步骤 2 纯数据地图均已完成,下一步按 `devlog/V1.5-3.md` 实施步骤 3 的实体房间与通道建造。方向④存档系统继续排在其后。
+  - **当前状态**:方向①、方向②与 `V1.5-debug` 均已完成并通过验收。方向③的教程/Reference 与步骤 1～5 均已完成,下一步按 `devlog/V1.5-3.md` 实施步骤 6 的六类房间内容,随后完成步骤 7 的三选一局内强化并再次提交。方向④存档系统继续排在其后。
 
 **更新规则**:每完成一项里程碑(一周任务,或用户认可的阶段性成果)后:
 1. 更新本节的"已有内容 / 尚未创建 / 下一步";
@@ -54,12 +56,12 @@
 
 **V1.5 命名约定**:`V1.5-1`~`V1.5-4` 只表示四个玩法深化方向;代码整理、统一调试等工程化插曲使用 `V1.5-cleanup`、`V1.5-debug` 这类名称,避免出现含义不清的 `V1.5-2.5-*`。当前只存在 `v1-week1`~`v1-week6` 六个 Git 标签,V1.5 标签均尚未创建。
 
-## 当前代码结构快照(V1.5-3 步骤 2 完成,2026-08-24)
+## 当前代码结构快照(V1.5-3 步骤 5 完成,2026-08-27)
 
 > "代码实际长什么样"的速查表,方便新对话快速定位。真实进度以 `Assets/` 为准;下面每条都对应已经落地的文件。
-> `Reference/Scripts/` 从 2026-08-19 起已提前写成 V1.5-3 的未来完成态(105 个脚本),不再与本节描述的 `Assets/Scripts/` 97 个现行脚本镜像;代码审查和进度判断必须区分两者。
+> `Reference/Scripts/` 从 2026-08-19 起已提前写成 V1.5-3 的未来完成态,不再与本节描述的 `Assets/Scripts/` 102 个现行脚本镜像;代码审查和进度判断必须区分两者。
 
-**脚本清单(`Assets/Scripts/`,当前共 97 个 `.cs`;可正常编译)**
+**脚本清单(`Assets/Scripts/`,当前共 102 个 `.cs`;可正常编译)**
 
 - `Core/`
   - `GameManager.cs`——单例(`Instance`),`[SerializeField] player` 只读暴露为 `Player`。目前很轻,只做单例 + Player 引用。
@@ -105,11 +107,14 @@
   - **`RunResultUI.cs`**(V1.5-3 步骤 1)——替代已删除的 `VictoryUI`,订阅 `RunEndedEvent` 统一显示胜利/失败、Seed 与最小统计,并提供同 Seed/新 Seed 重开按钮。
 - **`Level/`**(第 5 周新建,命名空间 `Game.Level`)
   - `Generation/`(V1.5-3 步骤 2)——`RoomDirectionUtility`/`RoomNode`/`LevelGraph`/`LevelGenerationSettings`/`LevelGraphGenerator`/`LevelGraphValidator` 六个纯数据与算法脚本。独立 `System.Random(seed)` 生成 9～12 间二维树结构,分配 Start/Boss/Elite/Treasure/Recovery,再集中验证坐标唯一、双向邻接、树边数、连通性、分岔与特殊房约束；不实例化任何 GameObject。
-  - `Rooms/RoomConfig.cs`——房间 SO(`Create > Game > Room Config`):`roomName`/`type`/`enemySpawns[]`/`pickupSpawns[]`。生成位置用**相对房间中心的 `localPosition`**(所以同一份配置能被任意位置的房间复用)。同文件有 `EnemySpawn`/`PickupSpawn` 两个 `[System.Serializable] struct`。资产在 `Assets/Data/Rooms/`。
+  - `Building/`(V1.5-3 步骤 3)——`DungeonBuilder` 按图实例化房间与通道,`RoomCatalog` 依据房型从候选配置中确定性抽取内容,`RoomConnection` 维护方向、Gate 与通道锚点。通道只由东/北方向创建一次,避免无向边重复实例化。
+  - `Rooms/RoomConfig.cs`——房间 SO(`Create > Game > Room Config`):`roomName`/`type`/`enemySpawns[]`/`pickupSpawns[]`/`clearRewardSpawns[]`。生成位置用**相对房间中心的 `localPosition`**;进入时 Pickup 与清场后 Pickup 分开配置。同文件有 `EnemySpawn`/`PickupSpawn` 两个 `[System.Serializable] struct`。资产在 `Assets/Data/Rooms/`。
   - `Rooms/EnemyFactory.cs`——**静态简单工厂**,`Create(prefab, worldPos, parent)`。现在只包了一层 `Instantiate`,价值在于**以后改生成逻辑(池化/按难度调血/生成时注册)只有这一个入口**。**敌人刻意不走对象池**——生成频率极低(进房间时一次性一批),池化收益接近零。
-  - `Rooms/Room.cs`——场景里的房间。按 `config` 生成内容、**订阅每个敌人的 `Health.Died` 计数**(不轮询)、清空后 `door.Unlock()` + 发**局部事件** `RoomCleared`;`Enter()`/`Exit()` 开关自己的 `roomCamera`。**它不知道自己是第几个房间、不认识 `LevelManager`**。`spawned` 标记保证只生成一次;**空房间靠 `Enter()` 末尾的 `if (aliveCount <= 0) MarkCleared()` 兜底**(否则门永远不开、玩家卡死)。
-  - `Rooms/Door.cs`——锁着时 `OnTriggerEnter2D` 直接 return;`Unlock()` 后碰到 Player 就发 `DoorEnteredEvent`。**它不知道自己通向哪**——去哪儿是 `LevelManager` 的事。所以门能随便复制到任何房间。
-  - `LevelManager.cs`——步骤 1 仍是**唯一知道固定房间顺序的人**。`Start` 构造临时线性 `RoomMapData[]` 并进入 0 号房;订阅旧 `DoorEnteredEvent` → `EnterRoom(currentIndex + 1)`;把 `Room.RoomCleared` 桥接成带 `RoomId` 的全局事件。数组越界通关改走 `RunManager.CompleteRun()`。步骤 3 会用程序化图与实体通道整文件替换它。
+  - `Rooms/Room.cs`——实体房间运行时主体。`RoomEncounterTrigger` 转发玩家进入/离开;首次进入按 `config` 生成敌人与即时 Pickup,有存活敌人时锁住所有相连 Gate。它订阅每个敌人的 `Health.Died` 计数(不轮询),清空后生成 `clearRewardSpawns`、发布局部 `RoomCleared` 并开门。`spawned`/`IsCleared` 保证重访不重复生成;空房会立即完成流程。
+  - `Rooms/Door.cs`——只负责启用/禁用自己的 Collider,是战斗期间的实体封锁,不再承担传送与房间寻址。
+  - `LevelManager.cs`——从 `RunManager` 取得 Seed,生成并建造地图,注册所有运行时房间的局部事件并桥接成全局房间事件。进入房间时切至该房的固定 RoomCamera,离开房间进入通道时切回 ExplorationCamera;Boss 房清空后通知 `RunManager` 胜利结算。
+- **`Pickups/`**(V1.5-3 步骤 4)
+  - `AmmoPickup.cs`/`HealthPickup.cs`——分别为当前武器补弹和恢复生命;只有资源确实增加时才销毁,满弹、无限弹药、满血或死亡状态下均保留。
 - `StateMachines/`
   - `IState.cs`(Enter/Tick/FixedTick/Exit)+ `StateMachine.cs`(`CurrentState`/`ChangeState`/`Tick`/`FixedTick`,**纯 C# 类,非 MonoBehaviour**,controller 内部 `new` 一个)。
   - `Player/`:Idle / Move / Dash / Attack / Hurt 五态。**状态类已彻底不读输入**(第 3 周删了右键近战分支和 `PerformHit`,第 4 周删了读 Shift 的闪避分支),现在只根据当前数据决定状态转换。
@@ -169,8 +174,8 @@
 
 ## 开发节奏
 
-- 当前阶段:**六周全部完成,V1(2D)收官,V1.5 方向①、方向②、`V1.5-cleanup` 与 `V1.5-debug` 均已验收完成;V1.5-3 教程/Reference、步骤 1 Run 闭环与步骤 2 纯数据地图均已完成**。六篇 `devlog/week1~6.md` 均已写完实际完成记录;`v1-week1`~`v1-week6` 六个标签已本地补打(未 push)。
-- **下一步**:按 `devlog/V1.5-3.md` 实施步骤 3(把纯数据图建造成实体房间和通道),之后逐步完成房间战斗流程并 Play 验收;V1.5-3 完成后再做存档系统。README 规划的 V2(3D 化)、V3(联机)推迟到 V1.5 之后。
+- 当前阶段:**六周全部完成,V1(2D)收官,V1.5 方向①、方向②、`V1.5-cleanup` 与 `V1.5-debug` 均已验收完成;V1.5-3 教程/Reference 与步骤 1～5 均已完成**。六篇 `devlog/week1~6.md` 均已写完实际完成记录;`v1-week1`~`v1-week6` 六个标签已本地补打(未 push)。
+- **下一步**:先提交步骤 4～5,再按 `devlog/V1.5-3.md` 完成步骤 6 的六类房间内容与步骤 7 的三选一局内强化,通过 Play 和代码 review 后再提交一次;V1.5-3 完成后再做存档系统。README 规划的 V2(3D 化)、V3(联机)推迟到 V1.5 之后。
 - **发布前清理清单**(答疑用):统一调试完成后关闭 `DebugSettings.Debug Enabled`,确认不存在临时直接 `Debug.Log*`;打包时 `Build Settings > Scenes In Build` 必须勾上场景(否则黑屏),构建目录别选在项目内(会递归导入)。
 - **分步下发的做法已连续三周验证有效,继续沿用**:大周原则上拆成若干"每步可编译、可 Play 验收"的小步(第 3、4、5 周都是 4 步),每步末尾给 ✅ 验收清单。若命名空间迁移等改动无法避免短暂编译失败,必须在文档中明确错误范围与恢复点,并把相邻步骤合并成一个可编译单元;`V1.5-debug` 的步骤 1+2 即为此例。**纯重构的步骤,验收标准就写"行为和上周完全一样"**(第 4 周步骤 1 这么做的,效果很好)。**"不写代码、只做对比实验"的步骤也很有价值**(第 4 周步骤 2 让用户把 `bufferDuration` 调成 0 体会差异)。
 - **课后练习值得继续出**:第 4 周出了三道,用户全做了,而且第一道让他真正撞上了"队列存引用不是快照"这个坑——**比直接讲有效得多**。第 5 周出了三道(清空奖励该放哪、Boss 血条要不要新事件、房间可重进要处理哪些状态)。

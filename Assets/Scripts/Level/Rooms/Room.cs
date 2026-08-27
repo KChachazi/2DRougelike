@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Game.Level
 {
     /// <summary>
-    /// 一个实体房间：延迟生成内容、管理战斗门、奖励等待和固定相机。
+    /// 一个实体房间：延迟一次性生成内容、管理战斗门、清场奖励和固定相机。
     /// </summary>
     public class Room : MonoBehaviour
     {
@@ -20,13 +20,13 @@ namespace Game.Level
         public event Action<Room> Entered;
         public event Action<Room> Exited;
         public event Action<Room> RoomCleared;
-        public event Action<Room> RewardRequested;
 
         private readonly List<Health> trackedEnemies = new List<Health>();
         private int aliveCount;
         private bool initialized;
         private bool spawned;
         private bool playerInside;
+
         private bool rewardPending;
         private bool recoveryConsumed;
 
@@ -60,6 +60,7 @@ namespace Game.Level
             if (!initialized || playerInside) return ;
             playerInside = true;
             Entered?.Invoke(this);
+
             if (spawned) return ;
             spawned = true;
             SpawnContents();
@@ -72,49 +73,9 @@ namespace Game.Level
             playerInside = false;
             Exited?.Invoke(this);
         }
-        public void CompleteReward()
-        {
-            if (!rewardPending) return ;
-            rewardPending = false;
-            UnlockConnectedGates();
-        }
-        public bool TryConsumeRecovery(out int amount)
-        {
-            amount = 0;
-            if (recoveryConsumed || Type != RoomType.Recovery || config == null || config.healAmount <= 0)
-                return false;
-            recoveryConsumed = true;
-            amount = config.healAmount;
-            return true;
-        }
         public void SetCameraActive(bool active)
         {
             if (roomCamera != null) roomCamera.SetActive(active);
-        }
-        private void SpawnContents()
-        {
-            if (config == null) return ;
-            Transform parent = contentParent != null ? contentParent : transform;
-            if (config.enemySpawns != null)
-            {
-                foreach (EnemySpawn spawn in config.enemySpawns)
-                {
-                    Vector3 worldPosition = transform.position + (Vector3)spawn.localPosition;
-                    GameObject enemy = EnemyFactory.Create(spawn.prefab, worldPosition, parent);
-                    if (enemy == null || !enemy.TryGetComponent(out Health health)) continue;
-                    health.Died += OnEnemyDied;
-                    trackedEnemies.Add(health);
-                    aliveCount ++;
-                }
-            }
-            if (config.pickupSpawns != null)
-            {
-                foreach (PickupSpawn spawn in config.pickupSpawns)
-                {
-                    Vector3 worldPosition = transform.position + (Vector3)spawn.localPosition;
-                    EnemyFactory.Create(spawn.prefab, worldPosition, parent);
-                }
-            }
         }
         private void OnEnemyDied()
         {
@@ -125,15 +86,10 @@ namespace Game.Level
         {
             if (IsCleared) return ;
             IsCleared = true;
+            Transform parent = contentParent != null ? contentParent : transform;
+            if (config != null) SpawnPickups(config.clearRewardSpawns, parent);
             RoomCleared?.Invoke(this);
-            if (config != null && config.grantsUpgradeReward)
-            {
-                rewardPending = true;
-                LockConnectedGates();
-                RewardRequested?.Invoke(this);
-            }
-            else
-                UnlockConnectedGates();
+            UnlockConnectedGates();
         }
         private void LockConnectedGates()
         {
@@ -154,6 +110,39 @@ namespace Game.Level
             for (int i = 0; i < trackedEnemies.Count; i++)
                 if (trackedEnemies[i] != null) trackedEnemies[i].Died -= OnEnemyDied;
             trackedEnemies.Clear();
+        }
+        private void SpawnContents()
+        {
+            if (config == null) return ;
+            Transform parent = contentParent != null ? contentParent : transform;
+            SpawnEnemies(config.enemySpawns, parent);
+            SpawnPickups(config.pickupSpawns, parent);
+        }
+        private void SpawnEnemies(EnemySpawn[] enemySpawns, Transform parent)
+        {
+            if (enemySpawns != null)
+            {
+                foreach (EnemySpawn spawn in enemySpawns)
+                {
+                    Vector3 worldPosition = transform.position + (Vector3)spawn.localPosition;
+                    GameObject enemy = EnemyFactory.Create(spawn.prefab, worldPosition, parent);
+                    if (enemy == null || !enemy.TryGetComponent(out Health health)) continue;
+                    health.Died += OnEnemyDied;
+                    trackedEnemies.Add(health);
+                    aliveCount ++;
+                }
+            }
+        }
+        private void SpawnPickups(PickupSpawn[] pickupSpawns, Transform parent)
+        {
+            if (pickupSpawns != null)
+            {
+                foreach (PickupSpawn spawn in pickupSpawns)
+                {
+                    Vector3 worldPosition = transform.position + (Vector3)spawn.localPosition;
+                    EnemyFactory.Create(spawn.prefab, worldPosition, parent);
+                }
+            }
         }
     }
 }
