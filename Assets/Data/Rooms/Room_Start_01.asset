@@ -10,12 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1486dddf032ee994e991e28173fb1a8d, type: 3}
-  m_Name: Room_Start
+  m_Name: Room_Start_01
   m_EditorClassIdentifier: Assembly-CSharp::Game.Level.RoomConfig
   roomName: StartRoom
   type: 0
+  minDepth: 0
+  maxDepth: 0
+  selectionWeight: 1
   enemySpawns: []
   pickupSpawns: []
+  clearRewardSpawns: []
   healAmount: 0
-  grantsUpgradeReward: 0
-  selectionWeight: 1

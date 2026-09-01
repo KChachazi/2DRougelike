@@ -1,6 +1,7 @@
 using Game.Core;
 using Game.StateMachines;
 using Game.StateMachines.Player;
+using Game.Rewards;
 using UnityEngine;
 
 namespace Game.Entities
@@ -33,11 +34,12 @@ namespace Game.Entities
         public SpriteRenderer SpriteRenderer { get; private set; }
         public Vector2 MoveInput { get; private set; }
         public StatusEffectManager StatusEffectManager { get; private set; }
+        public RunModifierSet RunModifiers { get; private set; }
 
         private readonly StateMachine stateMachine = new StateMachine();
         private float dashCooldownTimer;
 
-        public float MoveSpeed => moveSpeed;
+        public float MoveSpeed => moveSpeed * (RunModifiers != null ? RunModifiers.MoveSpeedMultiplier : 1f);
         public float DashSpeed => dashSpeed;
         public float DashDuration => dashDuration;
         public float HurtDuration => hurtDuration;
@@ -60,6 +62,7 @@ namespace Game.Entities
             health = GetComponent<Health>();
             SpriteRenderer = GetComponent<SpriteRenderer>();
             StatusEffectManager = GetComponent<StatusEffectManager>();
+            RunModifiers = GetComponent<RunModifierSet>();
 
             IdleState = new PlayerIdleState(this, stateMachine);
             MoveState = new PlayerMoveState(this, stateMachine);

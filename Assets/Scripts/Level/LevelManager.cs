@@ -14,7 +14,6 @@ namespace Game.Level
         [SerializeField] private LevelGenerationSettings generationSettings;
         [SerializeField] private DungeonBuilder dungeonBuilder;
         [SerializeField] private GameObject explorationCamera;
-        // [SerializeField] private RunUpgradeManager upgradeManager;
 
         private readonly List<Room> runtimeRooms = new List<Room>();
         private LevelGraph graph;

@@ -78,10 +78,24 @@ namespace Game.Entities
             if (isDead || isInvincible) return ;
             ApplyDamage(amount);
         }
+        /// <summary>
+        /// 仅接受整数治疗。
+        /// </summary>
         public void Heal(int amount)
         {
-            if (isDead) return ;
-            Current = Mathf.Min(Max, Current + amount);
+            if (isDead || amount <= 0) return ;
+            int previous = Current;
+            Current = Mathf.Min(maxHealth, Current + amount);
+            if (Current != previous) HealthChanged?.Invoke(Current, maxHealth);
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        public void IncreaseMaxHealth(int amount, bool healByAmount)
+        {
+            if (amount <= 0) return ;
+            maxHealth += amount;
+            if (healByAmount) Current = Mathf.Min(maxHealth, Current + amount);
             HealthChanged?.Invoke(Current, maxHealth);
         }
         // ======================== 私有工具 ========================

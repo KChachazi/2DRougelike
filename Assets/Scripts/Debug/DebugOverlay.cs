@@ -11,6 +11,9 @@ namespace Game.Debug
     /// </summary>
     public sealed class DebugOverlay : MonoBehaviour
     {
+        [Header("Debug Overlay面板")]
+        [SerializeField] private GameObject debugOverlayPanel;
+
         [Header("日志")]
         [SerializeField] private TMP_Text logText;
 
@@ -31,7 +34,11 @@ namespace Game.Debug
             lastOverlayVisiable = IsOverlayVisible();
             RefreshLogText();
             RefreshInputBuffer(true);
-            GameDebug.Log(DebugCategory.System, "Debug 面板开启。", this);
+            if (GameDebug.Settings.DebugEnabled && GameDebug.Settings.OverlayEnabled)
+            {
+                debugOverlayPanel.SetActive(true);
+                GameDebug.Log(DebugCategory.System, "Debug 面板开启。", this);
+            }
         }
         private void OnDisable()
         {

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Game.Core;
 using Game.Entities;
+using Game.Rewards;
 using UnityEngine;
 
 namespace Game.Weapons
@@ -22,6 +23,7 @@ namespace Game.Weapons
         public float CurrentWeaponRange => weapons[currentIdx].range;
 
         private PlayerController playerController;
+        private RunModifierSet runModifiers;
         
         private IWeaponStrategy[] weaponStrategies;
         private int currentIdx;
@@ -33,6 +35,7 @@ namespace Game.Weapons
         private void Awake()
         {
             playerController = GetComponent<PlayerController>();
+            runModifiers = GetComponent<RunModifierSet>();
             weaponStrategies = new IWeaponStrategy[weapons.Length];
             for (int i = 0; i < weapons.Length; i ++)
                 weaponStrategies[i] = weapons[i].type == WeaponType.Ranged
@@ -70,7 +73,8 @@ namespace Game.Weapons
             WeaponData data = CurrentWeapon;
             DamageInfo damageInfo = BuildDamageInfo(data);
             weaponStrategies[currentIdx].Fire(this, damageInfo);
-            cooldownTimer = data.cooldown;
+            float cooldownMultiplier = runModifiers != null ? runModifiers.CooldownMultiplier : 1f;
+            cooldownTimer = data.cooldown * cooldownMultiplier;
             if (data.maxAmmo >= 0)
             {
                 currentAmmo[currentIdx] --;
@@ -105,7 +109,13 @@ namespace Game.Weapons
         // ======================== 私有工具 ========================
         private DamageInfo BuildDamageInfo(WeaponData data)
         {
-            DamageInfo info = new DamageInfo(data.damage, data.knockbackForce);
+            // 结算局内伤害/击退加成
+            float damageMultiplier = runModifiers != null ? runModifiers.DamageMultiplier : 1f;
+            float knockbackMultiplier = runModifiers != null ? runModifiers.KnockbackMultiplier : 1f;
+            int damage = Mathf.Max(1, Mathf.RoundToInt(data.damage * damageMultiplier));
+            float knockbackForce = data.knockbackForce * knockbackMultiplier;
+            // 结算武器基础特效
+            DamageInfo info = new DamageInfo(damage, knockbackForce);
             if (data.burnDamagePerTick > 0 && data.burnDuration > 0f)
             {
                 info = info.WithAddedStatus(StatusEffectConfig.Burn(
@@ -116,6 +126,11 @@ namespace Game.Weapons
                 info = info.WithAddedStatus(StatusEffectConfig.Freeze(
                     data.freezeDuration, data.freezePercent));
             }
+            // 结算局内攻击特效
+            if (runModifiers != null && runModifiers.HasBonusBurn)
+                info = info.WithAddedStatus(runModifiers.BonusBurn);
+            if (runModifiers != null && runModifiers.HasBonusFreeze)
+                info = info.WithAddedStatus(runModifiers.BonusFreeze);
             return info;
         }
         private bool HasAmmo() => CurrentWeapon.maxAmmo < 0 || currentAmmo[currentIdx] > 0;

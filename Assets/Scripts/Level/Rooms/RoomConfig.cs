@@ -9,6 +9,15 @@ namespace Game.Level
     {
         public string roomName = "Room";
         public RoomType type = RoomType.Normal;
+
+        [Header("选择规则")]
+        [Tooltip("节点深度低于该值时不会选择此配置")]
+        [Min(0)] public int minDepth = 0;
+        [Tooltip("节点深度低于该值时不会选择此配置")]
+        [Min(0)] public int maxDepth = 99;
+        [Tooltip("同类型、同深度候选中的相对权重")]
+        [Min(1)] public int selectionWeight = 1;
+
         [Header("房间内容")]
         [Tooltip("敌人出生点(相对房间中心)")]
         public EnemySpawn[] enemySpawns;
@@ -20,9 +29,7 @@ namespace Game.Level
         [Tooltip("恢复房间恢复值")]
         [Min(0)] public int healAmount = 50;
 
-        // 最小可行暂用
-        public int selectionWeight = 1;
-        public bool SupportsDepth(int depth) => true;
+        public bool SupportsDepth(int depth) => minDepth <= depth && depth <= maxDepth;
     }
 
     /// <summary>一项敌人预制体及其关于房间中心的相对位置。</summary>

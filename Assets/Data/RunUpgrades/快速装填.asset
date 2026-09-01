@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d02707333973aeb479c2db1e7fac5f36, type: 3}
+  m_Name: "\u5FEB\u901F\u88C5\u586B"
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Rewards.RunUpgradeData
+  displayName: "\u5FEB\u901F\u88C5\u586B"
+  description: "\u6B66\u5668\u51B7\u5374\u7F29\u77ED 10%"
+  icon: {fileID: 0}
+  type: 1
+  maxStacks: 5
+  value: 0.1
+  duration: 3
+  interval: 0.5
