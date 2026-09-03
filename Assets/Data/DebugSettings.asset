@@ -15,7 +15,7 @@ MonoBehaviour:
   debugEnabled: 1
   expensiveChecksEnabled: 1
   consoleEnabled: 1
-  overlayEnabled: 1
+  overlayEnabled: 0
   enableCategories: -1
   overlayMessageLimit: 12
   includeTimestamp: 1

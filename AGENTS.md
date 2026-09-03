@@ -9,7 +9,7 @@
 
 ## 当前进度(务必保持最新)
 
-- 状态:**六周全部完成并通过验收;`v1-week1`~`v1-week6` 六个标签已全部补打(2026-07-25,本地),尚未 `push` 到远程。V1(2D 版本)收官,V1.5(深化)进行中——方向①(武器/伤害深化)、方向②(敌人 AI 深化)、`V1.5-cleanup` 与 `V1.5-debug` 均已完成。V1.5-3 的完整教程与未来版 `Reference/` 已准备,步骤 1～7 已落地并完成相应的 Play、批量验证、场景配置与代码 review;当前已具备 Seed 实体地图、完整房间流程、六类房间内容和三选一局内强化,下一步实施步骤 8 的二维小地图与最终整体验收。**
+- 状态:**六周全部完成并通过验收;`v1-week1`~`v1-week6` 六个标签已全部补打(2026-07-25,本地),尚未 `push` 到远程。V1(2D 版本)收官,V1.5(深化)进行中——方向①(武器/伤害深化)、方向②(敌人 AI 深化)、`V1.5-cleanup`、`V1.5-debug` 与方向③(V1.5-3 程序化关卡生成)均已完成。V1.5-3 的 8 个步骤已全部落地并通过 Play、批量 Seed、场景配置与代码 review 验收;当前已具备可复现的 Seed 实体地图、六类房间流程、三选一局内强化、二维拓扑小地图和完整胜负重开闭环,下一步进入方向④存档系统。**
 - 已有内容:
   - Unity 6000.3.19f1 + URP 2D 模板默认工程,`.gitignore`/`.gitattributes` 已提交。
   - 第 1 周:`Assets/Scripts/Core|Entities|Weapons` 下的 8 个文件、场景搭建均已由用户完成并通过验收,详见 `devlog/week1.md`。
@@ -43,13 +43,14 @@
 - **V1.5-3 步骤 4～5：房间流程与混合相机**(2026-08-27):**已落地 `Assets/` 并通过 Play 与代码 review**。新增 `RoomEncounterTrigger`、`Pickups/HealthPickup`,并把 `AmmoPickup` 连同 `.meta` 移至 `Pickups/`;`Room` 首次进入后按配置生成内容,战斗房封门并按敌人死亡事件计数,清空后生成一次性奖励并开门,重访不再重复生成。`WeaponController.AddAmmo` 改为返回是否实际补弹,满弹或无限弹药时 Pickup 不会误消耗。房内启用固定 RoomCamera,离房进入通道时切换跟随玩家的 ExplorationCamera。review 修正普通/精英房提前生成清场奖励和 AmmoPickup 预制体旧命名空间标识,并移除通道 Prefab 上多余的 `Room` 组件。`Assets/Scripts` 当前 102 个脚本;静态编译为 **0 error / 0 项目代码 warning**(40 条 warning 均来自 Unity Package)。完整记录见 `devlog/V1.5-3.md`。
 - **V1.5-3 步骤 6：房间内容矩阵**(2026-09-02):**已落地 `Assets/` 并完成配置与代码 review**。`RoomConfig` 新增最小/最大深度与选择权重,旧八份房间配置在保留 `.meta` GUID 的前提下按 Start/Early/Mid/Bomber/Elite/Treasure/Recovery/Boss 统一命名;`RoomCatalog` 已连接全部类型与三份 Normal 候选。普通/精英奖励使用 `clearRewardSpawns`,宝箱/恢复使用首次进入的 `pickupSpawns`;恢复房重叠 Pickup 已修正。Boss 房保留进入时战前补给,其位置约束继续由生成器的 Boss 最小深度保证。完整记录见 `devlog/V1.5-3.md`。
 - **V1.5-3 步骤 7：最小局内强化闭环**(2026-09-02):**已落地 `Assets/` 并完成场景引用与代码 review**。新增 `Rewards/RunUpgradeData`、`RunModifierSet`、`RunUpgradeManager`,`UI/RewardChoiceUI` 与 `Pickups/UpgradePickup`;七份强化 SO 覆盖伤害、冷却、移速、最大生命、灼烧、冰冻和击退。Player 上三个消费强化的组件位于同一物体,三槽 UI、七份资产、宝箱即时强化与精英清场强化引用均已核对;候选使用独立 Seed 随机流。`Assets/Scripts` 当前 107 个脚本;静态编译为 **0 error / 0 项目代码 warning**(40 条 warning 均来自 Unity Package)。完整记录见 `devlog/V1.5-3.md`。
+- **V1.5-3 步骤 8：二维小地图与整局验收**(2026-09-02):**已落地 `Assets/` 并通过完整 Play 与代码 review**。`MinimapUI` 按 `RoomMapData.GridPosition` 绘制二维房间与连接,支持当前/清空/特殊房颜色和可配置可见性;当前版本默认展示完整拓扑,保留 `initVisible` 接口供后续讨论探索迷雾。新增 `RoomIcon2D`/`RoomConnection2D` Prefab,正式场景更新为 `Main_V1_5_3` 并保留原 GUID、同步 Build Settings;`LevelGraphDebugView` 已从正式场景移除。V1.5-3 的生成、房间、强化、地图、胜负与重开闭环全部完成,静态编译为 **0 error / 0 项目代码 warning**。完整记录见 `devlog/V1.5-3.md`。
 - 下一步:**V1(2D 核心玩法)收官,进入 V1.5(深化阶段)**,而不是立刻做 V2(3D 化)——用户判断"核心玩法刚搭起来,3D 化为时过早",且学习目标是把游戏编程模式吃透,武器系统这类还有明显深挖空间。V2/V3 推迟为更后面的大版本,`EventBus`/`ICommand`/`IWeaponStrategy`/`RoomConfig` 这几层设计上不认识 2D Sprite/物理,理论上可原样迁移,不会因为推迟而过时。
   - **V1.5 四个方向,已确定优先级**(2026-07-25 讨论确定):
     1. **武器/伤害深化**(Decorator 装饰器 + 状态异常系统)——**已完成(2026-08-04)**。给武器叠加"燃烧/冰冻/击退"等附加效果,`Health` 上加 DoT/减速/易伤,击退改为独立状态 `EnemyKnockbackState`。
     2. 敌人 AI 深化(行为树/技能系统)——现有敌人是固定 4 态 FSM,换成行为树支持多敌人类型/远近战编队/Boss 多阶段技能。难度最高,放在①之后是为了复用状态异常系统。
     3. 程序化关卡生成——`LevelManager` 从固定房间数组换成 Seed 图结构与实体房间/通道(分支、宝箱、精英、恢复、Boss),并补齐局内强化与胜负重开。暂不做没有货币系统支撑的假商店。完整设计与参考代码已准备,待逐步同步 `Assets/`。
     4. 存档系统(Memento + 云存模式)——难度最低但最独立,放最后是因为越往后做,要序列化的状态(强化、图鉴、进度)越稳定,能少返工。
-  - **当前状态**:方向①、方向②与 `V1.5-debug` 均已完成并通过验收。方向③的教程/Reference 与步骤 1～7 均已完成,下一步按 `devlog/V1.5-3.md` 实施步骤 8 的二维小地图与最终整体验收。方向④存档系统继续排在其后。
+  - **当前状态**:方向①、方向②、`V1.5-debug` 与方向③均已完成并通过验收。V1.5-3 的教程/Reference 与步骤 1～8 已全部完成,下一步进入方向④存档系统。
 
 **更新规则**:每完成一项里程碑(一周任务,或用户认可的阶段性成果)后:
 1. 更新本节的"已有内容 / 尚未创建 / 下一步";
@@ -58,7 +59,7 @@
 
 **V1.5 命名约定**:`V1.5-1`~`V1.5-4` 只表示四个玩法深化方向;代码整理、统一调试等工程化插曲使用 `V1.5-cleanup`、`V1.5-debug` 这类名称,避免出现含义不清的 `V1.5-2.5-*`。当前只存在 `v1-week1`~`v1-week6` 六个 Git 标签,V1.5 标签均尚未创建。
 
-## 当前代码结构快照(V1.5-3 步骤 7 完成,2026-09-02)
+## 当前代码结构快照(V1.5-3 全部完成,2026-09-02)
 
 > "代码实际长什么样"的速查表,方便新对话快速定位。真实进度以 `Assets/` 为准;下面每条都对应已经落地的文件。
 > `Reference/Scripts/` 从 2026-08-19 起已提前写成 V1.5-3 的未来完成态;`Assets/Scripts/` 当前也达到 107 个脚本,但手写格式和少量既有命名仍可能不同,代码审查和进度判断继续以 Assets 为准。
@@ -105,7 +106,7 @@
   - `HealthBarUI.cs`——订阅 `PlayerHealthChangedEvent`,设 `Image.fillAmount = (float)Current/Max`。**对 Player/Health 零引用**。
   - `AmmoUI.cs`——订阅 `AmmoChangedEvent` + `WeaponChangedEvent`(两个事件分别到达,各自缓存后 `Refresh()` 重拼文本);`Max < 0` 显示 `∞`。
   - **`CooldownUI.cs`**(第 4 周)——**通用技能冷却环形遮罩**。`[SerializeField] SkillId skill` 决定自己盯哪个技能,订阅 `SkillCooldownStartedEvent` 后 `if (e.Skill != skill) return;` 过滤。**一个脚本服务任意技能**:加新技能只需加枚举值 + 挂个组件选中它,UI 代码不改。收到事件后**自己倒计时**(不靠每帧广播)。
-  - **`MinimapUI.cs`**(第 5 周)——一排格子代表房间。订阅 `LevelStartedEvent`(按房间数生成格子)/`RoomEnteredEvent`(高亮当前)/`RoomClearedEvent`(标记已清)/**`LevelCompletedEvent`(通关重置 currentIndex)**。**不认识 `LevelManager`、不认识 `Room`**。颜色优先级:当前(黄) > 已清空(绿) > Boss 未清(红) > 没去过(灰)。
+  - **`MinimapUI.cs`**(V1.5-3 步骤 8)——按 `RoomMapData.GridPosition` 绘制二维房间与东/北唯一连接,订阅 `LevelStartedEvent`/`RoomEnteredEvent`/`RoomClearedEvent`/`RunEndedEvent` 更新拓扑状态。**不认识 `LevelManager`、不认识 `Room`**。颜色优先级为当前(黄) > 已清空(绿) > 特殊房类型色 > 普通房;`initVisible` 当前默认展示全图,关闭后可按进入房间发现邻居。
   - **`RunResultUI.cs`**(V1.5-3 步骤 1)——替代已删除的 `VictoryUI`,订阅 `RunEndedEvent` 统一显示胜利/失败、Seed 与最小统计,并提供同 Seed/新 Seed 重开按钮。
   - **`RewardChoiceUI.cs`**(V1.5-3 步骤 7)——由始终激活的 Canvas 根组件控制独立 RewardPanel,使用三个固定槽位显示 Icon/标题/精确描述,运行时绑定选择回调并隐藏不足三个的空槽。
 - **`Level/`**(第 5 周新建,命名空间 `Game.Level`)
@@ -152,9 +153,9 @@
 17. **`timeScale=0` 期间要继续走的东西必须用 unscaled 时间**:`HitStop` 用 `WaitForSecondsRealtime`(不是 `WaitForSeconds`),`ScreenShake` 用 `Time.unscaledDeltaTime`——否则命中停顿会让它们当场冻住(HitStop 甚至永久卡死)。
 18. **迟滞(hysteresis)**:任何"进入条件"和"退出条件"用不同阈值的地方,退出阈值要比进入阈值宽,留出缓冲区,否则临界点附近会抖动。敌人 AI 的 `detectionRange`(进入追击,小)< `loseSightRange`(退出追击,大)就是例子。
 
-**场景(`Main_V1_5_2.unity`)关键物体**:Player(Tag `Player`,挂 `PlayerController`/`Health`/`StatusEffectManager`/`WeaponController`/`PlayerInputHandler`/`GrenadeThrower`/Rigidbody2D[Dynamic,Damping 0]/SpriteRenderer)、子弹池 + 手雷池 + **命中/死亡粒子池**(各挂 `ObjectPool`)、**GameManager(挂 `HitStop` + `CombatFeedback` + `RunManager`)**、**`Main Camera`(挂 `CinemachineBrain`,旧 `CameraFollow` 组件已移除)**、**`LevelManager`**(rooms 数组按顺序拖 3 个房间)、**3 个 `Room.prefab` 实例**(x = 0/30/60,各 override `config`,每个 `RoomCamera` 上挂 `ScreenShake`)、**`LevelGraphDebugView`**(只生成/预览纯数据图)、**Canvas**(血条、TMP 弹药文本、技能图标 + 环形冷却遮罩、Debug 文本、`Minimap`、`RunResultPanel`;`RunResultUI` 挂始终激活的 Canvas 根物体)。**敌人不手摆在场景里**——由 `RoomConfig` 生成;V1.5-2 已把房间配置中的敌人引用换成多类型预制体,生成组合已通过 Play 验收。
+**场景(`Main_V1_5_3.unity`)关键物体**:Player(Tag `Player`,挂 `PlayerController`/`Health`/`StatusEffectManager`/`WeaponController`/`PlayerInputHandler`/`GrenadeThrower`/`RunModifierSet`/`RunUpgradeManager`/Rigidbody2D[Dynamic,Damping 0]/SpriteRenderer)、子弹池 + 手雷池 + **命中/死亡粒子池**(各挂 `ObjectPool`)、**GameManager(挂 `HitStop` + `CombatFeedback` + `RunManager`)**、**`Main Camera`(挂 `CinemachineBrain`)**、**`LevelManager` + `DungeonBuilder`**(运行时按 Seed 建造房间与通道)、ExplorationCamera、**Canvas**(血条、弹药、技能冷却、二维 `Minimap`、RewardPanel、RunResultPanel 与可关闭的 DebugOverlay;相关 UI 控制脚本挂始终激活的 Canvas 根物体)。`LevelGraphDebugView` 已从正式场景移除,保留脚本作为独立开发工具;敌人和 Pickup 均由 `RoomConfig` 在房间流程中生成。
 
-**预制体(`Assets/Prefabs/`)**:V1.5-2 的敌人族为 `EnemyMeleed`(当前拼法)/`EnemyRanged`/`EnemyBomber`/`Boss`,以及池化的 `EnemyProjectile`;旧 `Enemy.prefab` 已删除。其余包括 `Bullet`、`Grenade`(root Scale 1 + Rigidbody2D[无 Collider2D] + 子物体 `Body`/`Explosion`)、`AmmoPickup`、`CooldownIcon`、`RoomIcon`、`Room`(围墙 + `EntryPoint` + `Contents` + `Door` + `RoomCamera`[inactive])、**`HitSpark`/`DeathSpark`**(粒子,`Stop Action=None`、取消 `Looping`)。**`Assets/Data/` 只放 ScriptableObject,预制体一律放 `Assets/Prefabs/`**。
+**预制体(`Assets/Prefabs/`)**:V1.5-2 的敌人族为 `EnemyMeleed`(当前拼法)/`EnemyRanged`/`EnemyBomber`/`Boss`,以及池化的 `EnemyProjectile`;旧 `Enemy.prefab` 已删除。其余包括 `Bullet`、`Grenade`(root Scale 1 + Rigidbody2D[无 Collider2D] + 子物体 `Body`/`Explosion`)、`AmmoPickup`、`UpgradePickup`、`CooldownIcon`、`RoomIcon2D`、`RoomConnection2D`、`Room`(围墙 + `EntryPoint` + `Contents` + `Door` + `RoomCamera`[inactive])、**`HitSpark`/`DeathSpark`**(粒子,`Stop Action=None`、取消 `Looping`)。**`Assets/Data/` 只放 ScriptableObject,预制体一律放 `Assets/Prefabs/`**。
 
 **UI 素材注意**:血条填充用的是自建的 `Assets/Art/Square`(纯白无圆角)。**别用 Unity 内置的 `UISprite`**——那是带圆角的九宫格图,配 `Image Type = Filled` 时圆角会被裁切拉伸成脏边(week3 踩过)。环形冷却遮罩用 `Image Type = Filled` + `Fill Method = Radial 360`。
 
@@ -182,8 +183,8 @@
 
 ## 开发节奏
 
-- 当前阶段:**六周全部完成,V1(2D)收官,V1.5 方向①、方向②、`V1.5-cleanup` 与 `V1.5-debug` 均已验收完成;V1.5-3 教程/Reference 与步骤 1～7 均已完成**。六篇 `devlog/week1~6.md` 均已写完实际完成记录;`v1-week1`~`v1-week6` 六个标签已本地补打(未 push)。
-- **下一步**:提交步骤 6～7 后,按 `devlog/V1.5-3.md` 完成步骤 8 的二维小地图和整局最终验收;V1.5-3 完成后再做存档系统。README 规划的 V2(3D 化)、V3(联机)推迟到 V1.5 之后。
+- 当前阶段:**六周全部完成,V1(2D)收官,V1.5 方向①、方向②、`V1.5-cleanup`、`V1.5-debug` 与方向③均已验收完成;V1.5-3 教程/Reference 与步骤 1～8 均已完成**。六篇 `devlog/week1~6.md` 均已写完实际完成记录;`v1-week1`~`v1-week6` 六个标签已本地补打(未 push)。
+- **下一步**:提交 V1.5-3 步骤 8 后进入方向④存档系统。README 规划的 V2(3D 化)、V3(联机)继续推迟到 V1.5 之后。
 - **发布前清理清单**(答疑用):统一调试完成后关闭 `DebugSettings.Debug Enabled`,确认不存在临时直接 `Debug.Log*`;打包时 `Build Settings > Scenes In Build` 必须勾上场景(否则黑屏),构建目录别选在项目内(会递归导入)。
 - **分步下发的做法已连续三周验证有效,继续沿用**:大周原则上拆成若干"每步可编译、可 Play 验收"的小步(第 3、4、5 周都是 4 步),每步末尾给 ✅ 验收清单。若命名空间迁移等改动无法避免短暂编译失败,必须在文档中明确错误范围与恢复点,并把相邻步骤合并成一个可编译单元;`V1.5-debug` 的步骤 1+2 即为此例。**纯重构的步骤,验收标准就写"行为和上周完全一样"**(第 4 周步骤 1 这么做的,效果很好)。**"不写代码、只做对比实验"的步骤也很有价值**(第 4 周步骤 2 让用户把 `bufferDuration` 调成 0 体会差异)。
 - **课后练习值得继续出**:第 4 周出了三道,用户全做了,而且第一道让他真正撞上了"队列存引用不是快照"这个坑——**比直接讲有效得多**。第 5 周出了三道(清空奖励该放哪、Boss 血条要不要新事件、房间可重进要处理哪些状态)。
@@ -210,7 +211,7 @@
 | 对象池 | 子弹、手雷和高频特效池化;低频生成的敌人不池化 | 按生成频率判断收益,不要按对象类型机械套用 |
 | 武器策略 | `IWeaponStrategy` 接口 + ScriptableObject 数据 | 新增武器只加数据和一个策略实现,不改主体逻辑 |
 | 伤害与状态 | `DamageInfo` + `StatusEffectManager` | 命中点分别结算伤害、状态与击退;不要退回裸传 `int` |
-| 房间流程 | `RoomConfig` + `Room` + `LevelManager` | 当前固定顺序;V1.5-3 再升级为图结构与规则生成 |
+| 房间流程 | `LevelGraph` + `DungeonBuilder` + `RoomConfig` + `Room` + `LevelManager` | Seed 生成纯数据图,再建造实体房间/通道并驱动首次进入、战斗、奖励与重访流程 |
 | 资源管理 | V1/V1.5 保持现有直接引用,V2 再评估 Addressables | 现阶段不要提前引入 Addressables |
 
 ## 目录结构约定
